@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             d:DesignHeight="400"
+             x:Class="AegisEditor.Controls.LuaEditor">
+
+    <DockPanel Margin="8">
+        <TextBlock DockPanel.Dock="Top"
+                   Text="Lua"
+                   Foreground="{DynamicResource AeTextBrush}"
+                   FontSize="13"
+                   Margin="0 0 0 6" />
+
+        <ae:TextEditor x:Name="Editor"
+                       ShowLineNumbers="True"
+                       FontFamily="{DynamicResource AeFontMono}"
+                       FontSize="12"
+                       Foreground="{DynamicResource AeTextBrush}"
+                       HorizontalScrollBarVisibility="Auto"
+                       VerticalScrollBarVisibility="Auto"
+                       Padding="10" />
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "nfkZtrK3XfQ=",
+  "success": true,
+  "projectFilePath": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\AegisEditor.Shared.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Manoel\\.nuget\\packages\\system.text.json\\8.0.5\\system.text.json.8.0.5.nupkg.sha512",
+    "C:\\Users\\Manoel\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.19\\microsoft.netcore.app.ref.8.0.19.nupkg.sha512",
+    "C:\\Users\\Manoel\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.19\\microsoft.windowsdesktop.app.ref.8.0.19.nupkg.sha512",
+    "C:\\Users\\Manoel\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.19\\microsoft.aspnetcore.app.ref.8.0.19.nupkg.sha512"
+  ],
+  "logs": []
+}

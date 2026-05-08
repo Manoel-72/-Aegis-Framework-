@@ -1,0 +1,32 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AegisEditor.App"
+             RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <Color x:Key="AeBackground">#FF0b0d12</Color>
+        <Color x:Key="AeSurface">#FF12151e</Color>
+        <Color x:Key="AeSurfaceHover">#FF1a1e2b</Color>
+        <Color x:Key="AeBorder">#FF1e2230</Color>
+        <Color x:Key="AeTextPrimary">#FFdde1ec</Color>
+        <Color x:Key="AeTextSecondary">#FF6b7280</Color>
+        <Color x:Key="AeAccent">#FF5b7fff</Color>
+        <Color x:Key="AeSuccess">#FF34d399</Color>
+        <Color x:Key="AeWarning">#FFfbbf24</Color>
+        <Color x:Key="AeError">#FFf87171</Color>
+
+        <SolidColorBrush x:Key="AeBackgroundBrush" Color="{DynamicResource AeBackground}" />
+        <SolidColorBrush x:Key="AeSurfaceBrush" Color="{DynamicResource AeSurface}" />
+        <SolidColorBrush x:Key="AeBorderBrush" Color="{DynamicResource AeBorder}" />
+        <SolidColorBrush x:Key="AeTextBrush" Color="{DynamicResource AeTextPrimary}" />
+
+        <FontFamily x:Key="AeFontMono">Cascadia Mono, Consolas, Courier New, monospace</FontFamily>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <!-- Dark palette overlay -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{DynamicResource AeBackgroundBrush}" />
+        </Style>
+    </Application.Styles>
+</Application>

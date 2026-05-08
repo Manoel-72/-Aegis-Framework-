@@ -1,0 +1,202 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor\\AegisEditor.csproj": {}
+  },
+  "projects": {
+    "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\AegisEditor.Shared.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\AegisEditor.Shared.csproj",
+        "projectName": "AegisEditor.Shared",
+        "projectPath": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\AegisEditor.Shared.csproj",
+        "packagesPath": "C:\\Users\\Manoel\\.nuget\\packages\\",
+        "outputPath": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Manoel\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "System.Text.Json": {
+              "target": "Package",
+              "version": "[8.0.5, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor\\AegisEditor.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor\\AegisEditor.csproj",
+        "projectName": "AegisEditor",
+        "projectPath": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor\\AegisEditor.csproj",
+        "packagesPath": "C:\\Users\\Manoel\\.nuget\\packages\\",
+        "outputPath": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Manoel\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\AegisEditor.Shared.csproj": {
+                "projectPath": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\AegisEditor.Shared.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Avalonia": {
+              "target": "Package",
+              "version": "[11.3.12, )"
+            },
+            "Avalonia.Desktop": {
+              "target": "Package",
+              "version": "[11.3.12, )"
+            },
+            "Avalonia.Fonts.Inter": {
+              "target": "Package",
+              "version": "[11.3.12, )"
+            },
+            "Avalonia.Themes.Fluent": {
+              "target": "Package",
+              "version": "[11.3.12, )"
+            },
+            "CommunityToolkit.Mvvm": {
+              "target": "Package",
+              "version": "[8.4.0, )"
+            },
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[8.0.1, )"
+            },
+            "OneWare.AvaloniaEdit": {
+              "target": "Package",
+              "version": "[11.3.12, )"
+            },
+            "SkiaSharp": {
+              "target": "Package",
+              "version": "[3.119.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.19, 8.0.19]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

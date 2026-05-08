@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="AegisEditor.Views.ConsolePanel"
+             Width="980"
+             Height="220">
+
+    <Border Background="{DynamicResource AeSurfaceBrush}"
+            BorderBrush="{DynamicResource AeBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="10">
+
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Console" FontWeight="SemiBold"
+                       Foreground="{DynamicResource AeTextBrush}" Margin="0 0 0 8" />
+            <ListBox ItemsSource="{Binding Lines}"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     FontFamily="{DynamicResource AeFontMono}"
+                     FontSize="11.5" />
+        </DockPanel>
+    </Border>
+</UserControl>

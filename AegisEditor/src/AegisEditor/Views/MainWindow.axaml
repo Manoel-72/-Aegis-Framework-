@@ -1,0 +1,124 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:AegisEditor.Views"
+        xmlns:controls="using:AegisEditor.Controls"
+        Title="Aegis Editor"
+        MinWidth="1180"
+        MinHeight="760"
+        Width="1440"
+        Height="900"
+        x:Class="AegisEditor.Views.MainWindow"
+        Background="{DynamicResource AeBackgroundBrush}">
+
+    <Grid Margin="12"
+          RowDefinitions="Auto,*,8,*"
+          ColumnDefinitions="224,8,*,8,276">
+
+        <DockPanel Grid.Row="0"
+                   Grid.ColumnSpan="5"
+                   Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal"
+                        DockPanel.Dock="Left"
+                        VerticalAlignment="Center"
+                        Spacing="10">
+                <Button Content="Connect" Padding="14,9" Command="{Binding ConnectCommand}" />
+                <Button Content="Disconnect" Padding="14,9" Command="{Binding DisconnectCommand}" />
+                <Button Content="PLAY" Padding="18,9" Command="{Binding PlayCommand}" />
+                <Button Content="PAUSE" Padding="14,9" Command="{Binding PauseCommand}" />
+                <Button Content="STOP" Padding="14,9" Command="{Binding StopCommand}" />
+                <Button Content="Lua Hot Reload"
+                        Margin="12,0,0,0"
+                        Padding="16,9"
+                        Command="{Binding HotReloadLuaCommand}" />
+
+                <Rectangle Width="1"
+                           Height="26"
+                           Margin="10,4"
+                           Fill="{DynamicResource AeBorderBrush}" />
+
+                <TextBox Text="{Binding SceneProjectPath}"
+                         Watermark="C:\path\to\scene.json"
+                         FontFamily="{DynamicResource AeFontMono}"
+                         MinWidth="400"
+                         Padding="10,8"
+                         VerticalAlignment="Center" />
+
+                <Button Content="Load"
+                        Margin="8,0,0,0"
+                        Padding="18,9"
+                        VerticalAlignment="Center"
+                        Command="{Binding LoadSceneCommand}" />
+            </StackPanel>
+
+            <TextBlock DockPanel.Dock="Right"
+                       VerticalAlignment="Center"
+                       Margin="10,2,4,2"
+                       FontFamily="{DynamicResource AeFontMono}"
+                       Foreground="#6b7280">
+                Entities
+                <Run Text="{Binding Hierarchy.Entities.Count}"
+                     Foreground="{DynamicResource AeTextBrush}"
+                     FontWeight="SemiBold" />
+            </TextBlock>
+        </DockPanel>
+
+        <views:HierarchyPanel Grid.Row="1"
+                              Grid.Column="0"
+                              Margin="2"
+                              DataContext="{Binding Hierarchy}" />
+
+        <GridSplitter Grid.Row="1"
+                      Grid.Column="1"
+                      Width="8"
+                      Margin="0,12,0,12"
+                      Background="{DynamicResource AeBorderBrush}" />
+
+        <Border Grid.Row="1"
+                Grid.Column="2"
+                Margin="2"
+                Background="{DynamicResource AeSurfaceBrush}"
+                BorderBrush="{DynamicResource AeBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="4">
+            <controls:SceneViewport DataContext="{Binding Viewport}"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch" />
+        </Border>
+
+        <GridSplitter Grid.Row="1"
+                      Grid.Column="3"
+                      Width="8"
+                      Margin="0,12,0,12"
+                      Background="{DynamicResource AeBorderBrush}" />
+
+        <views:InspectorPanel Grid.Row="1"
+                              Grid.Column="4"
+                              Margin="2"
+                              DataContext="{Binding Inspector}" />
+
+        <GridSplitter Grid.Row="2"
+                      Grid.ColumnSpan="5"
+                      Height="8"
+                      HorizontalAlignment="Stretch"
+                      Background="{DynamicResource AeBorderBrush}" />
+
+        <Grid Grid.Row="3"
+              Grid.ColumnSpan="5"
+              Margin="0,4,0,0"
+              ColumnDefinitions="1*,8,1*">
+            <views:ConsolePanel Grid.Column="0"
+                                DataContext="{Binding ConsoleLog}"
+                                HorizontalAlignment="Stretch" />
+
+            <GridSplitter Grid.Column="1"
+                          Width="8"
+                          Margin="0,6,0,6"
+                          Background="{DynamicResource AeBorderBrush}" />
+
+            <controls:LuaEditor Grid.Column="2"
+                                  DataContext="{Binding LuaEditor}"
+                                  HorizontalAlignment="Stretch" />
+        </Grid>
+    </Grid>
+</Window>

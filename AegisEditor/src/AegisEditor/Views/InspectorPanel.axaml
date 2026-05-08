@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="260"
+             d:DesignHeight="640"
+             x:Class="AegisEditor.Views.InspectorPanel">
+
+    <Border Background="{DynamicResource AeSurfaceBrush}"
+            BorderBrush="{DynamicResource AeBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="8">
+
+        <StackPanel Spacing="14">
+            <TextBlock Text="Inspector"
+                       FontSize="13"
+                       Margin="2 4"
+                       Foreground="{DynamicResource AeTextBrush}" />
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Name" FontSize="11" Foreground="#6b7280" />
+                <TextBox Text="{Binding Target.Name}" AcceptsReturn="False" />
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Type" FontSize="11" Foreground="#6b7280" />
+                <TextBox Text="{Binding Target.Type}" IsReadOnly="True" />
+            </StackPanel>
+
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="12">
+                <StackPanel Grid.Column="0" Spacing="6">
+                    <TextBlock Text="X" FontSize="11" Foreground="#6b7280" />
+                    <TextBlock Text="{Binding Target.X}"
+                               FontFamily="{DynamicResource AeFontMono}"
+                               FontSize="13" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="6">
+                    <TextBlock Text="Y" FontSize="11" Foreground="#6b7280" />
+                    <TextBlock Text="{Binding Target.Y}"
+                               FontFamily="{DynamicResource AeFontMono}"
+                               FontSize="13" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>
