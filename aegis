@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Raiz do repositório = pasta deste script (Git Bash / WSL / Linux / macOS)
+ROOT=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+cd "$ROOT" || exit 1
+exec dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- "$@"

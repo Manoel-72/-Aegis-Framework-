@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>aegis-cli</AssemblyName>
+    <RootNamespace>Aegis.CLI</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>aegis</ToolCommandName>
+    <PackageId>AegisEngine.CLI</PackageId>
+    <Version>0.9.0</Version>
+    <Description>Aegis Engine CLI - create, run, build and publish 2D Lua games</Description>
+    <ApplicationIcon>res\aegis-logo.ico</ApplicationIcon>
+    <!-- Evita conflito de chave duplicada no GenerateDepsFile -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="res\aegis-logo.ico" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="res\aegis-logo.ico" />
+    <Content Include="res\aegis-logo.png" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="res\aegis-logo.png" />
+    <Content Include="res\aegis-logo.svg" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="res\aegis-logo.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Aegis\Aegis.csproj">
+      <Private>true</Private>
+      <ExcludeAssets>none</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

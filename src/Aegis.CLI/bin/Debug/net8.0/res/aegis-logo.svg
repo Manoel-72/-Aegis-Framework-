@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aegis-Engine logo">
+  <rect width="512" height="512" rx="116" fill="#08100D"/>
+  <path d="M81 407L252 85L431 407H343L313 348H193L164 407H81Z" fill="#9CFFB7"/>
+  <path d="M216 289H290L253 213L216 289Z" fill="#08100D"/>
+  <path d="M142 221C202 205 250 173 295 119C264 212 211 270 112 314C122 276 131 246 142 221Z" fill="#5FE88A"/>
+  <path d="M194 172C253 156 300 127 342 82C316 158 269 212 170 256C177 225 184 196 194 172Z" fill="#C8FFD6" opacity="0.82"/>
+  <path d="M281 138C329 133 371 119 419 91C378 151 323 185 246 204C259 180 270 158 281 138Z" fill="#9CFFB7" opacity="0.72"/>
+</svg>
