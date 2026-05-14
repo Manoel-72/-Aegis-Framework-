@@ -90,6 +90,13 @@ public sealed class Rigidbody2D
     // ── Estado privado ────────────────────────────────────────────────────────
     private int _coyoteTimer;  // janela após deixar o chão; pulo ainda permitido
     private bool _touchingGround; // contato inferior neste passo (repouso estável)
+    private int _wallSideThisFrame; // -1 = parede esquerda, +1 = direita, 0 = nenhuma
+
+    /// <summary>true se tocando uma parede lateral neste frame. Útil para wall jump/slide.</summary>
+    public bool TouchingWall => _wallSideThisFrame != 0;
+
+    /// <summary>Lado da parede: -1 = à esquerda, +1 = à direita, 0 = nenhuma.</summary>
+    public int WallSide => _wallSideThisFrame;
 
     // ── Construtor ────────────────────────────────────────────────────────────
     public Rigidbody2D(Object2D owner)
@@ -134,7 +141,8 @@ public sealed class Rigidbody2D
         var hadSupport = _touchingGround;
         if (!hadSupport && _coyoteTimer > 0)
             _coyoteTimer--;
-        _touchingGround = false; // o passo de física a seguir pode pôr de novo
+        _touchingGround    = false; // o passo de física a seguir pode pôr de novo
+        _wallSideThisFrame = 0;     // Sprint 3: resetar side a cada passo
     }
 
     // ── Integração por eixo ───────────────────────────────────────────────────
@@ -182,6 +190,9 @@ public sealed class Rigidbody2D
     {
         if (normalX > 0f && VelocityX < 0f) VelocityX = 0f;
         if (normalX < 0f && VelocityX > 0f) VelocityX = 0f;
+
+        // Sprint 3: registrar lado da parede para isTouchingWall / wallSide
+        _wallSideThisFrame = normalX > 0f ? -1 : 1;
 
         // Sincroniza posição pós-resolução
         X = Owner.X;

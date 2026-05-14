@@ -95,6 +95,15 @@ public sealed class ParticleSystem2D : Object2D
             handle.IsStopped = true;
     }
 
+    /// <summary>Remove todas as partículas em voo e para todos os emitters.
+    /// Chamado em LuaRuntime.ClearAll() para evitar partículas zumbis após troca de cena.</summary>
+    public void ClearAll()
+    {
+        foreach (var e in _emitters) e.Id = -1; // marca todos como parados
+        _emitters.Clear();
+        _particles.Clear();
+    }
+
     public override void Update(float dt)
     {
         if (!float.IsFinite(dt) || dt < 0f) dt = 0f;

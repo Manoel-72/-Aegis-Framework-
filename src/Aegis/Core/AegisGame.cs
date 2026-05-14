@@ -98,6 +98,8 @@ public sealed class AegisGame : Game
         {
             InputManager.Update();
             _app.Lua.UpdateShake(dt);
+            _app.Lua.TickTime(dt);          // Sprint 2: acumula getTime()
+            _app.Lua.UpdateButtons();       // Sprint 2: atualiza botões interativos
             _app.Lua.CallFunction("aegis_update", dt);
 
             _physicsAccumulator = MathF.Min(_physicsAccumulator + dt, MaxFrameDelta);
@@ -140,6 +142,13 @@ public sealed class AegisGame : Game
 
         if (cam.Active) _spriteBatch.End();
         else Renderer.End();
+
+        // BUG #3 fix: UI layer desenhada FORA da transformação da câmera.
+        // Use aegis_draw_ui() para HUDs, overlays e menus que não devem
+        // ser afetados pelo scroll/zoom da câmera.
+        Renderer.Begin();
+        _app.Lua.CallFunction("aegis_draw_ui");
+        Renderer.End();
 
         if (SceneManager.Instance.FadeAlpha > 0.001f)
         {

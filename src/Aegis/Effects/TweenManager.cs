@@ -155,6 +155,10 @@ public sealed class TweenManager
         _sequences.Clear();
     }
 
+    /// <summary>Alias para Clear() — mata todos os tweens e sequências ativos.
+    /// Chamado em ClearAll() para evitar tweens zumbis após troca de cena.</summary>
+    public void KillAll() => Clear();
+
     private static Tween CreateTween(Object2D obj, LuaTable props, float dur, string ease, LuaFunction? onComplete, LuaTable? opts)
     {
         ArgumentNullException.ThrowIfNull(obj);

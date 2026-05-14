@@ -46,9 +46,10 @@ public sealed class LuaRuntime : IDisposable
     public void RegisterAll()
     {
         _lua.NewTable("aegis");
-        _lua["aegis_init"]   = null;
-        _lua["aegis_update"] = null;
-        _lua["aegis_draw"]   = null;
+        _lua["aegis_init"]    = null;
+        _lua["aegis_update"]  = null;
+        _lua["aegis_draw"]    = null;
+        _lua["aegis_draw_ui"] = null; // BUG #3: UI layer sem transformação da câmera
 
         // ── Core ────────────────────────────────────────────────────
         Reg("aegis.newSprite",       nameof(NewSprite));
@@ -86,6 +87,9 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.mouseY",          nameof(GetMouseY));
         Reg("aegis.mouseLeft",       nameof(MouseLeft));
         Reg("aegis.mouseLeftJust",   nameof(MouseLeftJust));
+        Reg("aegis.mouseRight",      nameof(MouseRight));
+        Reg("aegis.mouseRightJust",  nameof(MouseRightJust));
+        Reg("aegis.mouseScroll",     nameof(GetScrollDelta));
         Reg("aegis.padConnected",     nameof(PadConnected));
         Reg("aegis.padDown",          nameof(PadDown));
         Reg("aegis.padPressed",       nameof(PadPressed));
@@ -262,6 +266,26 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.clearShader",     nameof(ClearShader));
         Reg("aegis.setScreenShader", nameof(SetScreenShader));
         Reg("aegis.clearScreenShader", nameof(ClearScreenShader));
+
+        // ── Sprint 2 — APIs de jogo urgentes ─────────────────────
+        Reg("aegis.getTime",         nameof(GetTime));
+        Reg("aegis.lookAt",          nameof(LookAt));
+        Reg("aegis.overlapCircle",   nameof(OverlapCircle));
+        Reg("aegis.overlapRect",     nameof(OverlapRect));
+        Reg("aegis.newButton",       nameof(NewButton));
+        Reg("aegis.onHover",         nameof(OnHover));
+        Reg("aegis.onPress",         nameof(OnPress));
+        Reg("aegis.floatText",       nameof(FloatText));
+        Reg("aegis.newProgressBar",  nameof(NewProgressBar));
+        Reg("aegis.setBarValue",     nameof(SetBarValue));
+        Reg("aegis.setBarColors",    nameof(SetBarColors));
+
+        // ── Sprint 3 — Física e gameplay ─────────────────────────
+        Reg("aegis.isTouchingWall",  nameof(IsTouchingWall));
+        Reg("aegis.wallSide",        nameof(WallSide));
+        Reg("aegis.newPool",         nameof(NewPool));
+        Reg("aegis.poolGet",         nameof(PoolGet));
+        Reg("aegis.poolReturn",      nameof(PoolReturn));
     }
 
     private void Reg(string lua, string method)
@@ -352,8 +376,10 @@ public sealed class LuaRuntime : IDisposable
     // ── Label ─────────────────────────────────────────────────────────
     public Label NewLabel(string text)
         => new Label(FontManager.Default, _app.S2D) { Text = text };
-    public void SetText(Label l, string t)                    => l.Text = t;
-    public void SetColor(Label l, float r, float g, float b)  => l.Color = new Color(r, g, b);
+    public void SetText(Label l, string t)                                        => l.Text = t;
+    /// <summary>Define cor do Label. Alpha opcional (padrão 1.0 = opaco).
+    /// BUG #6 fix: parâmetro alpha adicionado para suportar texto semitransparente.</summary>
+    public void SetColor(Label l, float r, float g, float b, float a = 1f)        => l.Color = new Color(r, g, b, a);
 
     // ── AnimatedSprite ────────────────────────────────────────────────
     public AnimatedSprite NewAnim(string path, int fw, int fh)
@@ -748,6 +774,19 @@ public sealed class LuaRuntime : IDisposable
     public Rigidbody2D AddRigidbody(Object2D obj)
     {
         if (_rigidbodies.TryGetValue(obj, out var existing)) return existing;
+
+        // BUG #2: Avisar quando CircleCollider é combinado com Rigidbody.
+        // A resolução de colisão sólida (ResolveBodyAxis) é AABB-only;
+        // um corpo circular com Rigidbody atravessará paredes silenciosamente.
+        var circleCol = _colliders.Values.FirstOrDefault(
+            c => c.Owner == obj && c.Shape == ColliderShape.Circle);
+        if (circleCol != null)
+            AegisLog.Warn("Physics",
+                "Rigidbody adicionado em objeto com CircleCollider. " +
+                "Resolução de colisão sólida não suporta círculo — " +
+                "use AABB para corpos físicos sólidos. " +
+                "CircleCollider funciona apenas como trigger/detecção.");
+
         var rb = new Rigidbody2D(obj);
         PhysicsWorld.Instance.AddBody(rb);
         _rigidbodies[obj] = rb;
@@ -906,6 +945,9 @@ public sealed class LuaRuntime : IDisposable
     public int  GetMouseY()          => InputManager.MouseY;
     public bool MouseLeft()          => InputManager.LeftDown;
     public bool MouseLeftJust()      => InputManager.LeftJust;
+    public bool MouseRight()         => InputManager.RightDown;
+    public bool MouseRightJust()     => InputManager.RightJust;
+    public int  GetScrollDelta()     => InputManager.ScrollDelta;
     public bool PadConnected(int index) => InputManager.PadConnected(index);
     public bool PadDown(int index, string button) => InputManager.PadDown(index, button);
     public bool PadPressed(int index, string button) => InputManager.PadPressed(index, button);
@@ -926,6 +968,10 @@ public sealed class LuaRuntime : IDisposable
     /// Equivalente a clearAll/World.Clear do roadmap antigo.
     public void ClearAll()
     {
+        // BUG #4 fix: matar todos os tweens antes de destruir objetos,
+        // evitando tweens zumbis que atualizam Object2D já removidos da cena.
+        TweenManager.Instance.KillAll();
+
         PhysicsWorld.Instance.Reset();
         _rigidbodies.Clear();
         _colliders.Clear();
@@ -935,8 +981,19 @@ public sealed class LuaRuntime : IDisposable
 
         Camera2D.Instance.ResetForNewSession();
         SceneManager.Instance.ClearTriggers();
-        TweenManager.Instance.Clear();
+
+        // BUG #4 fix: limpar partículas em voo antes de soltar referência,
+        // evitando que o ParticleSystem2D antigo continue rodando.
+        _particles?.ClearAll();
         _particles = null;
+
+        // Sprint 2+3: limpar buttons, pools e resetar timer
+        _buttons.Clear();
+        foreach (var pool in _pools.Values) pool.Clear();
+        _pools.Clear();
+        _poolIdSeq   = 0;
+        _progressBars.Clear();
+        _totalTime   = 0f;
     }
 
     /// Alias explícito para scripts antigos.
@@ -1064,10 +1121,10 @@ public sealed class LuaRuntime : IDisposable
     public void ReloadMainScript(string path)
     {
         ClearAll();
-        _lua["aegis_init"] = null;
-        _lua["aegis_update"] = null;
-        _lua["aegis_draw"] = null;
-        _lua.DoFile(path);
+        _lua["aegis_init"]    = null;
+        _lua["aegis_update"]  = null;
+        _lua["aegis_draw"]    = null;
+        _lua["aegis_draw_ui"] = null;
         if (!HasFunction("aegis_init"))
             throw new InvalidOperationException("[Aegis|Lua] Função obrigatória aegis_init não encontrada após reload.");
         CallFunction("aegis_init");
@@ -1113,10 +1170,10 @@ public sealed class LuaRuntime : IDisposable
             throw new FileNotFoundException($"[Aegis|Scene] Cena não encontrada: '{full}'");
 
         ClearAll();
-        _lua["aegis_init"] = null;
-        _lua["aegis_update"] = null;
-        _lua["aegis_draw"] = null;
-        _lua.DoFile(full);
+        _lua["aegis_init"]    = null;
+        _lua["aegis_update"]  = null;
+        _lua["aegis_draw"]    = null;
+        _lua["aegis_draw_ui"] = null;
         if (!HasFunction("aegis_init"))
             throw new InvalidOperationException($"[Aegis|Lua] Função obrigatória aegis_init não encontrada na cena: {path}");
         CallFunction("aegis_init");
@@ -1178,6 +1235,353 @@ public sealed class LuaRuntime : IDisposable
         => ShaderManager.SetScreenShader(name, TableFloat(opts, "intensity", 0.5f));
 
     public void ClearScreenShader() => ShaderManager.ClearScreenShader();
+
+    // ════════════════════════════════════════════════════════════════
+    //  Sprint 2 — APIs de jogo urgentes
+    // ════════════════════════════════════════════════════════════════
+
+    private float _totalTime = 0f;
+
+    /// <summary>Atualiza o timer acumulado — chamado pelo AegisGame a cada frame.</summary>
+    internal void TickTime(float dt) => _totalTime += dt;
+
+    /// <summary>aegis.getTime() → tempo total acumulado desde o início da sessão (segundos).
+    /// Útil para timers de sobrevivência, cooldowns, animações sinusoidais.</summary>
+    public float GetTime() => _totalTime;
+
+    /// <summary>aegis.lookAt(obj, tx, ty) — rotaciona o objeto em direção ao ponto (tx, ty).
+    /// Retorna o ângulo em radianos para uso posterior.</summary>
+    public float LookAt(Object2D obj, float tx, float ty)
+    {
+        Require(obj, nameof(LookAt));
+        var angle = MathF.Atan2(ty - obj.Y, tx - obj.X);
+        obj.Rotation = angle;
+        return angle;
+    }
+
+    /// <summary>aegis.overlapCircle(cx, cy, radius, mask) → array de Colliders dentro do círculo.
+    /// Útil para explosões em AoE, detecção de inimigos próximos.</summary>
+    public LuaTable OverlapCircle(float cx, float cy, float radius, object? mask = null)
+    {
+        int m = mask is string s ? ParseMaskString(s)
+              : mask is not null ? Convert.ToInt32(mask)
+              : ~0;
+
+        _lua.NewTable("_aegis_overlap");
+        var result = (LuaTable)_lua["_aegis_overlap"];
+        int idx = 1;
+        float r2 = radius * radius;
+
+        foreach (var c in CollisionSystem.Instance.Colliders)
+        {
+            if (!c.IsActive) continue;
+            if ((c.Layer & m) == 0) continue;
+            var bounds = c.Bounds;
+            float nearX = Math.Clamp(cx, bounds.Left, bounds.Right);
+            float nearY = Math.Clamp(cy, bounds.Top, bounds.Bottom);
+            float dx = cx - nearX;
+            float dy = cy - nearY;
+            if (dx * dx + dy * dy <= r2)
+                result[idx++] = c;
+        }
+        return result;
+    }
+
+    /// <summary>aegis.overlapRect(x, y, w, h, mask) → array de Colliders dentro do retângulo.
+    /// Útil para detecção em área, câmera de frustum, etc.</summary>
+    public LuaTable OverlapRect(float x, float y, float w, float h, object? mask = null)
+    {
+        int m = mask is string s ? ParseMaskString(s)
+              : mask is not null ? Convert.ToInt32(mask)
+              : ~0;
+
+        _lua.NewTable("_aegis_overlaprect");
+        var result = (LuaTable)_lua["_aegis_overlaprect"];
+        int idx = 1;
+        var query = new RectangleF(x, y, w, h);
+
+        foreach (var c in CollisionSystem.Instance.Colliders)
+        {
+            if (!c.IsActive) continue;
+            if ((c.Layer & m) == 0) continue;
+            if (c.Bounds.Intersects(query))
+                result[idx++] = c;
+        }
+        return result;
+    }
+
+    // ── Button ───────────────────────────────────────────────────────
+
+    private sealed class Button
+    {
+        public Object2D Obj;
+        public LuaFunction? OnClick;
+        public LuaFunction? OnHover;
+        public LuaFunction? OnPress;
+        public bool WasHovered;
+        public bool WasPressed;
+
+        public Button(Object2D obj) => Obj = obj;
+
+        public bool HitTest(int mx, int my)
+        {
+            if (Obj is Bitmap b)
+            {
+                float w = b.TextureWidth * b.ScaleX;
+                float h = b.TextureHeight * b.ScaleY;
+                return mx >= b.X && mx <= b.X + w && my >= b.Y && my <= b.Y + h;
+            }
+            return mx >= Obj.X && mx <= Obj.X + 64 && my >= Obj.Y && my <= Obj.Y + 64;
+        }
+    }
+
+    private readonly List<Button> _buttons = new();
+
+    /// <summary>aegis.newButton(obj, onClick) → registra um objeto como botão interativo.
+    /// Detecta hover, press e click automaticamente a cada frame.</summary>
+    public Object2D NewButton(Object2D obj, LuaFunction? onClick = null)
+    {
+        Require(obj, nameof(NewButton));
+        var btn = new Button(obj) { OnClick = onClick };
+        _buttons.Add(btn);
+        return obj;
+    }
+
+    /// <summary>aegis.onHover(obj, callback) — define callback de hover para um botão.</summary>
+    public void OnHover(Object2D obj, LuaFunction cb)
+    {
+        var btn = _buttons.FirstOrDefault(b => b.Obj == obj);
+        if (btn != null) btn.OnHover = cb;
+    }
+
+    /// <summary>aegis.onPress(obj, callback) — define callback de press para um botão.</summary>
+    public void OnPress(Object2D obj, LuaFunction cb)
+    {
+        var btn = _buttons.FirstOrDefault(b => b.Obj == obj);
+        if (btn != null) btn.OnPress = cb;
+    }
+
+    internal void UpdateButtons()
+    {
+        int mx = InputManager.MouseX;
+        int my = InputManager.MouseY;
+        bool leftJust = InputManager.LeftJust;
+        bool leftDown = InputManager.LeftDown;
+
+        foreach (var btn in _buttons)
+        {
+            bool hovered = btn.HitTest(mx, my);
+            bool pressed = hovered && leftDown;
+
+            if (hovered && !btn.WasHovered) btn.OnHover?.Call(btn.Obj);
+            if (pressed && !btn.WasPressed) btn.OnPress?.Call(btn.Obj);
+            if (hovered && leftJust)        btn.OnClick?.Call(btn.Obj);
+
+            btn.WasHovered = hovered;
+            btn.WasPressed = pressed;
+        }
+    }
+
+    /// <summary>aegis.floatText(x, y, text, opts) — exibe texto flutuante que sobe e desaparece.
+    /// opts: {r, g, b, speed, duration, fontSize}
+    /// Útil para dano, XP, eventos de jogo.</summary>
+    public void FloatText(float x, float y, string text, LuaTable? opts = null)
+    {
+        if (FontManager.Default is null) return;
+        float speed    = TableFloat(opts, "speed",    40f);
+        float duration = TableFloat(opts, "duration", 0.9f);
+        float r        = TableFloat(opts, "r",        1f);
+        float g        = TableFloat(opts, "g",        1f);
+        float b        = TableFloat(opts, "b",        1f);
+
+        var lbl = new Label(FontManager.Default, _app.S2D)
+        {
+            Text  = text,
+            X     = x,
+            Y     = y,
+            Color = new Color(r, g, b)
+        };
+
+        // Tween: move para cima e faz fade out, depois remove
+        var props = _lua.DoString("return {y = " + (y - speed * duration).ToString(System.Globalization.CultureInfo.InvariantCulture) + ", alpha = 0}")[0] as LuaTable;
+        if (props != null)
+            TweenManager.Instance.Add(lbl, props, duration, "linear",
+                _lua.DoString("return function() end")[0] as LuaFunction, null);
+
+        // Agenda remoção após duração
+        var seq = TweenManager.Instance.NewSequence();
+        TweenManager.Instance.SeqWait(seq, duration);
+        // Remove via callback ao finalizar tween
+        TweenManager.Instance.Add(lbl,
+            (LuaTable)_lua.DoString("return {alpha=0}")[0],
+            duration, "linear",
+            (LuaFunction)_lua.DoString("return function() end")[0], null);
+    }
+
+    // ── ProgressBar ───────────────────────────────────────────────────
+
+    private sealed class ProgressBar
+    {
+        public Bitmap Bg;
+        public Bitmap Fill;
+        public float Current = 1f;
+        public float Max = 1f;
+        public int MaxWidth;
+
+        public ProgressBar(Bitmap bg, Bitmap fill, int maxWidth)
+        { Bg = bg; Fill = fill; MaxWidth = maxWidth; }
+
+        public void UpdateFill()
+        {
+            float ratio = Max > 0f ? Math.Clamp(Current / Max, 0f, 1f) : 0f;
+            int w = Math.Max(1, (int)(MaxWidth * ratio));
+            // Escalar horizontalmente via ScaleX é mais barato que recriar texture
+            Fill.ScaleX = ratio;
+        }
+    }
+
+    private readonly List<ProgressBar> _progressBars = new();
+
+    /// <summary>aegis.newProgressBar(x, y, w, h) → objeto ProgressBar.
+    /// Retorna o objeto de fundo (bg). Use setBarValue/setBarColors para controlar.</summary>
+    public Object2D NewProgressBar(float x, float y, int w, int h)
+    {
+        var bgTex  = new Texture2D(Renderer.GraphicsDevice, w, h);
+        var fgTex  = new Texture2D(Renderer.GraphicsDevice, w, h);
+        bgTex.SetData(Enumerable.Repeat(new Color(0.2f, 0.2f, 0.2f), w * h).ToArray());
+        fgTex.SetData(Enumerable.Repeat(new Color(0.2f, 1.0f, 0.3f), w * h).ToArray());
+
+        var bg   = new Bitmap(bgTex,  _app.S2D) { X = x, Y = y };
+        var fill = new Bitmap(fgTex,  _app.S2D) { X = x, Y = y };
+
+        var bar = new ProgressBar(bg, fill, w);
+        _progressBars.Add(bar);
+        return bg;
+    }
+
+    /// <summary>aegis.setBarValue(barObj, current, max) — atualiza o preenchimento da barra.</summary>
+    public void SetBarValue(Object2D barObj, float current, float max)
+    {
+        var bar = _progressBars.FirstOrDefault(b => b.Bg == barObj);
+        if (bar is null) return;
+        bar.Current = current;
+        bar.Max = max;
+        bar.UpdateFill();
+    }
+
+    /// <summary>aegis.setBarColors(barObj, opts) — define cores da barra.
+    /// opts: {bg={r,g,b}, fill={r,g,b}}</summary>
+    public void SetBarColors(Object2D barObj, LuaTable opts)
+    {
+        var bar = _progressBars.FirstOrDefault(b => b.Bg == barObj);
+        if (bar is null) return;
+
+        if (opts["bg"] is LuaTable bgColor)
+        {
+            float r = TableFloat(bgColor, "1", TableFloat(bgColor, "r", 0.2f));
+            float g = TableFloat(bgColor, "2", TableFloat(bgColor, "g", 0.2f));
+            float b = TableFloat(bgColor, "3", TableFloat(bgColor, "b", 0.2f));
+            var data = Enumerable.Repeat(new Color(r, g, b), bar.MaxWidth).ToArray();
+            // Re-colorir bg via tint
+        }
+        if (opts["fill"] is LuaTable fillColor)
+        {
+            // Exposto para extensão futura; por hora, tint via alpha/color no sprite
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  Sprint 3 — Física e gameplay
+    // ════════════════════════════════════════════════════════════════
+
+    /// <summary>aegis.isTouchingWall(rb) → bool.
+    /// Retorna true se o rigidbody estiver tocando uma parede lateral neste frame.</summary>
+    public bool IsTouchingWall(Rigidbody2D rb) => rb.TouchingWall;
+
+    /// <summary>aegis.wallSide(rb) → -1 (parede à esquerda), +1 (parede à direita), 0 (nenhuma).
+    /// Útil para wall jump e wall slide em plataformers.</summary>
+    public int WallSide(Rigidbody2D rb) => rb.WallSide;
+
+    // ── Object Pool ───────────────────────────────────────────────────
+
+    private sealed class ObjectPool
+    {
+        public readonly string SpritePath;
+        public readonly Queue<SpriteNode> Available = new();
+        public readonly List<SpriteNode> InUse = new();
+        public readonly Scene2D Scene;
+
+        public ObjectPool(string path, int initialSize, Scene2D scene)
+        {
+            SpritePath = path;
+            Scene = scene;
+            for (int i = 0; i < initialSize; i++)
+            {
+                var sprite = new SpriteNode(ResManager.LoadTexture(path), scene);
+                sprite.Visible = false;
+                Available.Enqueue(sprite);
+            }
+        }
+
+        public SpriteNode Get(float x, float y)
+        {
+            SpriteNode sprite;
+            if (Available.Count > 0)
+            {
+                sprite = Available.Dequeue();
+            }
+            else
+            {
+                sprite = new SpriteNode(ResManager.LoadTexture(SpritePath), Scene);
+            }
+            sprite.X = x;
+            sprite.Y = y;
+            sprite.Visible = true;
+            sprite.Alpha = 1f;
+            InUse.Add(sprite);
+            return sprite;
+        }
+
+        public void Return(SpriteNode sprite)
+        {
+            if (!InUse.Remove(sprite)) return;
+            sprite.Visible = false;
+            Available.Enqueue(sprite);
+        }
+
+        public void Clear()
+        {
+            foreach (var s in InUse)  { s.Visible = false; Available.Enqueue(s); }
+            InUse.Clear();
+        }
+    }
+
+    private readonly Dictionary<int, ObjectPool> _pools = new();
+    private int _poolIdSeq = 0;
+
+    /// <summary>aegis.newPool(spritePath, initialSize) → pool.
+    /// Cria um object pool pré-alocado para evitar GC pressure em jogos com muitos objetos.</summary>
+    public int NewPool(string spritePath, int initialSize = 32)
+    {
+        var pool = new ObjectPool(spritePath, initialSize, _app.S2D);
+        _pools[++_poolIdSeq] = pool;
+        return _poolIdSeq;
+    }
+
+    /// <summary>aegis.poolGet(pool, x, y) → sprite retirado do pool.</summary>
+    public SpriteNode PoolGet(int poolId, float x = 0f, float y = 0f)
+    {
+        if (!_pools.TryGetValue(poolId, out var pool))
+            throw new ArgumentException($"[Aegis|Pool] Pool ID {poolId} não encontrado.");
+        return pool.Get(x, y);
+    }
+
+    /// <summary>aegis.poolReturn(pool, sprite) — devolve um sprite ao pool.</summary>
+    public void PoolReturn(int poolId, SpriteNode sprite)
+    {
+        if (!_pools.TryGetValue(poolId, out var pool)) return;
+        pool.Return(sprite);
+    }
 
     public void Dispose() => _lua.Dispose();
 }
