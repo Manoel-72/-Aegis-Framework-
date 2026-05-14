@@ -90,13 +90,19 @@ public sealed class Rigidbody2D
     // ── Estado privado ────────────────────────────────────────────────────────
     private int _coyoteTimer;  // janela após deixar o chão; pulo ainda permitido
     private bool _touchingGround; // contato inferior neste passo (repouso estável)
-    private int _wallSideThisFrame; // -1 = parede esquerda, +1 = direita, 0 = nenhuma
+    // Sprint 3: wall tracking separado da velocidade.
+    // _wallSideThisFrame é setado por OnHitWall (resolução de sobreposição).
+    // _wallSideSticky é mantido por um frame extra para que isTouchingWall
+    // retorne true mesmo quando VelocityX foi zerado pelo próprio OnHitWall.
+    private int _wallSideThisFrame;  // -1 = esquerda, +1 = direita, 0 = nenhuma
+    private int _wallSideSticky;     // persiste 1 frame após o contato para leitura estável
+    private int _wallStickyFrames;   // contador de frames restantes
 
     /// <summary>true se tocando uma parede lateral neste frame. Útil para wall jump/slide.</summary>
-    public bool TouchingWall => _wallSideThisFrame != 0;
+    public bool TouchingWall => _wallSideSticky != 0;
 
     /// <summary>Lado da parede: -1 = à esquerda, +1 = à direita, 0 = nenhuma.</summary>
-    public int WallSide => _wallSideThisFrame;
+    public int WallSide => _wallSideSticky;
 
     // ── Construtor ────────────────────────────────────────────────────────────
     public Rigidbody2D(Object2D owner)
@@ -143,6 +149,13 @@ public sealed class Rigidbody2D
             _coyoteTimer--;
         _touchingGround    = false; // o passo de física a seguir pode pôr de novo
         _wallSideThisFrame = 0;     // Sprint 3: resetar side a cada passo
+
+        // Sticky: decrementa o frame-hold da parede
+        if (_wallSideSticky != 0)
+        {
+            if (_wallStickyFrames > 0) _wallStickyFrames--;
+            else _wallSideSticky = 0;
+        }
     }
 
     // ── Integração por eixo ───────────────────────────────────────────────────
@@ -193,6 +206,9 @@ public sealed class Rigidbody2D
 
         // Sprint 3: registrar lado da parede para isTouchingWall / wallSide
         _wallSideThisFrame = normalX > 0f ? -1 : 1;
+        // Sticky: mantém o side legível por 2 frames (cobre o frame em que VelocityX zerou)
+        _wallSideSticky    = _wallSideThisFrame;
+        _wallStickyFrames  = 2;
 
         // Sincroniza posição pós-resolução
         X = Owner.X;
@@ -244,10 +260,13 @@ public sealed class Rigidbody2D
     /// <summary>Resets velocity and coyote state — útil ao respawnar o player.</summary>
     public void ResetState()
     {
-        VelocityX       = 0f;
-        VelocityY       = 0f;
-        _coyoteTimer    = 0;
-        _touchingGround = false;
+        VelocityX          = 0f;
+        VelocityY          = 0f;
+        _coyoteTimer       = 0;
+        _touchingGround    = false;
+        _wallSideThisFrame = 0;
+        _wallSideSticky    = 0;
+        _wallStickyFrames  = 0;
     }
 
     private const float MaxSpeed = 8000f;

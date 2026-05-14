@@ -286,6 +286,8 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.newPool",         nameof(NewPool));
         Reg("aegis.poolGet",         nameof(PoolGet));
         Reg("aegis.poolReturn",      nameof(PoolReturn));
+        Reg("aegis.poolClear",       nameof(PoolClear));
+        Reg("aegis.poolCount",       nameof(PoolCount));
     }
 
     private void Reg(string lua, string method)
@@ -1577,13 +1579,29 @@ public sealed class LuaRuntime : IDisposable
         public void Return(SpriteNode sprite)
         {
             if (!InUse.Remove(sprite)) return;
-            sprite.Visible = false;
+            // Resetar estado visual para evitar sprites "sujos" no próximo Get()
+            sprite.Visible  = false;
+            sprite.ScaleX   = 1f;
+            sprite.ScaleY   = 1f;
+            sprite.Rotation = 0f;
+            sprite.Alpha    = 1f;
             Available.Enqueue(sprite);
         }
 
+        public int AvailableCount => Available.Count;
+        public int TotalCount     => Available.Count + InUse.Count;
+
         public void Clear()
         {
-            foreach (var s in InUse)  { s.Visible = false; Available.Enqueue(s); }
+            foreach (var s in InUse)
+            {
+                s.Visible  = false;
+                s.ScaleX   = 1f;
+                s.ScaleY   = 1f;
+                s.Rotation = 0f;
+                s.Alpha    = 1f;
+                Available.Enqueue(s);
+            }
             InUse.Clear();
         }
     }
@@ -1613,6 +1631,31 @@ public sealed class LuaRuntime : IDisposable
     {
         if (!_pools.TryGetValue(poolId, out var pool)) return;
         pool.Return(sprite);
+    }
+
+    /// <summary>aegis.poolClear(pool) — devolve todos os sprites em uso de volta ao pool.</summary>
+    public void PoolClear(int poolId)
+    {
+        if (!_pools.TryGetValue(poolId, out var pool)) return;
+        pool.Clear();
+    }
+
+    /// <summary>aegis.poolCount(pool) → {available, total} — tamanho atual do pool.</summary>
+    public LuaTable PoolCount(int poolId)
+    {
+        _lua.NewTable("_aegis_poolcount");
+        var t = (LuaTable)_lua["_aegis_poolcount"];
+        if (_pools.TryGetValue(poolId, out var pool))
+        {
+            t["available"] = pool.AvailableCount;
+            t["total"]     = pool.TotalCount;
+        }
+        else
+        {
+            t["available"] = 0;
+            t["total"]     = 0;
+        }
+        return t;
     }
 
     public void Dispose() => _lua.Dispose();
