@@ -1,17 +1,17 @@
 Aegis crash
-Time: 2026-05-14 03:02:08
+Time: 2026-05-08 02:12:35
 GameDir: D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\demo-platformer
 Entry: D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\demo-platformer\main.lua
 
 System.NullReferenceException: Object reference not set to an instance of an object.
-   at Aegis.Editor.EditorPipeHost.CollectScenePayload() in D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Editor\EditorPipeHost.cs:line 434
-   at Aegis.Editor.EditorPipeHost.EnqueueSceneState() in D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Editor\EditorPipeHost.cs:line 389
-   at Aegis.Editor.EditorPipeHost.PumpAndFlush(TimeSpan elapsed) in D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Editor\EditorPipeHost.cs:line 123
-   at Aegis.Core.AegisGame.Update(GameTime gameTime) in D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Core\AegisGame.cs:line 90
+   at Aegis.Editor.EditorPipeHost.CollectScenePayload() in d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Editor\EditorPipeHost.cs:line 434
+   at Aegis.Editor.EditorPipeHost.EnqueueSceneState() in d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Editor\EditorPipeHost.cs:line 389
+   at Aegis.Editor.EditorPipeHost.PumpAndFlush(TimeSpan elapsed) in d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Editor\EditorPipeHost.cs:line 123
+   at Aegis.Core.AegisGame.Update(GameTime gameTime) in d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Core\AegisGame.cs:line 90
    at Microsoft.Xna.Framework.Game.DoUpdate(GameTime gameTime)
    at Microsoft.Xna.Framework.Game.Tick()
    at Microsoft.Xna.Framework.SdlGamePlatform.RunLoop()
    at Microsoft.Xna.Framework.Game.Run(GameRunBehavior runBehavior)
    at Microsoft.Xna.Framework.Game.Run()
-   at Aegis.Core.App.Run(String luaEntryPoint) in D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Core\App.cs:line 36
-   at Program.<<Main>$>g__RunGame|0_21(String gameDirArg) in D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis.CLI\Program.cs:line 426
+   at Aegis.Core.App.Run(String luaEntryPoint) in d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\Core\App.cs:line 36
+   at Program.<<Main>$>g__RunGame|0_21(String gameDirArg) in d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis.CLI\Program.cs:line 426

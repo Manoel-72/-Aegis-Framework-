@@ -987,8 +987,10 @@ public sealed class LuaRuntime : IDisposable
         _particles?.ClearAll();
         _particles = null;
 
-        // Sprint 2+3: limpar buttons, pools e resetar timer
+        // Sprint 2+3: limpar buttons, pools, float texts e resetar timer
         _buttons.Clear();
+        foreach (var ft in _floatTexts) ft.Lbl.RemoveFromParent();
+        _floatTexts.Clear();
         foreach (var pool in _pools.Values) pool.Clear();
         _pools.Clear();
         _poolIdSeq   = 0;
@@ -1382,13 +1384,29 @@ public sealed class LuaRuntime : IDisposable
         }
     }
 
+    // ── FloatText — tracked list, sem dependência de tween p/ remoção ─────
+
+    private sealed class FloatTextEntry
+    {
+        public Label  Lbl;
+        public float  TimeLeft;
+        public float  Duration;
+        public float  Speed;      // px/s para cima
+        public float  OriginY;
+
+        public FloatTextEntry(Label lbl, float duration, float speed, float y)
+        { Lbl = lbl; TimeLeft = duration; Duration = duration; Speed = speed; OriginY = y; }
+    }
+
+    private readonly List<FloatTextEntry> _floatTexts = new();
+
     /// <summary>aegis.floatText(x, y, text, opts) — exibe texto flutuante que sobe e desaparece.
-    /// opts: {r, g, b, speed, duration, fontSize}
+    /// opts: {r, g, b, speed, duration}
     /// Útil para dano, XP, eventos de jogo.</summary>
     public void FloatText(float x, float y, string text, LuaTable? opts = null)
     {
         if (FontManager.Default is null) return;
-        float speed    = TableFloat(opts, "speed",    40f);
+        float speed    = TableFloat(opts, "speed",    45f);
         float duration = TableFloat(opts, "duration", 0.9f);
         float r        = TableFloat(opts, "r",        1f);
         float g        = TableFloat(opts, "g",        1f);
@@ -1399,23 +1417,32 @@ public sealed class LuaRuntime : IDisposable
             Text  = text,
             X     = x,
             Y     = y,
-            Color = new Color(r, g, b)
+            Color = new Color(r, g, b),
+            Z     = 900,
         };
 
-        // Tween: move para cima e faz fade out, depois remove
-        var props = _lua.DoString("return {y = " + (y - speed * duration).ToString(System.Globalization.CultureInfo.InvariantCulture) + ", alpha = 0}")[0] as LuaTable;
-        if (props != null)
-            TweenManager.Instance.Add(lbl, props, duration, "linear",
-                _lua.DoString("return function() end")[0] as LuaFunction, null);
+        _floatTexts.Add(new FloatTextEntry(lbl, duration, speed, y));
+    }
 
-        // Agenda remoção após duração
-        var seq = TweenManager.Instance.NewSequence();
-        TweenManager.Instance.SeqWait(seq, duration);
-        // Remove via callback ao finalizar tween
-        TweenManager.Instance.Add(lbl,
-            (LuaTable)_lua.DoString("return {alpha=0}")[0],
-            duration, "linear",
-            (LuaFunction)_lua.DoString("return function() end")[0], null);
+    /// <summary>Chamado pelo AegisGame a cada frame — move, faz fade e remove labels expirados.</summary>
+    internal void UpdateFloatTexts(float dt)
+    {
+        for (int i = _floatTexts.Count - 1; i >= 0; i--)
+        {
+            var ft = _floatTexts[i];
+            ft.TimeLeft -= dt;
+
+            // Progresso 0→1 conforme o tempo passa
+            float t = 1f - Math.Clamp(ft.TimeLeft / ft.Duration, 0f, 1f);
+            ft.Lbl.Y     = ft.OriginY - ft.Speed * ft.Duration * t;
+            ft.Lbl.Alpha = 1f - t;   // fade out linear
+
+            if (ft.TimeLeft <= 0f)
+            {
+                ft.Lbl.RemoveFromParent();
+                _floatTexts.RemoveAt(i);
+            }
+        }
     }
 
     // ── ProgressBar ───────────────────────────────────────────────────
@@ -1427,16 +1454,16 @@ public sealed class LuaRuntime : IDisposable
         public float Current = 1f;
         public float Max = 1f;
         public int MaxWidth;
+        public int MaxHeight;
 
-        public ProgressBar(Bitmap bg, Bitmap fill, int maxWidth)
-        { Bg = bg; Fill = fill; MaxWidth = maxWidth; }
+        public ProgressBar(Bitmap bg, Bitmap fill, int maxWidth, int maxHeight)
+        { Bg = bg; Fill = fill; MaxWidth = maxWidth; MaxHeight = maxHeight; }
 
         public void UpdateFill()
         {
             float ratio = Max > 0f ? Math.Clamp(Current / Max, 0f, 1f) : 0f;
-            int w = Math.Max(1, (int)(MaxWidth * ratio));
-            // Escalar horizontalmente via ScaleX é mais barato que recriar texture
-            Fill.ScaleX = ratio;
+            // ScaleX com Pivot=(0,0) cresce da esquerda para a direita sem deslocar
+            Fill.ScaleX = Math.Max(0.001f, ratio);
         }
     }
 
@@ -1448,13 +1475,15 @@ public sealed class LuaRuntime : IDisposable
     {
         var bgTex  = new Texture2D(Renderer.GraphicsDevice, w, h);
         var fgTex  = new Texture2D(Renderer.GraphicsDevice, w, h);
-        bgTex.SetData(Enumerable.Repeat(new Color(0.2f, 0.2f, 0.2f), w * h).ToArray());
+        bgTex.SetData(Enumerable.Repeat(new Color(0.15f, 0.15f, 0.15f), w * h).ToArray());
         fgTex.SetData(Enumerable.Repeat(new Color(0.2f, 1.0f, 0.3f), w * h).ToArray());
 
         var bg   = new Bitmap(bgTex,  _app.S2D) { X = x, Y = y };
+        // Fill usa Pivot=(0,0) e ScaleX para crescer da esquerda p/ direita
         var fill = new Bitmap(fgTex,  _app.S2D) { X = x, Y = y };
+        fill.Pivot = Vector2.Zero;   // ancora no canto esquerdo antes de escalar
 
-        var bar = new ProgressBar(bg, fill, w);
+        var bar = new ProgressBar(bg, fill, w, h);
         _progressBars.Add(bar);
         return bg;
     }
@@ -1478,18 +1507,21 @@ public sealed class LuaRuntime : IDisposable
 
         if (opts["bg"] is LuaTable bgColor)
         {
-            float r = TableFloat(bgColor, "1", TableFloat(bgColor, "r", 0.2f));
-            float g = TableFloat(bgColor, "2", TableFloat(bgColor, "g", 0.2f));
-            float b = TableFloat(bgColor, "3", TableFloat(bgColor, "b", 0.2f));
-            var data = Enumerable.Repeat(new Color(r, g, b), bar.MaxWidth).ToArray();
-            // Re-colorir bg via tint
+            float r = TableFloat(bgColor, "1", TableFloat(bgColor, "r", 0.15f));
+            float g = TableFloat(bgColor, "2", TableFloat(bgColor, "g", 0.15f));
+            float b = TableFloat(bgColor, "3", TableFloat(bgColor, "b", 0.15f));
+            var pixels = Enumerable.Repeat(new Color(r, g, b), bar.MaxWidth * bar.MaxHeight).ToArray();
+            bar.Bg.Texture.SetData(pixels);
         }
         if (opts["fill"] is LuaTable fillColor)
         {
-            // Exposto para extensão futura; por hora, tint via alpha/color no sprite
+            float r = TableFloat(fillColor, "1", TableFloat(fillColor, "r", 0.2f));
+            float g = TableFloat(fillColor, "2", TableFloat(fillColor, "g", 1.0f));
+            float b = TableFloat(fillColor, "3", TableFloat(fillColor, "b", 0.3f));
+            var pixels = Enumerable.Repeat(new Color(r, g, b), bar.MaxWidth * bar.MaxHeight).ToArray();
+            bar.Fill.Texture.SetData(pixels);
         }
     }
-
     // ════════════════════════════════════════════════════════════════
     //  Sprint 3 — Física e gameplay
     // ════════════════════════════════════════════════════════════════

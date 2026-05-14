@@ -100,6 +100,7 @@ public sealed class AegisGame : Game
             _app.Lua.UpdateShake(dt);
             _app.Lua.TickTime(dt);          // Sprint 2: acumula getTime()
             _app.Lua.UpdateButtons();       // Sprint 2: atualiza botões interativos
+            _app.Lua.UpdateFloatTexts(dt);  // Sprint 2: move e remove float texts
             _app.Lua.CallFunction("aegis_update", dt);
 
             _physicsAccumulator = MathF.Min(_physicsAccumulator + dt, MaxFrameDelta);

@@ -59,11 +59,21 @@ local function damagePlayer(enemy)
     end
 end
 
-local function spawnEnemy(x, y)
+local function spawnEnemy(x, y, patrolLeft, patrolRight)
     local obj = aegis.newSprite("sprites/enemy.png")
     aegis.setPosition(obj, x, y)
     aegis.setZ(obj, 15)
-    local enemy = { obj = obj, pathTimer = 0, path = nil, pathIndex = 1 }
+    local enemy = {
+        obj        = obj,
+        pathTimer  = 0,
+        path       = nil,
+        pathIndex  = 1,
+        -- patrulha: limites horizontais quando não há caminho ao player
+        patrolLeft  = patrolLeft  or (x - 80),
+        patrolRight = patrolRight or (x + 80),
+        patrolDir   = 1,   -- +1 → direita, -1 → esquerda
+        patrolSpeed = 55,
+    }
     local col = aegis.addCollider(obj, 22, 22, 1, 2)
     aegis.setTrigger(col, true)
     aegis.setColliderLayer(col, "ENEMY")
@@ -142,8 +152,13 @@ function aegis_init()
 
     local coinY = { 335, 175, 225, 285, 290 }
     for i=1,5 do spawnCoin(160 + i*150, coinY[((i+li-1)%#coinY)+1]) end
-    spawnEnemy(520 + li*80, 408)
-    if li >= 2 then spawnEnemy(880, 280) end
+
+    -- Fase 1: um inimigo patrulhando plataforma central
+    spawnEnemy(520 + li*80, 408,  380, 700)
+    -- Fases 2 e 3: segundo inimigo numa plataforma elevada
+    if li >= 2 then spawnEnemy(880, 280,  760, 1000) end
+    -- Fase 3: terceiro inimigo mais agressivo perto da saída
+    if li >= 3 then spawnEnemy(1100, 408, 950, 1190) end
 
     goal = aegis.newRect(34, 72, 0.55, 1.0, 0.65)
     aegis.setPosition(goal, 1210, 380)
@@ -262,13 +277,30 @@ local function updateEnemies(dt)
             e.pathIndex = 2
             aegis.playSoundAt("enemy.wav", aegis.getX(e.obj), aegis.getY(e.obj), { maxDist = 420, volume = 0.18 })
         end
+
+        local moved = false
         if e.path and e.path[e.pathIndex] then
             local p = e.path[e.pathIndex]
             local ex,ey = aegis.getX(e.obj), aegis.getY(e.obj)
             local dx,dy = p.x - ex, p.y - ey
             local dist = math.sqrt(dx*dx + dy*dy)
-            if dist < 5 then e.pathIndex = e.pathIndex + 1
-            else aegis.move(e.obj, dx / dist * 65 * dt, dy / dist * 65 * dt) end
+            if dist < 5 then
+                e.pathIndex = e.pathIndex + 1
+            else
+                aegis.move(e.obj, dx / dist * 65 * dt, dy / dist * 65 * dt)
+                moved = true
+            end
+        end
+
+        -- Patrulha lateral quando não há caminho válido ao player
+        if not moved then
+            local ex = aegis.getX(e.obj)
+            if ex >= e.patrolRight then
+                e.patrolDir = -1
+            elseif ex <= e.patrolLeft then
+                e.patrolDir = 1
+            end
+            aegis.move(e.obj, e.patrolDir * e.patrolSpeed * dt, 0)
         end
     end
 end
