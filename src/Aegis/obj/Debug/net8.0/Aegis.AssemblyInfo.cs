@@ -14,11 +14,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("Aegis 2D Game Engine - Lua scripted, sprites, animator, tilemaps, save/config, pa" +
     "rticles, tween, debug overlay and hot reload"))]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("0.9.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.9.0")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("0.98.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+f4937a90fd4854577ae40cf85b88bb7355394295")]
 [assembly: System.Reflection.AssemblyProductAttribute("Aegis")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Aegis")]
-[assembly: System.Reflection.AssemblyVersionAttribute("0.9.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("0.98.0.0")]
 
 // Gerado pela classe WriteCodeFragment do MSBuild.
 

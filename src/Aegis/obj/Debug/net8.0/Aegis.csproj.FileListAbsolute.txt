@@ -10,3 +10,7 @@ D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Ae
 D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Debug\net8.0\refint\Aegis.dll
 D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Debug\net8.0\Aegis.pdb
 D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Debug\net8.0\ref\Aegis.dll
+d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Debug\net8.0\Aegis.sourcelink.json
+d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\bin\Debug\net8.0\AegisEditor.Shared.dll
+d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\bin\Debug\net8.0\AegisEditor.Shared.pdb
+d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Debug\net8.0\Aegis.csproj.Up2Date

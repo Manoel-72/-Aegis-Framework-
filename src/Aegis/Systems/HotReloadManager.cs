@@ -1,3 +1,4 @@
+using Aegis.Editor;
 using Aegis.Scripting;
 using Aegis.Input;
 
@@ -6,13 +7,17 @@ namespace Aegis.Systems;
 public sealed class HotReloadManager
 {
     public static HotReloadManager Instance { get; } = new();
-    private HotReloadManager() { }
+
+    private HotReloadManager()
+    {
+    }
 
     private string _entry = "";
     private LuaRuntime? _lua;
     private DateTime _lastWrite;
     private float _timer;
     public bool Enabled { get; set; } = true;
+
     public string LastStatus { get; private set; } = "hot reload: ready";
 
     public void Initialize(string entry, LuaRuntime lua)
@@ -24,6 +29,7 @@ public sealed class HotReloadManager
 
     public void Update(float dt)
     {
+        if (EditorPipeHost.SimulationPausedByEditor) return;
         if (!Enabled || _lua is null || string.IsNullOrEmpty(_entry)) return;
         _timer += dt;
         if (_timer < 0.5f && !InputManager.JustPressed("F5")) return;

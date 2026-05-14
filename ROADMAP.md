@@ -56,7 +56,7 @@ Estado real do código em abril/2026.
 - `aegis.debugStats()` para telemetria Lua
 - `aegis doctor` para diagnóstico rápido no CLI
 
-## Próximos focos sugeridos (v0.9+)
+## Próximos focos sugeridos (v0.98+)
 - Audio spatial e mixer por bus
 - Navegação/pathfinding
 - Perfilador in-game com timelines

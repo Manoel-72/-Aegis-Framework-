@@ -13,11 +13,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("aegis-cli")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Aegis Engine CLI - create, run, build and publish 2D Lua games")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("0.9.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.9.0")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("0.98.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+f4937a90fd4854577ae40cf85b88bb7355394295")]
 [assembly: System.Reflection.AssemblyProductAttribute("aegis-cli")]
 [assembly: System.Reflection.AssemblyTitleAttribute("aegis-cli")]
-[assembly: System.Reflection.AssemblyVersionAttribute("0.9.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("0.98.0.0")]
 
 // Gerado pela classe WriteCodeFragment do MSBuild.
 

@@ -1,4 +1,4 @@
-# Aegis Engine v0.9.0 - Instalacao Rapida
+# Aegis Engine v0.98 - Instalacao Rapida
 
 Este pacote contem o framework original da Aegis Engine, CLI, templates e demos.
 
@@ -9,9 +9,9 @@ Este pacote contem o framework original da Aegis Engine, CLI, templates e demos.
 
 ## 1) Extrair o zip
 
-Extraia o arquivo `Aegis-Framework-v0.9.0-site.zip` em uma pasta local, por exemplo:
+Extraia o arquivo `Aegis-Framework-v0.98-site.zip` em uma pasta local, por exemplo:
 
-`D:\Aegis-Framework-v0.9.0`
+`D:\Aegis-Framework-v0.98`
 
 ## 2) Rodar pela CLI local (recomendado)
 

@@ -1,3 +1,4 @@
+using Aegis.Audio;
 using Aegis.Core;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -16,7 +17,7 @@ static void PrintHelp()
     Console.WriteLine("Aegis Engine CLI");
     Console.WriteLine();
     Console.WriteLine("Uso:");
-    Console.WriteLine("  aegis run <pasta-do-jogo>");
+    Console.WriteLine("  aegis run <pasta-do-jogo> [--editor-pipe] [--editor-pipe=NomePipe] [--audio-root=rel/a/partir/do/jogo]");
     Console.WriteLine("  aegis new <nome>");
     Console.WriteLine("  aegis new platformer|topdown|puzzle <nome>");
     Console.WriteLine("  aegis build [pasta-do-jogo] --target win-x64|linux-x64|osx|osx-x64|web");
@@ -347,9 +348,62 @@ static int PublishItch(string[] args)
     return 0;
 }
 
+/// <summary>Flags opcionais após a pasta (<c>aegis run &lt;pasta&gt; --editor-pipe</c>).</summary>
+static void ApplyRunnerEnvironmentFlags(ReadOnlySpan<string> args)
+{
+    static bool TakesPathNext(ReadOnlySpan<string> span, int idx, out string relative)
+    {
+        relative = string.Empty;
+        if (idx + 1 >= span.Length)
+            return false;
+        var n = span[idx + 1];
+        if (n.StartsWith('-'))
+            return false;
+        relative = n.Replace('\\', '/');
+        return relative.Length > 0;
+    }
+
+    for (var i = 0; i < args.Length; i++)
+    {
+        var key = args[i];
+        if (key.StartsWith("--editor-pipe=", StringComparison.OrdinalIgnoreCase))
+        {
+            Environment.SetEnvironmentVariable("AEGIS_EDITOR_PIPE",
+                key["--editor-pipe=".Length..].Trim());
+            continue;
+        }
+
+        if (key.Equals("--editor-pipe", StringComparison.OrdinalIgnoreCase))
+        {
+            Environment.SetEnvironmentVariable("AEGIS_EDITOR_PIPE", "1");
+            continue;
+        }
+
+        if (key.StartsWith("--audio-root=", StringComparison.OrdinalIgnoreCase))
+        {
+            Environment.SetEnvironmentVariable("AEGIS_AUDIO_ROOT",
+                key["--audio-root=".Length..].Trim().Replace('\\', '/'));
+            continue;
+        }
+
+        if (!key.Equals("--audio-root", StringComparison.OrdinalIgnoreCase))
+            continue;
+
+        if (TakesPathNext(args, i, out var rel))
+        {
+            Environment.SetEnvironmentVariable("AEGIS_AUDIO_ROOT", rel);
+            i++;
+        }
+    }
+}
+
 static int RunGame(string gameDirArg)
 {
     var fullGameDir = Path.GetFullPath(gameDirArg);
+
+    var audioRoot = Environment.GetEnvironmentVariable("AEGIS_AUDIO_ROOT");
+    if (!string.IsNullOrWhiteSpace(audioRoot))
+        AudioManager.AudioRoot = audioRoot.Trim().Replace('\\', '/');
 
     // Em build exportado/atalho, o CurrentDirectory pode não ser a pasta do .exe.
     // Então tentamos também a pasta real do executável.
@@ -408,8 +462,17 @@ if (cmd == "publish") return PublishItch(args);
 
 if (cmd == "run")
 {
-    var gameDir = args.Length >= 2 ? args[1] : ".";
-    return RunGame(gameDir);
+    var tail = args.Skip(1).ToArray();
+    var folder = ".";
+    var flagSlice = tail.AsSpan();
+    if (tail.Length >= 1 && !tail[0].StartsWith("--"))
+    {
+        folder = tail[0];
+        flagSlice = tail.AsSpan(1);
+    }
+
+    ApplyRunnerEnvironmentFlags(flagSlice);
+    return RunGame(folder);
 }
 
 if (cmd == "new")

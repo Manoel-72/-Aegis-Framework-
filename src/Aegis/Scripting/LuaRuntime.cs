@@ -31,6 +31,8 @@ public sealed class LuaRuntime : IDisposable
     private readonly Dictionary<int, Collider> _colliders = new();
     private int _colliderIdSeq = 0;
     private string _gameRoot = Directory.GetCurrentDirectory();
+
+    private string _mainLuaFullPath = string.Empty;
     private ParticleSystem2D? _particles;
 
     public LuaRuntime(App app)
@@ -1078,7 +1080,26 @@ public sealed class LuaRuntime : IDisposable
         if (!File.Exists(full))
             throw new FileNotFoundException($"[Aegis] Script não encontrado: '{full}'");
         _gameRoot = Directory.GetCurrentDirectory();
+        _mainLuaFullPath = full;
         _lua.DoFile(full);
+    }
+
+    /// <summary>HOT_RELOAD vindo do Aegis Editor: recarrega module ou main.lua dentro da pasta do jogo.</summary>
+    public void EditorHotReloadFile(string relativeOrGameRelativePath)
+    {
+        var root = Path.GetFullPath(_gameRoot);
+        var safe = relativeOrGameRelativePath.Replace('\\', '/').TrimStart('/');
+        var full = Path.GetFullPath(Path.Combine(root, safe));
+        if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"[Aegis|Scene] Script fora da pasta do jogo: '{relativeOrGameRelativePath}'");
+
+        if (!File.Exists(full))
+            throw new FileNotFoundException($"[Aegis|EditorIPC] Script não encontrado: '{full}'");
+
+        if (string.Equals(full, _mainLuaFullPath, StringComparison.OrdinalIgnoreCase))
+            ReloadMainScript(full);
+        else
+            _lua.DoFile(full);
     }
 
     public void LoadSceneFile(string path)

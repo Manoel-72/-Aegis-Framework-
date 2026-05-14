@@ -6,12 +6,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.9.0</Version>
+    <Version>0.98.0</Version>
     <Authors>Aegis Engine</Authors>
     <Description>Aegis 2D Game Engine - Lua scripted, sprites, animator, tilemaps, save/config, particles, tween, debug overlay and hot reload</Description>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\AegisEditor\src\AegisEditor.Shared\AegisEditor.Shared.csproj" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
     <PackageReference Include="NLua"                         Version="1.7.3" />
     <PackageReference Include="SpriteFontPlus"               Version="0.9.2" />

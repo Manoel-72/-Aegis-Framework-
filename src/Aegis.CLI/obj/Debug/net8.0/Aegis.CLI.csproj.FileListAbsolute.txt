@@ -50,3 +50,6 @@ D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Ae
 D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis.CLI\obj\Debug\net8.0\aegis-cli.pdb
 D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis.CLI\obj\Debug\net8.0\Aegis.CLI.genruntimeconfig.cache
 D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis.CLI\obj\Debug\net8.0\ref\aegis-cli.dll
+d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis.CLI\bin\Debug\net8.0\AegisEditor.Shared.dll
+d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis.CLI\bin\Debug\net8.0\AegisEditor.Shared.pdb
+d:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis.CLI\obj\Debug\net8.0\Aegis.CLI.sourcelink.json

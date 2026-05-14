@@ -9,7 +9,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>aegis</ToolCommandName>
     <PackageId>AegisEngine.CLI</PackageId>
-    <Version>0.9.0</Version>
+    <Version>0.98.0</Version>
     <Description>Aegis Engine CLI - create, run, build and publish 2D Lua games</Description>
     <ApplicationIcon>res\aegis-logo.ico</ApplicationIcon>
     <!-- Evita conflito de chave duplicada no GenerateDepsFile -->

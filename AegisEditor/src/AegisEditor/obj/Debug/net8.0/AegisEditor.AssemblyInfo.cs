@@ -12,11 +12,11 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("AegisEditor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+254ba143238969d00df0d5860469d52971db8c23")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("0.98.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+f4937a90fd4854577ae40cf85b88bb7355394295")]
 [assembly: System.Reflection.AssemblyProductAttribute("AegisEditor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AegisEditor")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("0.98.0.0")]
 
 // Gerado pela classe WriteCodeFragment do MSBuild.
 

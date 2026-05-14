@@ -5,7 +5,7 @@
   },
   "projects": {
     "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\AegisEditor.Shared.csproj": {
-      "version": "1.0.0",
+      "version": "0.98.0",
       "restore": {
         "projectUniqueName": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor.Shared\\AegisEditor.Shared.csproj",
         "projectName": "AegisEditor.Shared",
@@ -84,7 +84,7 @@
       }
     },
     "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor\\AegisEditor.csproj": {
-      "version": "1.0.0",
+      "version": "0.98.0",
       "restore": {
         "projectUniqueName": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\AegisEditor\\src\\AegisEditor\\AegisEditor.csproj",
         "projectName": "AegisEditor",

@@ -28,6 +28,9 @@ public sealed class TilemapNode : Object2D
     private readonly List<Object2D> _generatedColliderNodes = new();
     private readonly HashSet<int> _tiledSolidGids = new();
 
+    /// <summary>Caminho do .json relativo ao jogo, se criado por <see cref="LoadTiledJson"/>.</summary>
+    public string? TiledSourcePath { get; private set; }
+
     public int GeneratedColliderCount => _generatedColliders.Count;
     public bool CameraCulling { get; set; } = true;
     public int CullingPaddingTiles { get; set; } = 2;
@@ -118,6 +121,7 @@ public sealed class TilemapNode : Object2D
 
     private void LoadFromTiled(string relativePath)
     {
+        TiledSourcePath = relativePath.Replace('\\', '/').TrimStart('/');
         var full = ResolveSafe(relativePath);
         using var doc = JsonDocument.Parse(File.ReadAllText(full));
         var root = doc.RootElement;

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "aE+SFi13bgQ=",
+  "dgSpecHash": "dvKphrcg+Qc=",
   "success": true,
   "projectFilePath": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\src\\Aegis\\Aegis.csproj",
   "expectedPackageFiles": [
@@ -11,6 +11,7 @@
     "C:\\Users\\Manoel\\.nuget\\packages\\spritefontplus\\0.9.2\\spritefontplus.0.9.2.nupkg.sha512",
     "C:\\Users\\Manoel\\.nuget\\packages\\stbimagesharp\\2.22.4\\stbimagesharp.2.22.4.nupkg.sha512",
     "C:\\Users\\Manoel\\.nuget\\packages\\stbtruetypesharp\\1.24.7\\stbtruetypesharp.1.24.7.nupkg.sha512",
+    "C:\\Users\\Manoel\\.nuget\\packages\\system.text.json\\8.0.5\\system.text.json.8.0.5.nupkg.sha512",
     "C:\\Users\\Manoel\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.19\\microsoft.netcore.app.ref.8.0.19.nupkg.sha512",
     "C:\\Users\\Manoel\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.19\\microsoft.windowsdesktop.app.ref.8.0.19.nupkg.sha512",
     "C:\\Users\\Manoel\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.19\\microsoft.aspnetcore.app.ref.8.0.19.nupkg.sha512"

@@ -1,4 +1,5 @@
 using Aegis.Display;
+using Aegis.Editor;
 using Aegis.Input;
 using Aegis.Physics;
 using Aegis.Platform;
@@ -48,6 +49,9 @@ public sealed class AegisGame : Game
         Window.Title = app.Title;
         IsFixedTimeStep = true;
         TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
+
+        EditorPipeHost.Instance.Attach(this, app);
+        EditorPipeHost.Instance.TryStartFromEnvironment();
     }
 
     protected override void LoadContent()
@@ -82,27 +86,35 @@ public sealed class AegisGame : Game
 
     protected override void Update(GameTime gameTime)
     {
-        var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        var elapsed = gameTime.ElapsedGameTime;
+        EditorPipeHost.Instance.PumpAndFlush(elapsed);
+
+        var dt = (float)elapsed.TotalSeconds;
         if (!float.IsFinite(dt) || dt <= 0f) dt = FixedDeltaTime;
         dt = MathF.Min(dt, MaxFrameDelta);
 
-        InputManager.Update();
-        _app.Lua.UpdateShake(dt);
-        _app.Lua.CallFunction("aegis_update", dt);
-
-        _physicsAccumulator = MathF.Min(_physicsAccumulator + dt, MaxFrameDelta);
-        for (var steps = 0; steps < MaxPhysicsSteps && _physicsAccumulator >= FixedDeltaTime; steps++)
+        var pause = EditorPipeHost.SimulationPausedByEditor;
+        if (!pause)
         {
-            PhysicsWorld.Instance.Step(FixedDeltaTime);
-            _physicsAccumulator -= FixedDeltaTime;
+            InputManager.Update();
+            _app.Lua.UpdateShake(dt);
+            _app.Lua.CallFunction("aegis_update", dt);
+
+            _physicsAccumulator = MathF.Min(_physicsAccumulator + dt, MaxFrameDelta);
+            for (var steps = 0; steps < MaxPhysicsSteps && _physicsAccumulator >= FixedDeltaTime; steps++)
+            {
+                PhysicsWorld.Instance.Step(FixedDeltaTime);
+                _physicsAccumulator -= FixedDeltaTime;
+            }
+
+            _app.S2D.Update(dt);
+            SceneManager.Instance.Update(dt);
+            Camera2D.Instance.Update(dt);
+            TweenManager.Instance.Update(dt);
+            ScreenEffects.Instance.Update(dt);
+            HotReloadManager.Instance.Update(dt);
         }
 
-        _app.S2D.Update(dt);
-        SceneManager.Instance.Update(dt);
-        Camera2D.Instance.Update(dt);
-        TweenManager.Instance.Update(dt);
-        ScreenEffects.Instance.Update(dt);
-        HotReloadManager.Instance.Update(dt);
         DebugOverlay.Instance.Update(dt);
 
         base.Update(gameTime);
@@ -187,7 +199,11 @@ public sealed class AegisGame : Game
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
+            EditorPipeHost.Instance.Shutdown();
             PhysicsWorld.Instance.Reset();
+        }
+
         base.Dispose(disposing);
     }
 }

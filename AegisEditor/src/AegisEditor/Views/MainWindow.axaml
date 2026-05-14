@@ -11,12 +11,12 @@
         Background="{DynamicResource AeBackgroundBrush}">
 
     <Grid Margin="12"
-          RowDefinitions="Auto,*,8,*"
+          RowDefinitions="Auto,Auto,*,8,*"
           ColumnDefinitions="224,8,*,8,276">
 
         <DockPanel Grid.Row="0"
                    Grid.ColumnSpan="5"
-                   Margin="0,0,0,12">
+                   Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal"
                         DockPanel.Dock="Left"
                         VerticalAlignment="Center"
@@ -62,18 +62,60 @@
             </TextBlock>
         </DockPanel>
 
-        <views:HierarchyPanel Grid.Row="1"
+        <!-- Pré-visualização ao vivo: arranca dotnet + aegis run com pipe e faz Connect -->
+        <DockPanel Grid.Row="1"
+                   Grid.ColumnSpan="5"
+                   Margin="0,0,0,12"
+                   Background="{DynamicResource AeSurfaceBrush}"
+                   FlowDirection="LeftToRight">
+            <Border Padding="12,10"
+                    BorderBrush="{DynamicResource AeBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    DockPanel.Dock="Top">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="10"
+                            VerticalAlignment="Center">
+                    <Button Content="Correr jogo + Connect"
+                            Padding="16,10"
+                            Command="{Binding RunGameAndConnectCommand}" />
+                    <TextBlock VerticalAlignment="Center"
+                               Margin="16,0,4,0"
+                               Foreground="#9ca3af"
+                               FontSize="13"
+                               Text="pasta main.lua:" />
+                    <TextBox Width="460"
+                             Text="{Binding GamePreviewFolder}"
+                             Watermark="...\demo-platformer"
+                             FontFamily="{DynamicResource AeFontMono}"
+                             Padding="10,8" />
+                    <TextBlock VerticalAlignment="Center"
+                               Margin="8,0,4,0"
+                               Foreground="#9ca3af"
+                               FontSize="13"
+                               Text="raiz motor (opc.):" />
+                    <TextBox MinWidth="220"
+                             Width="340"
+                             Text="{Binding EngineRepoOverride}"
+                             Watermark="vazio = detetar pela pasta do exe"
+                             FontFamily="{DynamicResource AeFontMono}"
+                             Padding="10,8" />
+                </StackPanel>
+            </Border>
+        </DockPanel>
+
+        <views:HierarchyPanel Grid.Row="2"
                               Grid.Column="0"
                               Margin="2"
                               DataContext="{Binding Hierarchy}" />
 
-        <GridSplitter Grid.Row="1"
+        <GridSplitter Grid.Row="2"
                       Grid.Column="1"
                       Width="8"
                       Margin="0,12,0,12"
                       Background="{DynamicResource AeBorderBrush}" />
 
-        <Border Grid.Row="1"
+        <Border Grid.Row="2"
                 Grid.Column="2"
                 Margin="2"
                 Background="{DynamicResource AeSurfaceBrush}"
@@ -86,24 +128,24 @@
                                     VerticalAlignment="Stretch" />
         </Border>
 
-        <GridSplitter Grid.Row="1"
+        <GridSplitter Grid.Row="2"
                       Grid.Column="3"
                       Width="8"
                       Margin="0,12,0,12"
                       Background="{DynamicResource AeBorderBrush}" />
 
-        <views:InspectorPanel Grid.Row="1"
+        <views:InspectorPanel Grid.Row="2"
                               Grid.Column="4"
                               Margin="2"
                               DataContext="{Binding Inspector}" />
 
-        <GridSplitter Grid.Row="2"
+        <GridSplitter Grid.Row="3"
                       Grid.ColumnSpan="5"
                       Height="8"
                       HorizontalAlignment="Stretch"
                       Background="{DynamicResource AeBorderBrush}" />
 
-        <Grid Grid.Row="3"
+        <Grid Grid.Row="4"
               Grid.ColumnSpan="5"
               Margin="0,4,0,0"
               ColumnDefinitions="1*,8,1*">

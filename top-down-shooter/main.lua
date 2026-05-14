@@ -1,6 +1,6 @@
 -- ═══════════════════════════════════════════════════════════════
 -- ZONE RECON — Top-Down Shooter com Coleta e Missões
--- Engine: Aegis v0.9
+-- Engine: Aegis v0.98
 -- Estrutura de cenas:
 --   menu  →  game (zona 1/2/3)  →  mission  →  gameover / win
 -- ═══════════════════════════════════════════════════════════════
