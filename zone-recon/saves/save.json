@@ -1,1 +1,6 @@
-{}
+{
+  "card_save_valid": true,
+  "card_player_hp": 20,
+  "card_enemy_hp": 10,
+  "card_turn": 2
+}

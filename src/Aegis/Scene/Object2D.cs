@@ -41,6 +41,11 @@ public class Object2D
     private readonly List<Object2D> _children = new();
     public IReadOnlyList<Object2D> Children => _children;
 
+    public Object2D(Object2D? parent = null)
+    {
+        parent?.AddChild(this);
+    }
+
     public void AddChild(Object2D child)
     {
         ArgumentNullException.ThrowIfNull(child);

@@ -5,6 +5,7 @@ using Aegis.Input;
 using Aegis.Physics;
 using Aegis.Resource;
 using Aegis.Scene;
+using Aegis.Scripting.Components;
 using Aegis.World;
 using Aegis.Effects;
 using Aegis.Systems;
@@ -22,6 +23,7 @@ public sealed class LuaRuntime : IDisposable
 {
     private readonly Lua _lua;
     private readonly App _app;
+    private readonly ComponentFactory _components;
     private static readonly Random _rng = new();
 
     private float _shakeTime;
@@ -38,6 +40,7 @@ public sealed class LuaRuntime : IDisposable
     public LuaRuntime(App app)
     {
         _app = app;
+        _components = new ComponentFactory(app);
         _lua = new Lua();
         _lua.State.Encoding = System.Text.Encoding.UTF8;
         SceneManager.Instance.Initialize(app, this);
@@ -52,6 +55,10 @@ public sealed class LuaRuntime : IDisposable
         _lua["aegis_draw_ui"] = null; // BUG #3: UI layer sem transformação da câmera
 
         // ── Core ────────────────────────────────────────────────────
+        // Stable MVP API. Prefer this for new templates; legacy aliases remain registered below.
+        Reg("aegis.create",          nameof(Create));
+        Reg("aegis.destroy",         nameof(Destroy));
+
         Reg("aegis.newSprite",       nameof(NewSprite));
         Reg("aegis.newRect",         nameof(NewRect));
         Reg("aegis.removeObject",    nameof(RemoveObject));
@@ -169,12 +176,15 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.flowSet",         nameof(FlowSet));
 
         // ── v0.4 Collider & CollisionSystem ─────────────────────────
-        Reg("aegis.addCollider",     nameof(AddCollider));
-        Reg("aegis.addCircleCollider", nameof(AddCircleCollider));
-        Reg("aegis.removeCollider",  nameof(RemoveCollider));
+        Reg("aegis.addCollider",        nameof(AddCollider));
+        Reg("aegis.addCircleCollider",  nameof(AddCircleCollider));
+        Reg("aegis.addSlopeCollider",   nameof(AddSlopeCollider));   // Slope/Ramp
+        Reg("aegis.setSlopeDir",        nameof(SetSlopeDir));        // "left" | "right"
+        Reg("aegis.removeCollider",     nameof(RemoveCollider));
         Reg("aegis.setColliderLayer",nameof(SetColliderLayer));
         Reg("aegis.setColliderMask", nameof(SetColliderMask));
         Reg("aegis.setTrigger",      nameof(SetTrigger));
+        Reg("aegis.setOneWay",       nameof(SetOneWay));   // Sprint 4: plataformas one-way
         Reg("aegis.setColliderOffset",nameof(SetColliderOffset));
         Reg("aegis.onCollide",       nameof(OnCollide));
         Reg("aegis.onCollideEnter",  nameof(OnCollideEnter));
@@ -288,6 +298,38 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.poolReturn",      nameof(PoolReturn));
         Reg("aegis.poolClear",       nameof(PoolClear));
         Reg("aegis.poolCount",       nameof(PoolCount));
+
+        // ── Drag & Drop ──────────────────────────────────────────────────
+        Reg("aegis.newDraggable",    nameof(NewDraggable));
+        Reg("aegis.onDragStart",     nameof(OnDragStart));
+        Reg("aegis.onDragMove",      nameof(OnDragMove));
+        Reg("aegis.onDragEnd",       nameof(OnDragEnd));
+        Reg("aegis.getDragTarget",   nameof(GetDragTarget));
+
+        // ── Z-order dinâmico ─────────────────────────────────────────────
+        Reg("aegis.bringToFront",    nameof(BringToFront));
+        Reg("aegis.sendToBack",      nameof(SendToBack));
+        Reg("aegis.setZRelative",    nameof(SetZRelative));
+
+        // ── Hand / Card Layout ───────────────────────────────────────────
+        Reg("aegis.newHand",         nameof(NewHand));
+        Reg("aegis.handAdd",         nameof(HandAdd));
+        Reg("aegis.handRemove",      nameof(HandRemove));
+        Reg("aegis.handLayout",      nameof(HandLayout));
+        Reg("aegis.handSetHover",    nameof(HandSetHover));
+
+        // ── Camera Autozoom ──────────────────────────────────────────────
+        Reg("aegis.setCameraAutozoom", nameof(SetCameraAutozoom));
+
+        // ── Upgrade / Skill Tree ─────────────────────────────────────────
+        Reg("aegis.addUpgrade",      nameof(AddUpgrade));
+        Reg("aegis.onUpgradeChosen", nameof(OnUpgradeChosen));
+        Reg("aegis.getUpgradeLevel", nameof(GetUpgradeLevel));
+        Reg("aegis.showUpgrades",    nameof(ShowUpgrades));
+        Reg("aegis.hideUpgrades",    nameof(HideUpgrades));
+
+        // ── Audio Spatial 3D ─────────────────────────────────────────────
+        Reg("aegis.playSoundAt3D",   nameof(PlaySoundAt3D));
     }
 
     private void Reg(string lua, string method)
@@ -304,16 +346,18 @@ public sealed class LuaRuntime : IDisposable
     }
 
     // ── Core ──────────────────────────────────────────────────────────
+    public Object2D Create(string kind, LuaTable? opts = null)
+        => _components.Create(kind, opts);
+
+    public void Destroy(Object2D obj)
+        => RemoveObject(obj);
+
     public SpriteNode NewSprite(string path)
-        => new SpriteNode(ResManager.LoadTexture(path), _app.S2D);
+        => _components.CreateSprite(path);
 
     public Bitmap NewRect(int w, int h, float r, float g, float b)
     {
-        var tex  = new Texture2D(Renderer.GraphicsDevice, w, h);
-        var data = new Color[w * h];
-        Array.Fill(data, new Color(r, g, b));
-        tex.SetData(data);
-        return new Bitmap(tex, _app.S2D);
+        return _components.CreateRect(w, h, new Color(r, g, b));
     }
 
     public void RemoveObject(Object2D obj)
@@ -377,7 +421,7 @@ public sealed class LuaRuntime : IDisposable
 
     // ── Label ─────────────────────────────────────────────────────────
     public Label NewLabel(string text)
-        => new Label(FontManager.Default, _app.S2D) { Text = text };
+        => _components.CreateLabel(text);
     public void SetText(Label l, string t)                                        => l.Text = t;
     /// <summary>Define cor do Label. Alpha opcional (padrão 1.0 = opaco).
     /// BUG #6 fix: parâmetro alpha adicionado para suportar texto semitransparente.</summary>
@@ -385,7 +429,7 @@ public sealed class LuaRuntime : IDisposable
 
     // ── AnimatedSprite ────────────────────────────────────────────────
     public AnimatedSprite NewAnim(string path, int fw, int fh)
-        => new AnimatedSprite(ResManager.LoadTexture(path), fw, fh, _app.S2D);
+        => _components.CreateAnimatedSprite(path, fw, fh);
     public void PlayAnim(AnimatedSprite a, int s, int e, bool loop, float fps)
         => a.Play(s, e, loop, fps);
     public void StopAnim(AnimatedSprite a)    => a.Stop();
@@ -458,11 +502,7 @@ public sealed class LuaRuntime : IDisposable
 
     // ── RichLabel ─────────────────────────────────────────────────────
     public RichLabel NewRichLabel(string markup)
-    {
-        var rl = new RichLabel(_app.S2D) { Markup = markup };
-        if (FontManager.Default is not null) rl.Font = FontManager.Default;
-        return rl;
-    }
+        => _components.CreateRichLabel(markup);
     public void SetMarkup(RichLabel rl, string m)             => rl.Markup = m;
     public void SetPivotRich(RichLabel rl, float px, float py) => rl.Pivot = new Vector2(px, py);
 
@@ -473,18 +513,12 @@ public sealed class LuaRuntime : IDisposable
 
     // ── NineSlice ─────────────────────────────────────────────────────
     public NineSlice NewPanel(string path, int border)
-        => new NineSlice(ResManager.LoadTexture(path), border, _app.S2D);
+        => _components.CreatePanel(path, border);
     public void SetPanelSize(NineSlice p, int w, int h) { p.Width = w; p.Height = h; }
 
     public FlowContainer NewFlow(string direction, LuaTable? opts = null)
     {
-        var flow = new FlowContainer(
-            direction,
-            TableFloat(opts, "gap", 0f),
-            TableFloat(opts, "padding", 0f),
-            TableString(opts, "align", "start"),
-            _app.S2D);
-        return flow;
+        return _components.CreateFlow(direction, opts);
     }
 
     public void FlowAdd(FlowContainer flow, Object2D child)
@@ -696,6 +730,39 @@ public sealed class LuaRuntime : IDisposable
         return c;
     }
 
+    /// <summary>aegis.addSlopeCollider(obj, w, h, dir [, offX, offY]) → collider
+    /// dir: "right" = rampa sobe esq→dir | "left" = rampa sobe dir→esq.
+    /// O collider deve ser num objeto estático (sem Rigidbody).
+    ///
+    /// Exemplo de tile de rampa 32×32:
+    ///   local col = aegis.addSlopeCollider(tile, 32, 32, "right")
+    ///   aegis.setColliderLayer(col, "WORLD")
+    ///   aegis.setColliderMask(col, "PLAYER|ENEMY")
+    /// </summary>
+    public Collider AddSlopeCollider(Object2D obj, float w, float h,
+                                     string dir = "right",
+                                     float offX = 0f, float offY = 0f)
+    {
+        Require(obj, nameof(AddSlopeCollider));
+        var c = new Collider(obj, w, h, offX, offY)
+        {
+            Shape          = ColliderShape.Slope,
+            SlopeDirection = dir == "left" ? SlopeDir.Left : SlopeDir.Right,
+            Layer          = 1,
+            Mask           = ~0,
+        };
+        CollisionSystem.Instance.Register(c);
+        _colliders[++_colliderIdSeq] = c;
+        // Aviso: Slope num objeto com Rigidbody não faz sentido
+        if (PhysicsWorld.Instance.Bodies.Any(rb => rb.Owner == obj))
+            AegisLog.Warn("Slope", "addSlopeCollider num objeto com Rigidbody — slope deve ser estático.");
+        return c;
+    }
+
+    /// <summary>aegis.setSlopeDir(collider, "left"|"right") — muda direção do slope em runtime.</summary>
+    public void SetSlopeDir(Collider c, string dir)
+        => c.SlopeDirection = dir == "left" ? SlopeDir.Left : SlopeDir.Right;
+
     public void RemoveCollider(Collider c)
     {
         CollisionSystem.Instance.Unregister(c);
@@ -737,7 +804,12 @@ public sealed class LuaRuntime : IDisposable
         if (c.Mask == 0) AegisLog.Warn("Collision", "Collider mask ficou 0; ele não detectará colisões.");
     }
 
-    public void SetTrigger(Collider c, bool v)                      => c.IsTrigger = v;
+    public void SetTrigger(Collider c, bool v)  => c.IsTrigger = v;
+
+    /// <summary>aegis.setOneWay(collider, bool) — marca collider como plataforma one-way.
+    /// O corpo pode pular de baixo para cima atravessando-a; pousa normalmente ao cair.
+    /// Sprint 4 (do plano do MD).</summary>
+    public void SetOneWay(Collider c, bool v)   => c.IsOneWay = v;
     public void SetColliderOffset(Collider c, float ox, float oy)   { c.OffsetX = ox; c.OffsetY = oy; }
 
     /// Retorna o Collider anexado ao Object2D (busca por Owner)
@@ -989,14 +1061,19 @@ public sealed class LuaRuntime : IDisposable
         _particles?.ClearAll();
         _particles = null;
 
-        // Sprint 2+3: limpar buttons, pools, float texts e resetar timer
+        // Sprint 2+3+Final: limpar buttons, pools, float texts e resetar timer
         _buttons.Clear();
+        _draggables.Clear();
+        _activeDrag = null;
+        _hands.Clear();
+        HideUpgrades();
+        _autozoomEnabled = false;
         foreach (var ft in _floatTexts) ft.Lbl.RemoveFromParent();
         _floatTexts.Clear();
         foreach (var pool in _pools.Values) pool.Clear();
         _pools.Clear();
         _poolIdSeq   = 0;
-        _progressBars.Clear();
+        _components.ClearRuntimeState();
         _totalTime   = 0f;
     }
 
@@ -1324,6 +1401,8 @@ public sealed class LuaRuntime : IDisposable
         public LuaFunction? OnPress;
         public bool WasHovered;
         public bool WasPressed;
+        /// <summary>Callback C# para botões criados internamente (ex: upgrade menu).</summary>
+        public Action? ClickOverride;
 
         public Button(Object2D obj) => Obj = obj;
 
@@ -1379,7 +1458,11 @@ public sealed class LuaRuntime : IDisposable
 
             if (hovered && !btn.WasHovered) btn.OnHover?.Call(btn.Obj);
             if (pressed && !btn.WasPressed) btn.OnPress?.Call(btn.Obj);
-            if (hovered && leftJust)        btn.OnClick?.Call(btn.Obj);
+            if (hovered && leftJust)
+            {
+                btn.ClickOverride?.Invoke();  // callback C# (upgrade menu etc.)
+                btn.OnClick?.Call(btn.Obj);   // callback Lua
+            }
 
             btn.WasHovered = hovered;
             btn.WasPressed = pressed;
@@ -1449,81 +1532,19 @@ public sealed class LuaRuntime : IDisposable
 
     // ── ProgressBar ───────────────────────────────────────────────────
 
-    private sealed class ProgressBar
-    {
-        public Bitmap Bg;
-        public Bitmap Fill;
-        public float Current = 1f;
-        public float Max = 1f;
-        public int MaxWidth;
-        public int MaxHeight;
-
-        public ProgressBar(Bitmap bg, Bitmap fill, int maxWidth, int maxHeight)
-        { Bg = bg; Fill = fill; MaxWidth = maxWidth; MaxHeight = maxHeight; }
-
-        public void UpdateFill()
-        {
-            float ratio = Max > 0f ? Math.Clamp(Current / Max, 0f, 1f) : 0f;
-            // ScaleX com Pivot=(0,0) cresce da esquerda para a direita sem deslocar
-            Fill.ScaleX = Math.Max(0.001f, ratio);
-        }
-    }
-
-    private readonly List<ProgressBar> _progressBars = new();
-
     /// <summary>aegis.newProgressBar(x, y, w, h) → objeto ProgressBar.
     /// Retorna o objeto de fundo (bg). Use setBarValue/setBarColors para controlar.</summary>
     public Object2D NewProgressBar(float x, float y, int w, int h)
-    {
-        var bgTex  = new Texture2D(Renderer.GraphicsDevice, w, h);
-        var fgTex  = new Texture2D(Renderer.GraphicsDevice, w, h);
-        bgTex.SetData(Enumerable.Repeat(new Color(0.15f, 0.15f, 0.15f), w * h).ToArray());
-        fgTex.SetData(Enumerable.Repeat(new Color(0.2f, 1.0f, 0.3f), w * h).ToArray());
-
-        var bg   = new Bitmap(bgTex,  _app.S2D) { X = x, Y = y };
-        // Fill usa Pivot=(0,0) e ScaleX para crescer da esquerda p/ direita
-        var fill = new Bitmap(fgTex,  _app.S2D) { X = x, Y = y };
-        fill.Pivot = Vector2.Zero;   // ancora no canto esquerdo antes de escalar
-
-        var bar = new ProgressBar(bg, fill, w, h);
-        _progressBars.Add(bar);
-        return bg;
-    }
+        => _components.CreateProgressBar(x, y, w, h, new Color(0.15f, 0.15f, 0.15f), new Color(0.2f, 1f, 0.3f));
 
     /// <summary>aegis.setBarValue(barObj, current, max) — atualiza o preenchimento da barra.</summary>
     public void SetBarValue(Object2D barObj, float current, float max)
-    {
-        var bar = _progressBars.FirstOrDefault(b => b.Bg == barObj);
-        if (bar is null) return;
-        bar.Current = current;
-        bar.Max = max;
-        bar.UpdateFill();
-    }
+        => _components.SetProgressValue(barObj, current, max);
 
     /// <summary>aegis.setBarColors(barObj, opts) — define cores da barra.
     /// opts: {bg={r,g,b}, fill={r,g,b}}</summary>
     public void SetBarColors(Object2D barObj, LuaTable opts)
-    {
-        var bar = _progressBars.FirstOrDefault(b => b.Bg == barObj);
-        if (bar is null) return;
-
-        if (opts["bg"] is LuaTable bgColor)
-        {
-            float r = TableFloat(bgColor, "1", TableFloat(bgColor, "r", 0.15f));
-            float g = TableFloat(bgColor, "2", TableFloat(bgColor, "g", 0.15f));
-            float b = TableFloat(bgColor, "3", TableFloat(bgColor, "b", 0.15f));
-            var pixels = Enumerable.Repeat(new Color(r, g, b), bar.MaxWidth * bar.MaxHeight).ToArray();
-            bar.Bg.Texture.SetData(pixels);
-        }
-        if (opts["fill"] is LuaTable fillColor)
-        {
-            float r = TableFloat(fillColor, "1", TableFloat(fillColor, "r", 0.2f));
-            float g = TableFloat(fillColor, "2", TableFloat(fillColor, "g", 1.0f));
-            float b = TableFloat(fillColor, "3", TableFloat(fillColor, "b", 0.3f));
-            var pixels = Enumerable.Repeat(new Color(r, g, b), bar.MaxWidth * bar.MaxHeight).ToArray();
-            bar.Fill.Texture.SetData(pixels);
-        }
-    }
+        => _components.SetProgressColors(barObj, opts);
     // ════════════════════════════════════════════════════════════════
     //  Sprint 3 — Física e gameplay
     // ════════════════════════════════════════════════════════════════
@@ -1656,6 +1677,407 @@ public sealed class LuaRuntime : IDisposable
             t["total"]     = 0;
         }
         return t;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // DRAG & DROP
+    // ══════════════════════════════════════════════════════════════════════
+
+    private sealed class DraggableEntry
+    {
+        public Object2D Obj;
+        public bool     IsDragging;
+        public float    OffX, OffY;        // offset do ponto de pega em relação ao objeto
+        public LuaFunction? OnStart;
+        public LuaFunction? OnMove;
+        public LuaFunction? OnEnd;
+        public DraggableEntry(Object2D obj) { Obj = obj; }
+    }
+
+    private readonly List<DraggableEntry> _draggables = new();
+    private DraggableEntry?               _activeDrag;
+
+    /// <summary>aegis.newDraggable(obj) — marca objeto como arrastável com mouse.</summary>
+    public void NewDraggable(Object2D obj)
+    {
+        if (_draggables.Any(d => d.Obj == obj)) return;
+        _draggables.Add(new DraggableEntry(obj));
+    }
+
+    /// <summary>aegis.onDragStart(obj, cb) / aegis.onDragMove(obj, cb) / aegis.onDragEnd(obj, cb)</summary>
+    public void OnDragStart(Object2D obj, LuaFunction cb)
+        => (_draggables.FirstOrDefault(d => d.Obj == obj) ?? throw new("newDraggable não chamado")).OnStart = cb;
+    public void OnDragMove(Object2D obj, LuaFunction cb)
+        => (_draggables.FirstOrDefault(d => d.Obj == obj) ?? throw new("newDraggable não chamado")).OnMove = cb;
+    public void OnDragEnd(Object2D obj, LuaFunction cb)
+        => (_draggables.FirstOrDefault(d => d.Obj == obj) ?? throw new("newDraggable não chamado")).OnEnd = cb;
+
+    /// <summary>aegis.getDragTarget() → obj ou nil — retorna o objeto sendo arrastado.</summary>
+    public Object2D? GetDragTarget() => _activeDrag?.Obj;
+
+    /// <summary>Chamado pelo AegisGame — processa estado de drag via InputManager.</summary>
+    internal void UpdateDraggables()
+    {
+        float mx = InputManager.MouseX;
+        float my = InputManager.MouseY;
+        // Converter mouse screen → world
+        var world = Camera2D.Instance.ScreenToWorld(mx, my);
+        float wx = world.X, wy = world.Y;
+
+        if (InputManager.LeftJust)
+        {
+            // Inicia drag: verificar se mouse está sobre algum draggable (do topo do Z p/ baixo)
+            var sorted = _draggables.OrderByDescending(d => d.Obj.Z).ToList();
+            foreach (var dr in sorted)
+            {
+                var col = CollisionSystem.Instance.GetFirstCollider(dr.Obj);
+                bool hit;
+                if (col is not null)
+                {
+                    var bounds = col.Bounds;
+                    hit = wx >= bounds.Left && wx <= bounds.Right &&
+                          wy >= bounds.Top && wy <= bounds.Bottom;
+                }
+                else
+                {
+                    hit = wx >= dr.Obj.X && wx <= dr.Obj.X + 32 &&
+                          wy >= dr.Obj.Y && wy <= dr.Obj.Y + 32;
+                }
+                if (!hit) continue;
+                dr.IsDragging  = true;
+                dr.OffX        = dr.Obj.X - wx;
+                dr.OffY        = dr.Obj.Y - wy;
+                _activeDrag    = dr;
+                dr.OnStart?.Call(dr.Obj, wx, wy);
+                break;
+            }
+        }
+
+        if (_activeDrag is not null && InputManager.LeftDown)
+        {
+            _activeDrag.Obj.X = wx + _activeDrag.OffX;
+            _activeDrag.Obj.Y = wy + _activeDrag.OffY;
+            _activeDrag.OnMove?.Call(_activeDrag.Obj, wx, wy);
+        }
+
+        if (_activeDrag is not null && !InputManager.LeftDown)
+        {
+            _activeDrag.IsDragging = false;
+            _activeDrag.OnEnd?.Call(_activeDrag.Obj, wx, wy);
+            _activeDrag = null;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Z-ORDER DINÂMICO
+    // ══════════════════════════════════════════════════════════════════════
+
+    /// <summary>aegis.bringToFront(obj) — coloca o objeto na frente de todos os irmãos.</summary>
+    public void BringToFront(Object2D obj)
+    {
+        if (obj.Parent is null) return;
+        var siblings = obj.Parent.Children;
+        var maxZ = siblings.Where(s => s != obj).Select(s => s.Z).DefaultIfEmpty(0).Max();
+        obj.Z = maxZ + 1;
+    }
+
+    /// <summary>aegis.sendToBack(obj) — coloca o objeto atrás de todos os irmãos.</summary>
+    public void SendToBack(Object2D obj)
+    {
+        if (obj.Parent is null) return;
+        var siblings = obj.Parent.Children;
+        var minZ = siblings.Where(s => s != obj).Select(s => s.Z).DefaultIfEmpty(0).Min();
+        obj.Z = minZ - 1;
+    }
+
+    /// <summary>aegis.setZRelative(obj, delta) — incrementa/decrementa Z em delta.</summary>
+    public void SetZRelative(Object2D obj, float delta) => obj.Z = (int)MathF.Round(obj.Z + delta);
+
+    // ══════════════════════════════════════════════════════════════════════
+    // HAND / CARD LAYOUT
+    // ══════════════════════════════════════════════════════════════════════
+
+    private sealed class HandLayoutState
+    {
+        public List<Object2D> Cards = new();
+        public float CenterX, BaseY;
+        public float FanAngle;   // ângulo total do leque em graus
+        public float Spacing;    // espaço horizontal entre cartas
+        public float HoverLift;  // quanto a carta sobe no hover (px)
+        public int   HoveredIdx = -1;
+    }
+
+    private readonly Dictionary<int, HandLayoutState> _hands = new();
+    private int _handNextId = 1;
+
+    /// <summary>aegis.newHand(cx, cy, opts) → handId
+    /// opts: {fanAngle=30, spacing=60, hoverLift=20}</summary>
+    public int NewHand(float cx, float cy, LuaTable? opts = null)
+    {
+        int id = _handNextId++;
+        _hands[id] = new HandLayoutState
+        {
+            CenterX   = cx,
+            BaseY     = cy,
+            FanAngle  = TableFloat(opts, "fanAngle",  30f),
+            Spacing   = TableFloat(opts, "spacing",   60f),
+            HoverLift = TableFloat(opts, "hoverLift", 20f),
+        };
+        return id;
+    }
+
+    /// <summary>aegis.handAdd(handId, obj) — adiciona carta/objeto à mão.</summary>
+    public void HandAdd(int handId, Object2D obj)
+    {
+        if (!_hands.TryGetValue(handId, out var h)) return;
+        h.Cards.Add(obj);
+        ApplyHandLayout(h);
+    }
+
+    /// <summary>aegis.handRemove(handId, obj) — remove carta da mão.</summary>
+    public void HandRemove(int handId, Object2D obj)
+    {
+        if (!_hands.TryGetValue(handId, out var h)) return;
+        h.Cards.Remove(obj);
+        ApplyHandLayout(h);
+    }
+
+    /// <summary>aegis.handLayout(handId) — força re-layout (após mover cartas manualmente).</summary>
+    public void HandLayout(int handId)
+    {
+        if (_hands.TryGetValue(handId, out var h)) ApplyHandLayout(h);
+    }
+
+    /// <summary>aegis.handSetHover(handId, idx) — eleva a carta idx (1-based), -1 para nenhuma.</summary>
+    public void HandSetHover(int handId, int idx)
+    {
+        if (!_hands.TryGetValue(handId, out var h)) return;
+        h.HoveredIdx = idx - 1; // converter para 0-based
+        ApplyHandLayout(h);
+    }
+
+    private static void ApplyHandLayout(HandLayoutState h)
+    {
+        int n = h.Cards.Count;
+        if (n == 0) return;
+
+        float totalW = h.Spacing * (n - 1);
+        float startX = h.CenterX - totalW * 0.5f;
+        float halfFan = h.FanAngle * 0.5f;
+
+        for (int i = 0; i < n; i++)
+        {
+            var card  = h.Cards[i];
+            float t   = n == 1 ? 0f : (float)i / (n - 1) * 2f - 1f; // -1..+1
+            float rot = t * halfFan;
+            float liftY = (i == h.HoveredIdx) ? -h.HoverLift : 0f;
+            // Tween suave até posição final
+            card.X        = startX + i * h.Spacing;
+            card.Y        = h.BaseY + MathF.Abs(t) * 8f + liftY; // leve arco
+            card.Rotation = rot * (MathF.PI / 180f);
+            card.Z        = i; // Z incremental para sobreposição correta
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // CÂMERA AUTOZOOM POR DENSIDADE
+    // ══════════════════════════════════════════════════════════════════════
+
+    private bool  _autozoomEnabled;
+    private float _autozoomMinZoom = 0.5f;
+    private float _autozoomMaxZoom = 1.5f;
+    private float _autozoomRadius  = 400f;   // raio em torno do player para contar inimigos
+    private float _autozoomTarget  = 1f;
+    private int   _autozoomDensityThreshold = 5; // inimigos para começar a zoom out
+
+    /// <summary>aegis.setCameraAutozoom(enable, opts)
+    /// opts: {minZoom=0.5, maxZoom=1.5, radius=400, densityThreshold=5}</summary>
+    public void SetCameraAutozoom(bool enable, LuaTable? opts = null)
+    {
+        _autozoomEnabled           = enable;
+        _autozoomMinZoom           = TableFloat(opts, "minZoom",           0.5f);
+        _autozoomMaxZoom           = TableFloat(opts, "maxZoom",           1.5f);
+        _autozoomRadius            = TableFloat(opts, "radius",            400f);
+        _autozoomDensityThreshold  = (int)TableFloat(opts, "densityThreshold", 5f);
+    }
+
+    /// <summary>Chamado pelo AegisGame — recalcula zoom alvo por densidade de colliders próximos.</summary>
+    internal void UpdateAutozoom(float dt)
+    {
+        if (!_autozoomEnabled) return;
+
+        float cx = Camera2D.Instance.X + Camera2D.Instance.ViewWidth  * 0.5f;
+        float cy = Camera2D.Instance.Y + Camera2D.Instance.ViewHeight * 0.5f;
+
+        // Conta colliders ativos no raio (usa OverlapCircle já implementado)
+        int nearby = CollisionSystem.Instance.Colliders
+            .Count(c => c.IsActive && !c.IsTrigger
+                && MathF.Sqrt(MathF.Pow(c.Bounds.Left + c.Bounds.Width * 0.5f - cx, 2)
+                            + MathF.Pow(c.Bounds.Top  + c.Bounds.Height* 0.5f - cy, 2))
+                   <= _autozoomRadius);
+
+        // Interpola zoom: muitos inimigos → zoom out (zoom menor)
+        float t = Math.Clamp((nearby - _autozoomDensityThreshold) / 20f, 0f, 1f);
+        _autozoomTarget = _autozoomMaxZoom + (_autozoomMinZoom - _autozoomMaxZoom) * t;
+
+        float currentZoom = Camera2D.Instance.Zoom;
+        float newZoom = currentZoom + (_autozoomTarget - currentZoom) * Math.Clamp(dt * 2f, 0f, 1f);
+        Camera2D.Instance.SetZoom(newZoom);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // SISTEMA DE UPGRADES / SKILL TREE
+    // ══════════════════════════════════════════════════════════════════════
+
+    private sealed class UpgradeOption
+    {
+        public string  Id;
+        public string  Title;
+        public string  Desc;
+        public string? Icon;   // path de sprite opcional
+        public int     Level;
+        public int     MaxLevel;
+        public UpgradeOption(string id, string title, string desc, int maxLevel)
+        { Id = id; Title = title; Desc = desc; MaxLevel = maxLevel; }
+    }
+
+    private readonly Dictionary<string, UpgradeOption> _upgrades  = new();
+    private LuaFunction?                                _onUpgradeChosen;
+    private Object2D?                                   _upgradeMenuRoot;
+
+    /// <summary>aegis.addUpgrade(id, title, desc, opts)
+    /// opts: {maxLevel=3, icon="path"}</summary>
+    public void AddUpgrade(string id, string title, string desc, LuaTable? opts = null)
+    {
+        int maxLvl = (int)TableFloat(opts, "maxLevel", 3f);
+        var up = new UpgradeOption(id, title, desc, maxLvl);
+        up.Icon = opts?["icon"] as string;
+        _upgrades[id] = up;
+    }
+
+    /// <summary>aegis.onUpgradeChosen(cb) — cb(id, level) chamado quando player escolhe upgrade.</summary>
+    public void OnUpgradeChosen(LuaFunction cb) => _onUpgradeChosen = cb;
+
+    /// <summary>aegis.getUpgradeLevel(id) → level atual (0 = não adquirido).</summary>
+    public int GetUpgradeLevel(string id)
+        => _upgrades.TryGetValue(id, out var u) ? u.Level : 0;
+
+    /// <summary>aegis.showUpgrades(count) — exibe menu de escolha com `count` opções aleatórias não-maxadas.</summary>
+    public void ShowUpgrades(int count)
+    {
+        HideUpgrades();
+
+        var available = _upgrades.Values
+            .Where(u => u.Level < u.MaxLevel)
+            .OrderBy(_ => Guid.NewGuid())
+            .Take(count)
+            .ToList();
+
+        if (available.Count == 0) return;
+
+        // Constrói UI nativa com botões
+        float panelW = 280f * available.Count + 40f;
+        float panelH = 200f;
+        float sx = Camera2D.Instance.ViewWidth  * 0.5f - panelW * 0.5f;
+        float sy = Camera2D.Instance.ViewHeight * 0.5f - panelH * 0.5f;
+
+        // Root sem texture — só container lógico
+        var root = new Object2D(_app.S2D) { X = sx, Y = sy, Z = 1000 };
+        _upgradeMenuRoot = root;
+
+        for (int i = 0; i < available.Count; i++)
+        {
+            var up  = available[i];
+            var capturedUp = up;
+            float bx = i * 290f;
+
+            // Painel de fundo
+            var bgTex = new Microsoft.Xna.Framework.Graphics.Texture2D(Renderer.GraphicsDevice, 270, (int)panelH);
+            bgTex.SetData(Enumerable.Repeat(new Microsoft.Xna.Framework.Color(0.1f, 0.1f, 0.2f, 0.92f),
+                270 * (int)panelH).ToArray());
+            var bg = new Bitmap(bgTex, root) { X = bx };
+
+            // Título
+            if (FontManager.Default is not null)
+            {
+                var titleLbl = new Label(FontManager.Default, root)
+                {
+                    Text = $"{up.Title}  (Lv {up.Level + 1})",
+                    X    = bx + 10, Y = 12, Z = 1001,
+                    Color = Microsoft.Xna.Framework.Color.White
+                };
+                var descLbl = new Label(FontManager.Default, root)
+                {
+                    Text = up.Desc,
+                    X    = bx + 10, Y = 48, Z = 1001,
+                    Color = new Microsoft.Xna.Framework.Color(0.8f, 0.8f, 0.8f)
+                };
+            }
+
+            // Botão invisível cobrindo o painel — Object2D simples com dimensões do painel
+            var btnObj = new Object2D(root) { X = bx, Y = 0f, Z = 1002 };
+            var btn = new Button(btnObj);
+            btn.ClickOverride = () =>
+            {
+                capturedUp.Level++;
+                _onUpgradeChosen?.Call(capturedUp.Id, capturedUp.Level);
+                HideUpgrades();
+            };
+            _buttons.Add(btn);
+        }
+    }
+
+    /// <summary>aegis.hideUpgrades() — fecha o menu de upgrades manualmente.</summary>
+    public void HideUpgrades()
+    {
+        _upgradeMenuRoot?.RemoveFromParent();
+        _upgradeMenuRoot = null;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // AUDIO SPATIAL 3D MELHORADO
+    // Rolloff curvo (quadrático), pan estéreo correto, oclusão via raycast
+    // ══════════════════════════════════════════════════════════════════════
+
+    /// <summary>aegis.playSoundAt3D(file, x, y, opts)
+    /// opts: {maxDist=600, volume=1, rolloff="quadratic"|"linear", occlusion=false}
+    /// Substitui playSoundAt com qualidade de áudio melhorada.</summary>
+    public void PlaySoundAt3D(string file, float x, float y, LuaTable? opts = null)
+    {
+        float maxDist   = TableFloat(opts, "maxDist",  600f);
+        float volume    = TableFloat(opts, "volume",   1f);
+        string rolloff  = opts?["rolloff"] as string ?? "quadratic";
+        bool occlusion  = opts?["occlusion"] is bool b && b;
+
+        float camCx = Camera2D.Instance.X + Camera2D.Instance.ViewWidth  * 0.5f;
+        float camCy = Camera2D.Instance.Y + Camera2D.Instance.ViewHeight * 0.5f;
+
+        float dx   = x - camCx;
+        float dy   = y - camCy;
+        float dist = MathF.Sqrt(dx * dx + dy * dy);
+
+        if (dist >= maxDist) return;
+
+        // Rolloff: linear ou quadrático
+        float atten = rolloff == "quadratic"
+            ? MathF.Pow(1f - dist / maxDist, 2f)
+            : 1f - dist / maxDist;
+
+        // Oclusão: verifica se há sólido entre câmera e fonte (raycast)
+        if (occlusion)
+        {
+            var hit = CollisionSystem.Instance.Raycast(
+                new Microsoft.Xna.Framework.Vector2(camCx, camCy),
+                new Microsoft.Xna.Framework.Vector2(dx, dy),
+                dist, ~0);
+            if (hit is not null) atten *= 0.25f; // reduz volume se obstruído
+        }
+
+        // Pan estéreo baseado em ângulo horizontal da câmera
+        float pan = Math.Clamp(dx / (Camera2D.Instance.ViewWidth * 0.5f), -1f, 1f);
+        pan = MathF.Sign(pan) * MathF.Pow(MathF.Abs(pan), 0.7f); // curva de pan mais suave
+
+        Aegis.Audio.AudioManager.PlaySound(file, volume * atten, 0f, pan);
     }
 
     public void Dispose() => _lua.Dispose();

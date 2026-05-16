@@ -86,6 +86,8 @@ public sealed class Rigidbody2D
     // possa ler a posição sem precisar navegar pela hierarquia da cena.
     internal float X;
     internal float Y;
+    /// <summary>Sprint 4: posição X do frame anterior — usada pelo moving platform carry.</summary>
+    internal float PrevX;
 
     // ── Estado privado ────────────────────────────────────────────────────────
     private int _coyoteTimer;  // janela após deixar o chão; pulo ainda permitido
@@ -129,6 +131,7 @@ public sealed class Rigidbody2D
         if (MathF.Abs(Owner.Y - Y) > TeleportThreshold)
             VelocityY = 0f;
 
+        PrevX = X;   // Sprint 4: salvar posição anterior para moving platform carry
         X = Owner.X;
         Y = Owner.Y;
     }

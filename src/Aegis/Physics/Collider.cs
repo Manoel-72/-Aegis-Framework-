@@ -6,15 +6,26 @@ namespace Aegis.Physics;
 public enum ColliderShape
 {
     AABB,
-    Circle
+    Circle,
+    /// <summary>
+    /// Triângulo retângulo (ramp).
+    /// Definido por SlopeDir (Left/Right) e Height — largura = Width do collider.
+    /// A base está no fundo do AABB envolvente; o vértice alto está no topo do lado indicado.
+    /// Ex: SlopeDir.Right = rampa subindo da esquerda para a direita.
+    /// </summary>
+    Slope
 }
+
+/// <summary>Direção do vértice alto da rampa.</summary>
+public enum SlopeDir { Right, Left }
 
 /// <summary>
 /// Componente de colisão acoplado a um Object2D.
 ///
 /// Shape:
-/// - AABB: retângulo padrão, usado pela resolução física por eixo.
-/// - Circle: círculo para detecção/trigger; colisões sólidas continuam sendo resolvidas apenas por AABB.
+/// - AABB:   retângulo padrão, resolução física por eixo.
+/// - Circle: círculo para detecção/trigger.
+/// - Slope:  triângulo de rampa — resolução Y via interpolação da superfície inclinada.
 ///
 /// Layer / Mask: bitmask de colisão.
 /// Trigger: apenas detecta sobreposição, sem resolução física.
@@ -31,13 +42,35 @@ public sealed class Collider
     public float Width   { get; set; }
     public float Height  { get; set; }
 
-    public ColliderShape Shape { get; set; } = ColliderShape.AABB;
-    public float Radius { get; set; }
+    public ColliderShape Shape   { get; set; } = ColliderShape.AABB;
+    public float         Radius  { get; set; }
 
-    public int  Layer   { get; set; } = 1;
-    public int  Mask    { get; set; } = ~0;
+    // ── Slope ────────────────────────────────────────────────────────────
+    /// <summary>Direção do vértice alto. Só relevante quando Shape == Slope.</summary>
+    public SlopeDir SlopeDirection { get; set; } = SlopeDir.Right;
+
+    /// <summary>
+    /// Retorna a altura Y da superfície da rampa para uma posição X no espaço de mundo.
+    /// Retorna float.MaxValue se X estiver fora da rampa.
+    /// </summary>
+    public float GetSlopeSurfaceY(float worldX)
+    {
+        var b = Bounds;
+        if (worldX < b.Left || worldX > b.Right) return float.MaxValue;
+        float t = (worldX - b.Left) / b.Width;   // 0..1
+        // SlopeDir.Right: topo à direita  → Y desce de cima-esq (topo) para baixo-dir (base)
+        // SlopeDir.Left:  topo à esquerda → Y desce de cima-dir para baixo-esq
+        float surfaceY = SlopeDirection == SlopeDir.Right
+            ? b.Top    + (1f - t) * b.Height   // esq=topo, dir=base
+            : b.Top    + t        * b.Height;  // esq=base, dir=topo
+        return surfaceY;
+    }
+
+    public int  Layer     { get; set; } = 1;
+    public int  Mask      { get; set; } = ~0;
     public bool IsTrigger { get; set; } = false;
-    public bool IsActive { get; set; } = true;
+    public bool IsActive  { get; set; } = true;
+    public bool IsOneWay  { get; set; } = false;
 
     // Callbacks Lua
     internal Action<Collider, Collider>? OnCollideEnter;

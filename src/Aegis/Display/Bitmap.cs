@@ -26,6 +26,12 @@ public class Bitmap : Object2D
         parent?.AddChild(this);
     }
 
+    public Bitmap(Texture2D? texture, Object2D parent)
+    {
+        Texture = texture;
+        parent.AddChild(this);
+    }
+
     public override void Draw(SpriteBatch sb, float inheritedAlpha = 1f)
     {
         if (!Visible || Texture is null) return;

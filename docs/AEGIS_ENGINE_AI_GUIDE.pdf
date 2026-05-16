@@ -1,0 +1,148 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [ 3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R 21 0 R 23 0 R 25 0 R ] /Count 12 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1909 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL () Tj T* (AEGIS ENGINE AI GUIDE) Tj T* () Tj T* () Tj T* (Documento para orientar IAs e agentes de codigo a entender, modificar e criar jogos na) Tj T* (Aegis Engine.) Tj T* () Tj T* (Versao observada do projeto: Aegis Engine v0.98/v0.99 em desenvolvimento.) Tj T* () Tj T* () Tj T* (1. O que e a Aegis Engine) Tj T* () Tj T* (Aegis Engine e uma engine/framework 2D em C#/.NET 8 usando MonoGame DesktopGL como) Tj T* (backend grafico e NLua para scripting Lua.) Tj T* () Tj T* (O objetivo pratico e permitir que jogos sejam escritos em Lua usando uma API global) Tj T* (chamada `aegis.*`, enquanto o runtime, renderizacao, audio, input, fisica, cena,) Tj T* (recursos e build ficam implementados em C#.) Tj T* () Tj T* () Tj T* (2. Estrutura do repositorio) Tj T* () Tj T* (Principais pastas:) Tj T* () Tj T* (- `src/Aegis/`: nucleo da engine.) Tj T* (- `src/Aegis.CLI/`: ferramenta de linha de comando `aegis`.) Tj T* (- `AegisEditor/`: editor visual desktop em Avalonia.) Tj T* (- `templates/`: modelos de jogos \(`platformer`, `topdown`, `puzzle`\).) Tj T* (- `demo-platformer/`: demo de plataforma.) Tj T* (- `zone-recon/`: jogo top-down shooter de exemplo.) Tj T* (- `physics-lab/`: laboratorio/demo de fisica.) Tj T* (- `card-battle/`: prototipo de jogo de cartas criado como projeto separado.) Tj T* (- `docs/`: documentacao.) Tj T* () Tj T* (Arquivos importantes:) Tj T* () Tj T* (- `Aegis.sln`: solucao principal.) Tj T* (- `src/Aegis/Core/AegisGame.cs`: loop principal MonoGame.) Tj T* (- `src/Aegis/Scripting/LuaRuntime.cs`: registra a API `aegis.*`.) Tj T* (- `src/Aegis.CLI/Program.cs`: CLI para run, new, build, publish, doctor, update.) Tj T* () Tj T* () Tj T* (3. Padrao de projeto de jogo) Tj T* () Tj T* (Cada jogo deve viver em sua propria pasta. Nao misture um jogo novo dentro de outro jogo) Tj T* (existente.) Tj T* () Tj T* (Estrutura recomendada:) Tj T* ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 1107 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL () Tj T* (meu-jogo/) Tj T* (main.lua) Tj T* (aegis.toml) Tj T* (aegis.cfg) Tj T* (README.md) Tj T* (scenes/) Tj T* (menu.lua) Tj T* (game.lua) Tj T* (win.lua) Tj T* (gameover.lua) Tj T* (res/) Tj T* (sprites/) Tj T* (audio/) Tj T* (fonts/) Tj T* (tilemaps/) Tj T* (saves/) Tj T* (save.json) Tj T* () Tj T* (Exemplo de `aegis.toml`:) Tj T* () Tj T* (title = "Meu Jogo") Tj T* (width = 1280) Tj T* (height = 720) Tj T* () Tj T* () Tj T* (4. Como rodar) Tj T* () Tj T* (Via wrapper local:) Tj T* () Tj T* (.\\aegis.cmd run card-battle) Tj T* () Tj T* (Via dotnet direto:) Tj T* () Tj T* (dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- run card-battle) Tj T* () Tj T* (Comandos principais da CLI:) Tj T* () Tj T* (aegis run <pasta-do-jogo>) Tj T* (aegis new <nome>) Tj T* (aegis new platformer|topdown|puzzle <nome>) Tj T* (aegis build <pasta-do-jogo> --target win-x64|linux-x64|osx-x64|osx-arm64|web) Tj T* (aegis publish <pasta-do-jogo> --itch usuario/jogo --target win-x64) Tj T* (aegis doctor) Tj T* (aegis update) Tj T* () Tj T* () Tj T* (5. Ciclo de vida Lua) Tj T* ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 1358 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL () Tj T* (Todo jogo Lua usa funcoes globais especiais:) Tj T* () Tj T* (function aegis_init\(\)) Tj T* (-- chamado quando a cena/script e carregado) Tj T* (end) Tj T* () Tj T* (function aegis_update\(dt\)) Tj T* (-- chamado a cada frame; dt em segundos) Tj T* (end) Tj T* () Tj T* (function aegis_draw\(\)) Tj T* (-- desenho manual opcional em coordenadas de mundo/camera) Tj T* (end) Tj T* () Tj T* (function aegis_draw_ui\(\)) Tj T* (-- desenho manual opcional sem transformacao de camera) Tj T* (end) Tj T* () Tj T* (Um `main.lua` tipico registra cenas e abre o menu:) Tj T* () Tj T* (GAME = { score = 0 }) Tj T* (local booted = false) Tj T* () Tj T* (function aegis_init\(\)) Tj T* (aegis.registerScene\("menu", "scenes/menu.lua"\)) Tj T* (aegis.registerScene\("game", "scenes/game.lua"\)) Tj T* (booted = false) Tj T* (end) Tj T* () Tj T* (function aegis_update\(dt\)) Tj T* (if not booted then) Tj T* (booted = true) Tj T* (aegis.transitionTo\("menu", "none", 0.01\)) Tj T* (end) Tj T* (end) Tj T* () Tj T* (function aegis_draw\(\) end) Tj T* () Tj T* () Tj T* (6. Cenas) Tj T* () Tj T* (Use `aegis.registerScene\(nome, caminho\)` para registrar uma cena e) Tj T* (`aegis.transitionTo\(nome, efeito, duracao\)` para trocar.) Tj T* () Tj T* (Exemplo:) Tj T* () Tj T* (aegis.registerScene\("win", "scenes/win.lua"\)) Tj T* ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 10 0 R >>
+endobj
+10 0 obj
+<< /Length 1593 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL (aegis.transitionTo\("win", "fade", 0.35\)) Tj T* () Tj T* (Recomendacao para IA:) Tj T* () Tj T* (- Use cenas separadas para menu, gameplay, vitoria e derrota.) Tj T* (- Chame `aegis.clearAll\(\)` no `aegis_init` de cada cena para limpar objetos anteriores.) Tj T* (- Chame `aegis.setCameraOff\(\)` em menus/HUDs fixos quando existir.) Tj T* () Tj T* () Tj T* (7. Texto e fontes) Tj T* () Tj T* (Importante: `aegis.newLabel\(\)` so desenha se houver uma fonte carregada. A fonte padrao) Tj T* (pode estar nula ate `aegis.loadFont\(\)` ser usado.) Tj T* () Tj T* (Padrao seguro:) Tj T* () Tj T* (local ui_font = nil) Tj T* () Tj T* (local function load_ui_font\(\)) Tj T* (if not \(aegis.loadFont and aegis.setFont\) then return end) Tj T* (local candidates = {) Tj T* ("Inter-Regular.ttf",) Tj T* ("Roboto-Regular.ttf",) Tj T* ("C:/Windows/Fonts/segoeui.ttf",) Tj T* ("C:/Windows/Fonts/arial.ttf") Tj T* (}) Tj T* (for _, path in ipairs\(candidates\) do) Tj T* (local ok, font = pcall\(aegis.loadFont, path, 20\)) Tj T* (if ok and font then ui_font = font; return end) Tj T* (end) Tj T* (end) Tj T* () Tj T* (local function label\(text, x, y\)) Tj T* (local l = aegis.newLabel\(text\)) Tj T* (if ui_font then pcall\(aegis.setFont, l, ui_font\) end) Tj T* (aegis.setPosition\(l, x, y\)) Tj T* (return l) Tj T* (end) Tj T* () Tj T* (Arquivos TTF devem ficar em `res/fonts/`. O `FontManager` usa raiz `res/fonts`.) Tj T* () Tj T* () Tj T* (8. Assets) Tj T* () Tj T* (Raizes comuns:) Tj T* () Tj T* (- Sprites e imagens: `res/`) Tj T* (- Audio: `res/audio/`) Tj T* ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 12 0 R >>
+endobj
+12 0 obj
+<< /Length 1680 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL (- Fontes: `res/fonts/`) Tj T* (- Tilemaps: normalmente em `res/tilemaps/`) Tj T* () Tj T* (`aegis.newSprite\("sprites/player.png"\)` carrega `res/sprites/player.png`.) Tj T* () Tj T* (`aegis.playSound\("click.wav"\)` carrega `res/audio/click.wav`.) Tj T* () Tj T* (`aegis.loadFont\("Inter-Regular.ttf", 20\)` carrega `res/fonts/Inter-Regular.ttf`.) Tj T* () Tj T* () Tj T* (9. API Lua principal) Tj T* () Tj T* (Core e objetos) Tj T* () Tj T* (- `aegis.newSprite\(path\)`) Tj T* (- `aegis.newRect\(w, h, r, g, b\)`) Tj T* (- `aegis.removeObject\(obj\)`) Tj T* (- `aegis.clearAll\(\)`) Tj T* (- `aegis.worldClear\(\)`) Tj T* (- `aegis.log\(text\)`) Tj T* () Tj T* (Transform) Tj T* () Tj T* (- `aegis.setPosition\(obj, x, y\)`) Tj T* (- `aegis.setPositionNorm\(obj, nx, ny\)`) Tj T* (- `aegis.move\(obj, dx, dy\)`) Tj T* (- `aegis.setScale\(obj, sx, sy\)`) Tj T* (- `aegis.setRotation\(obj, radians\)`) Tj T* (- `aegis.setAlpha\(obj, alpha\)`) Tj T* (- `aegis.setVisible\(obj, bool\)`) Tj T* (- `aegis.setPivot\(bitmap, px, py\)`) Tj T* (- `aegis.setZ\(obj, z\)`) Tj T* (- `aegis.getX\(obj\)`, `aegis.getY\(obj\)`) Tj T* (- `aegis.getWidth\(bitmap\)`, `aegis.getHeight\(bitmap\)`) Tj T* () Tj T* (Labels e texto) Tj T* () Tj T* (- `aegis.newLabel\(text\)`) Tj T* (- `aegis.setText\(label, text\)`) Tj T* (- `aegis.setColor\(label, r, g, b, a?\)`) Tj T* (- `aegis.loadFont\(file, size\)`) Tj T* (- `aegis.setFont\(label, font\)`) Tj T* (- `aegis.newRichLabel\(markup\)`) Tj T* (- `aegis.setMarkup\(richLabel, markup\)`) Tj T* () Tj T* (Observacao: `setColor` e para `Label`. Nao use em retangulos criados com `newRect`.) Tj T* () Tj T* (Input) Tj T* ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 14 0 R >>
+endobj
+14 0 obj
+<< /Length 1892 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL () Tj T* (- `aegis.keyDown\(key\)`) Tj T* (- `aegis.keyPressed\(key\)`) Tj T* (- `aegis.mouseX\(\)`, `aegis.mouseY\(\)`) Tj T* (- `aegis.mouseLeft\(\)`, `aegis.mouseLeftJust\(\)`) Tj T* (- `aegis.mouseRight\(\)`, `aegis.mouseRightJust\(\)`) Tj T* (- `aegis.mouseScroll\(\)`) Tj T* (- `aegis.padConnected\(index\)`) Tj T* (- `aegis.padDown\(index, button\)`) Tj T* (- `aegis.padPressed\(index, button\)`) Tj T* (- `aegis.padAxis\(index, axis\)`) Tj T* (- `aegis.padVibrate\(index, left, right, seconds\)`) Tj T* () Tj T* (Tela e desenho manual) Tj T* () Tj T* (- `aegis.screenWidth\(\)`, `aegis.screenHeight\(\)`) Tj T* (- `aegis.drawText\(text, x, y, r, g, b\)`) Tj T* (- `aegis.drawRect\(x, y, w, h, r, g, b\)`) Tj T* (- `aegis.drawLine\(x1, y1, x2, y2, r, g, b\)`) Tj T* (- `aegis.drawCircle\(x, y, radius, r, g, b\)`) Tj T* () Tj T* (Camera) Tj T* () Tj T* (- `aegis.setCameraTarget\(obj, speed?\)`) Tj T* (- `aegis.setCameraOff\(\)`) Tj T* (- `aegis.setCameraZoom\(zoom\)`) Tj T* (- `aegis.setCameraOffset\(x, y\)`) Tj T* (- `aegis.setCameraLimits\(left, top, right, bottom\)`) Tj T* (- `aegis.setCameraDeadzone\(w, h\)`) Tj T* (- `aegis.setCameraLookahead\(distance, speed?\)`) Tj T* (- `aegis.cameraX\(\)`, `aegis.cameraY\(\)`) Tj T* (- `aegis.screenToWorldX\(x, y\)`) Tj T* (- `aegis.screenToWorldY\(x, y\)`) Tj T* (- `aegis.setCameraAutozoom\(enabled, opts\)`) Tj T* () Tj T* (Audio) Tj T* () Tj T* (- `aegis.playSound\(file\)`) Tj T* (- `aegis.playSoundEx\(file, volume, pitch, pan\)`) Tj T* (- `aegis.playSoundAt\(file, x, y, opts?\)`) Tj T* (- `aegis.playMusic\(file, loop?\)`) Tj T* (- `aegis.stopMusic\(\)`) Tj T* (- `aegis.pauseMusic\(\)`) Tj T* (- `aegis.resumeMusic\(\)`) Tj T* (- `aegis.setSfxVolume\(value\)`) Tj T* (- `aegis.setMusicVolume\(value\)`) Tj T* (- `aegis.musicPlaying\(\)`) Tj T* (- `aegis.setGroupVolume\(group, volume\)`) Tj T* ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 16 0 R >>
+endobj
+16 0 obj
+<< /Length 1897 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL (- `aegis.crossfadeTo\(file, seconds?\)`) Tj T* () Tj T* (Fisica e colisao) Tj T* () Tj T* (Regra simples:) Tj T* () Tj T* (- Chao, parede e plataforma parada: `Collider` apenas.) Tj T* (- Player, inimigo e caixa dinamica: `Rigidbody + Collider`.) Tj T* (- Item coletavel: `Collider + Trigger`.) Tj T* () Tj T* (APIs:) Tj T* () Tj T* (- `aegis.addCollider\(obj, w, h, offX?, offY?\)`) Tj T* (- `aegis.addCircleCollider\(obj, radius, offX?, offY?\)`) Tj T* (- `aegis.addSlopeCollider\(obj, w, h, dir, offX?, offY?\)`) Tj T* (- `aegis.setSlopeDir\(collider, "left"|"right"\)`) Tj T* (- `aegis.removeCollider\(collider\)`) Tj T* (- `aegis.setColliderLayer\(collider, layer\)`) Tj T* (- `aegis.setColliderMask\(collider, mask\)`) Tj T* (- `aegis.setTrigger\(collider, bool\)`) Tj T* (- `aegis.setOneWay\(collider, bool\)`) Tj T* (- `aegis.setColliderOffset\(collider, x, y\)`) Tj T* (- `aegis.onCollide\(collider, callback\)`) Tj T* (- `aegis.onCollideEnter\(collider, callback\)`) Tj T* (- `aegis.onCollideExit\(collider, callback\)`) Tj T* (- `aegis.getColliderOf\(obj\)`) Tj T* () Tj T* (Rigidbody:) Tj T* () Tj T* (- `aegis.addRigidbody\(obj\)`) Tj T* (- `aegis.removeRigidbody\(obj\)`) Tj T* (- `aegis.setVelocity\(rb, vx, vy\)`) Tj T* (- `aegis.setVelocityX\(rb, vx\)`) Tj T* (- `aegis.addImpulseY\(rb, vy\)`) Tj T* (- `aegis.setVel\(rb, vx, vy\)`) Tj T* (- `aegis.setVelX\(rb, vx\)`) Tj T* (- `aegis.jumpY\(rb, vy\)`) Tj T* (- `aegis.addVelocity\(rb, dvx, dvy\)`) Tj T* (- `aegis.getVelocityX\(rb\)`, `aegis.getVelocityY\(rb\)`) Tj T* (- `aegis.setGravity\(rb, scale\)`) Tj T* (- `aegis.setGroundFriction\(rb, value\)`) Tj T* (- `aegis.setGlobalGravity\(value\)`) Tj T* (- `aegis.setKinematic\(rb, bool\)`) Tj T* (- `aegis.isGrounded\(rb\)`) Tj T* (- `aegis.isTouchingWall\(rb\)`) Tj T* (- `aegis.wallSide\(rb\)`) Tj T* () Tj T* (Sprites, animacao e atlas) Tj T* ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 18 0 R >>
+endobj
+18 0 obj
+<< /Length 2094 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL () Tj T* (- `aegis.setFrame\(sprite, x, y, w, h\)`) Tj T* (- `aegis.clearFrame\(sprite\)`) Tj T* (- `aegis.loadAtlas\(file\)`) Tj T* (- `aegis.setAtlasFrame\(sprite, atlas, frameName\)`) Tj T* (- `aegis.newAnim\(path, frameW, frameH\)`) Tj T* (- `aegis.playAnim\(anim, start, end, loop, fps\)`) Tj T* (- `aegis.stopAnim\(anim\)`) Tj T* (- `aegis.resumeAnim\(anim\)`) Tj T* (- `aegis.animFrame\(anim\)`) Tj T* (- `aegis.animPlaying\(anim\)`) Tj T* (- `aegis.newAnimator\(sprite, frameW, frameH\)`) Tj T* (- `aegis.addClip\(animator, name, frames, fps, loop?\)`) Tj T* (- `aegis.play\(animator, clipName, restart?\)`) Tj T* (- `aegis.stopAnimator\(animator\)`) Tj T* (- `aegis.currentClip\(animator\)`) Tj T* (- `aegis.newAtlasAnimator\(sprite, atlas\)`) Tj T* (- `aegis.addAtlasClip\(animator, name, frameNames, fps, loop?\)`) Tj T* () Tj T* (Tilemap, mundo e pathfinding) Tj T* () Tj T* (- `aegis.loadTilemap\(file\)`) Tj T* (- `aegis.generateTilemap\(tileset, cols, rows, tileW, tileH, seed, scale\)`) Tj T* (- `aegis.setTile\(tilemap, layer, x, y, gid\)`) Tj T* (- `aegis.getTile\(tilemap, layer, x, y\)`) Tj T* (- `aegis.setTileCulling\(tilemap, enabled, margin?\)`) Tj T* (- `aegis.buildTilemapColliders\(tilemap, layer?\)`) Tj T* (- `aegis.clearTilemapColliders\(tilemap\)`) Tj T* (- `aegis.tilemapColliderCount\(tilemap\)`) Tj T* (- `aegis.newNavGrid\(cols, rows, cellSize\)`) Tj T* (- `aegis.navFromTilemap\(tilemap, layer?\)`) Tj T* (- `aegis.navFindPath\(nav, sx, sy, tx, ty\)`) Tj T* (- `aegis.navSetSolid\(nav, x, y, bool\)`) Tj T* (- `aegis.navIsSolid\(nav, x, y\)`) Tj T* (- `aegis.perlin\(x, y, seed, octaves, scale\)`) Tj T* () Tj T* (Triggers e areas) Tj T* () Tj T* (- `aegis.newAreaTrigger\(name, x, y, w, h\)`) Tj T* (- `aegis.onTriggerEnter\(trigger, callback\)`) Tj T* (- `aegis.onTriggerStay\(trigger, callback\)`) Tj T* (- `aegis.onTriggerExit\(trigger, callback\)`) Tj T* (- `aegis.checkTrigger\(trigger, obj\)`) Tj T* (- `aegis.clearTriggers\(\)`) Tj T* () Tj T* (Save, config e debug) Tj T* () Tj T* (- `aegis.save\(key, value\)`) Tj T* ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 20 0 R >>
+endobj
+20 0 obj
+<< /Length 1851 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL (- `aegis.load\(key\)`) Tj T* (- `aegis.loadConfig\(\)`) Tj T* (- `aegis.setFullscreen\(bool\)`) Tj T* (- `aegis.setResolution\(width, height\)`) Tj T* (- `aegis.setHotReload\(bool\)`) Tj T* () Tj T* (Arquivos:) Tj T* () Tj T* (- `saves/save.json`: persistencia local.) Tj T* (- `aegis.cfg`: janela/fullscreen/vsync.) Tj T* () Tj T* (Efeitos, tween e particulas) Tj T* () Tj T* (- `aegis.burst\(x, y, opts\)`) Tj T* (- `aegis.newEmitter\(x, y, opts\)`) Tj T* (- `aegis.stopEmitter\(emitter\)`) Tj T* (- `aegis.tween\(obj, props, seconds, easing, callback?, opts?\)`) Tj T* (- `aegis.newSequence\(\)`) Tj T* (- `aegis.seqAdd\(sequence, obj, props, seconds, easing?\)`) Tj T* (- `aegis.seqWait\(sequence, seconds\)`) Tj T* (- `aegis.seqPlay\(sequence\)`) Tj T* (- `aegis.seqStop\(sequence\)`) Tj T* (- `aegis.fadeIn\(seconds\)`) Tj T* (- `aegis.fadeOut\(seconds\)`) Tj T* (- `aegis.flashScreen\(color, seconds\)`) Tj T* (- `aegis.screenShake\(intensity, duration\)`) Tj T* (- `aegis.setShader\(obj, name, opts?\)`) Tj T* (- `aegis.clearShader\(obj\)`) Tj T* (- `aegis.setScreenShader\(name, opts?\)`) Tj T* (- `aegis.clearScreenShader\(\)`) Tj T* () Tj T* (UI e interacao) Tj T* () Tj T* (- `aegis.newPanel\(...\)`) Tj T* (- `aegis.setPanelSize\(panel, w, h\)`) Tj T* (- `aegis.newFlow\(...\)`) Tj T* (- `aegis.flowAdd\(flow, obj\)`) Tj T* (- `aegis.flowLayout\(flow\)`) Tj T* (- `aegis.flowSet\(flow, opts\)`) Tj T* (- `aegis.newButton\(obj, onClick\)`) Tj T* (- `aegis.onHover\(obj, callback\)`) Tj T* (- `aegis.onPress\(obj, callback\)`) Tj T* (- `aegis.floatText\(x, y, text, opts\)`) Tj T* (- `aegis.newProgressBar\(x, y, w, h\)`) Tj T* (- `aegis.setBarValue\(bar, current, max\)`) Tj T* (- `aegis.setBarColors\(bar, opts\)`) Tj T* (- `aegis.newDraggable\(obj\)`) Tj T* (- `aegis.onDragStart\(obj, callback\)`) Tj T* ET
+endstream
+endobj
+21 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 22 0 R >>
+endobj
+22 0 obj
+<< /Length 2164 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL (- `aegis.onDragMove\(obj, callback\)`) Tj T* (- `aegis.onDragEnd\(obj, callback\)`) Tj T* (- `aegis.getDragTarget\(\)`) Tj T* (- `aegis.bringToFront\(obj\)`) Tj T* (- `aegis.sendToBack\(obj\)`) Tj T* (- `aegis.setZRelative\(obj, delta\)`) Tj T* (- `aegis.newHand\(cx, cy, opts\)`) Tj T* (- `aegis.handAdd\(hand, obj\)`) Tj T* (- `aegis.handRemove\(hand, obj\)`) Tj T* (- `aegis.handLayout\(hand\)`) Tj T* (- `aegis.handSetHover\(hand, index\)`) Tj T* () Tj T* (Gameplay helpers) Tj T* () Tj T* (- `aegis.getTime\(\)`) Tj T* (- `aegis.lookAt\(obj, tx, ty\)`) Tj T* (- `aegis.overlapCircle\(x, y, radius, mask?\)`) Tj T* (- `aegis.overlapRect\(x, y, w, h, mask?\)`) Tj T* (- `aegis.raycast\(ox, oy, dx, dy, length\)`) Tj T* (- `aegis.raycastMask\(ox, oy, dx, dy, length, mask\)`) Tj T* (- `aegis.lineOfSight\(ax, ay, bx, by, mask?\)`) Tj T* (- `aegis.newPool\(spritePath, initialSize\)`) Tj T* (- `aegis.poolGet\(pool, x, y\)`) Tj T* (- `aegis.poolReturn\(pool, obj\)`) Tj T* (- `aegis.poolClear\(pool\)`) Tj T* (- `aegis.poolCount\(pool\)`) Tj T* () Tj T* (Upgrade system) Tj T* () Tj T* (- `aegis.addUpgrade\(id, title, desc, opts\)`) Tj T* (- `aegis.onUpgradeChosen\(callback\)`) Tj T* (- `aegis.getUpgradeLevel\(id\)`) Tj T* (- `aegis.showUpgrades\(count\)`) Tj T* (- `aegis.hideUpgrades\(\)`) Tj T* () Tj T* () Tj T* (10. Boas praticas para IAs) Tj T* () Tj T* (1. Crie jogos novos em pastas novas. Nao altere `zone-recon`, `demo-platformer` ou) Tj T* (`physics-lab` para prototipos novos, a menos que o usuario peca explicitamente.) Tj T* (2. Use `aegis.clearAll\(\)` no inicio de cada cena.) Tj T* (3. Carregue fonte antes de criar labels.) Tj T* (4. Use `pcall` para APIs opcionais quando a compatibilidade importar.) Tj T* (5. Nao use `setColor` em retangulos; recrie o retangulo ou mude labels/overlays.) Tj T* (6. Use `aegis.playSoundEx` para volume/pitch/pan; `playSound` aceita apenas arquivo.) Tj T* (7. Salve progresso com `aegis.save` em valores simples.) Tj T* (8. Em UI, mantenha hitboxes manuais se `newButton` nao for necessario.) Tj T* (9. Em jogos com camera, use `screenToWorldX/Y` para converter mouse.) Tj T* ET
+endstream
+endobj
+23 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 24 0 R >>
+endobj
+24 0 obj
+<< /Length 1586 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL (10. Para menus, desligue a camera com `aegis.setCameraOff\(\)`.) Tj T* () Tj T* () Tj T* (11. Exemplo minimo de menu) Tj T* () Tj T* (local title) Tj T* () Tj T* (local function load_font\(\)) Tj T* (local ok, font = pcall\(aegis.loadFont, "Inter-Regular.ttf", 24\)) Tj T* (return ok and font or nil) Tj T* (end) Tj T* () Tj T* (function aegis_init\(\)) Tj T* (aegis.clearAll\(\)) Tj T* (if aegis.setCameraOff then aegis.setCameraOff\(\) end) Tj T* (local font = load_font\(\)) Tj T* (local bg = aegis.newRect\(1280, 720, 0.04, 0.05, 0.08\)) Tj T* (aegis.setPosition\(bg, 0, 0\)) Tj T* (title = aegis.newLabel\("MEU JOGO"\)) Tj T* (if font then aegis.setFont\(title, font\) end) Tj T* (aegis.setPosition\(title, 100, 100\)) Tj T* (aegis.setColor\(title, 1.0, 0.8, 0.3\)) Tj T* (end) Tj T* () Tj T* (function aegis_update\(dt\)) Tj T* (if aegis.keyPressed\("Enter"\) then) Tj T* (aegis.transitionTo\("game", "fade", 0.35\)) Tj T* (end) Tj T* (end) Tj T* () Tj T* () Tj T* (12. Exemplo minimo de player com fisica) Tj T* () Tj T* (local player, rb) Tj T* () Tj T* (function aegis_init\(\)) Tj T* (aegis.clearAll\(\)) Tj T* (player = aegis.newRect\(32, 48, 0.2, 0.8, 0.4\)) Tj T* (aegis.setPosition\(player, 100, 100\)) Tj T* (rb = aegis.addRigidbody\(player\)) Tj T* (local col = aegis.addCollider\(player, 32, 48, 0, 0\)) Tj T* (aegis.setColliderLayer\(col, "PLAYER"\)) Tj T* (aegis.setColliderMask\(col, "WORLD"\)) Tj T* (end) Tj T* () Tj T* (function aegis_update\(dt\)) Tj T* (local vx = 0) Tj T* (if aegis.keyDown\("A"\) then vx = vx - 180 end) Tj T* ET
+endstream
+endobj
+25 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 26 0 R >>
+endobj
+26 0 obj
+<< /Length 719 >>
+stream
+BT /F1 10 Tf 50 750 Td 14 TL (if aegis.keyDown\("D"\) then vx = vx + 180 end) Tj T* (aegis.setVelX\(rb, vx\)) Tj T* (if aegis.keyPressed\("Space"\) and aegis.isGrounded\(rb\) then) Tj T* (aegis.jumpY\(rb, -520\)) Tj T* (end) Tj T* (end) Tj T* () Tj T* () Tj T* (13. Estado atual e alertas) Tj T* () Tj T* (O projeto esta em desenvolvimento. Algumas areas possuem APIs registradas e recursos) Tj T* (experimentais. Se a build falhar em arquivos da engine, verifique primeiro) Tj T* (`src/Aegis/Scripting/LuaRuntime.cs`, pois ele concentra muitas APIs e pode conter) Tj T* (trechos em evolucao.) Tj T* () Tj T* (Quando gerar um jogo, prefira depender das APIs ja usadas pelas demos existentes.) Tj T* () Tj T* () Tj T* ET
+endstream
+endobj
+xref
+0 27
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000192 00000 n 
+0000000367 00000 n 
+0000002328 00000 n 
+0000002503 00000 n 
+0000003662 00000 n 
+0000003837 00000 n 
+0000005247 00000 n 
+0000005423 00000 n 
+0000007069 00000 n 
+0000007246 00000 n 
+0000008979 00000 n 
+0000009156 00000 n 
+0000011101 00000 n 
+0000011278 00000 n 
+0000013228 00000 n 
+0000013405 00000 n 
+0000015552 00000 n 
+0000015729 00000 n 
+0000017633 00000 n 
+0000017810 00000 n 
+0000020027 00000 n 
+0000020204 00000 n 
+0000021843 00000 n 
+0000022020 00000 n 
+trailer << /Size 27 /Root 1 0 R >>
+startxref
+22791
+%%EOF

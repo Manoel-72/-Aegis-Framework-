@@ -98,9 +98,11 @@ public sealed class AegisGame : Game
         {
             InputManager.Update();
             _app.Lua.UpdateShake(dt);
-            _app.Lua.TickTime(dt);          // Sprint 2: acumula getTime()
-            _app.Lua.UpdateButtons();       // Sprint 2: atualiza botões interativos
-            _app.Lua.UpdateFloatTexts(dt);  // Sprint 2: move e remove float texts
+            _app.Lua.TickTime(dt);            // Sprint 2: acumula getTime()
+            _app.Lua.UpdateButtons();         // Sprint 2: atualiza botões interativos
+            _app.Lua.UpdateFloatTexts(dt);    // Sprint 2: move e remove float texts
+            _app.Lua.UpdateDraggables();      // Final: drag & drop
+            _app.Lua.UpdateAutozoom(dt);      // Final: câmera autozoom por densidade
             _app.Lua.CallFunction("aegis_update", dt);
 
             _physicsAccumulator = MathF.Min(_physicsAccumulator + dt, MaxFrameDelta);

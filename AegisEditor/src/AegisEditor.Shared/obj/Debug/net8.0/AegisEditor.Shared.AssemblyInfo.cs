@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AegisEditor.Shared")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.98.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+ff20024a88e42d3b3d9a34ddc113c5a07d15a779")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+7fa834bb5d356e0543fe979ed46f84824ee1e284")]
 [assembly: System.Reflection.AssemblyProductAttribute("AegisEditor.Shared")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AegisEditor.Shared")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.98.0.0")]
