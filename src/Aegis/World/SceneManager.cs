@@ -55,12 +55,22 @@ public sealed class SceneManager
             throw new ArgumentException("Nome de cena vazio.", nameof(scene));
         if (!_scenes.ContainsKey(scene) && !File.Exists(scene))
             throw new InvalidOperationException($"[Aegis|Scene] Cena não registrada: {scene}. Use aegis.registerScene(nome, arquivoLua) antes de transitionTo.");
+        scene = scene.Trim();
+        if (_pendingScene is not null && string.Equals(_pendingScene, scene, StringComparison.OrdinalIgnoreCase))
+            return;
+
         _pendingScene = scene;
         _transition = string.IsNullOrWhiteSpace(transition) ? "fade" : transition.ToLowerInvariant();
         _transitionTime = Math.Clamp(duration, 0.01f, 10f);
         _timer = 0f;
         _loading = false;
-        if (_transition == "none") LoadPending();
+        if (_transition == "none")
+        {
+            LoadPending();
+            _pendingScene = null;
+            _loading = false;
+            FadeAlpha = 0f;
+        }
     }
 
     public void AddTrigger(AreaTrigger trigger) => _triggers.Add(trigger);

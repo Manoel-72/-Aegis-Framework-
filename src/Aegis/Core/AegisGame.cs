@@ -35,13 +35,25 @@ public sealed class AegisGame : Game
 
         ConfigManager.Initialize(Directory.GetCurrentDirectory(), app.ScreenWidth, app.ScreenHeight);
 
+        var initialMode = ConfigManager.Current.displayMode ?? "windowed";
+        var initialBorderless = IsBorderlessMode(initialMode);
+        var initialWidth = ConfigManager.Current.windowWidth;
+        var initialHeight = ConfigManager.Current.windowHeight;
+        if (initialBorderless)
+        {
+            var display = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+            initialWidth = display.Width;
+            initialHeight = display.Height;
+        }
+
         _graphics = new GraphicsDeviceManager(this)
         {
-            PreferredBackBufferWidth = ConfigManager.Current.windowWidth,
-            PreferredBackBufferHeight = ConfigManager.Current.windowHeight,
-            IsFullScreen = ConfigManager.Current.fullscreen,
+            PreferredBackBufferWidth = initialWidth,
+            PreferredBackBufferHeight = initialHeight,
+            IsFullScreen = false,
             SynchronizeWithVerticalRetrace = ConfigManager.Current.vsync,
-            PreferMultiSampling = true,
+            PreferMultiSampling = false,
+            HardwareModeSwitch = false,
         };
 
         Content.RootDirectory = "res";
@@ -49,6 +61,8 @@ public sealed class AegisGame : Game
         Window.Title = app.Title;
         IsFixedTimeStep = true;
         TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
+        SetBorderlessWindow(initialBorderless);
+        Window.ClientSizeChanged += (_, _) => SyncViewportSize();
 
         EditorPipeHost.Instance.Attach(this, app);
         EditorPipeHost.Instance.TryStartFromEnvironment();
@@ -56,6 +70,7 @@ public sealed class AegisGame : Game
 
     protected override void LoadContent()
     {
+        DisplayWakeLock.Enable();
         PhysicsWorld.Instance.Reset();
         Rigidbody2D.Gravity = 800f;
         Camera2D.Instance.ResetForNewSession();
@@ -70,6 +85,7 @@ public sealed class AegisGame : Game
 
         Camera2D.Instance.ViewWidth = GraphicsDevice.Viewport.Width;
         Camera2D.Instance.ViewHeight = GraphicsDevice.Viewport.Height;
+        AegisLog.Info("Display", $"mode={ConfigManager.Current.displayMode} viewport={GraphicsDevice.Viewport.Width}x{GraphicsDevice.Viewport.Height} window={Window.ClientBounds.Width}x{Window.ClientBounds.Height}");
 
         WindowIcon.TrySet(Window.Handle, Path.Combine("res", "aegis-logo.png"), GraphicsDevice);
 
@@ -197,21 +213,60 @@ public sealed class AegisGame : Game
     }
 
     public void ApplyWindowConfig(int width, int height, bool fullscreen)
+        => ApplyWindowConfig(width, height, fullscreen ? "borderless" : "windowed");
+
+    public void ApplyWindowConfig(int width, int height, string? displayMode)
     {
+        displayMode = string.IsNullOrWhiteSpace(displayMode) ? "windowed" : displayMode.Trim().ToLowerInvariant();
+        var borderless = IsBorderlessMode(displayMode);
+
         width = Math.Clamp(width, 320, 7680);
         height = Math.Clamp(height, 240, 4320);
+
+        if (borderless)
+        {
+            var display = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+            width = Math.Clamp(display.Width, 320, 7680);
+            height = Math.Clamp(display.Height, 240, 4320);
+        }
+
+        _graphics.HardwareModeSwitch = false;
+        _graphics.IsFullScreen = false;
         _graphics.PreferredBackBufferWidth = width;
         _graphics.PreferredBackBufferHeight = height;
-        _graphics.IsFullScreen = fullscreen;
+        SetBorderlessWindow(borderless);
         _graphics.ApplyChanges();
+
+        if (borderless)
+            Window.Position = Point.Zero;
+
+        SyncViewportSize();
+        AegisLog.Info("Display", $"applied mode={displayMode} viewport={GraphicsDevice.Viewport.Width}x{GraphicsDevice.Viewport.Height} window={Window.ClientBounds.Width}x{Window.ClientBounds.Height}");
+    }
+
+    private static bool IsBorderlessMode(string? displayMode)
+        => displayMode?.Trim().ToLowerInvariant() is "borderless" or "fullscreen" or "fullscreen-borderless";
+
+    private void SyncViewportSize()
+    {
+        if (GraphicsDevice is null) return;
         Camera2D.Instance.ViewWidth = GraphicsDevice.Viewport.Width;
         Camera2D.Instance.ViewHeight = GraphicsDevice.Viewport.Height;
+    }
+
+    private void SetBorderlessWindow(bool enabled)
+    {
+        var type = Window.GetType();
+        var prop = type.GetProperty("IsBorderlessEXT") ?? type.GetProperty("IsBorderless");
+        if (prop is not null && prop.CanWrite && prop.PropertyType == typeof(bool))
+            prop.SetValue(Window, enabled);
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
+            DisplayWakeLock.Disable();
             EditorPipeHost.Instance.Shutdown();
             PhysicsWorld.Instance.Reset();
         }

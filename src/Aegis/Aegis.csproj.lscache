@@ -87,7 +87,9 @@ Physics/
  CollisionSystem.cs
  PhysicsWorld.cs
  Rigidbody2D.cs
-Platform/WindowIcon.cs
+Platform/
+ DisplayWakeLock.cs
+ WindowIcon.cs
 Resource/
  FontManager.cs
  ResManager.cs

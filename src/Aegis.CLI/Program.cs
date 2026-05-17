@@ -150,7 +150,12 @@ static bool ShouldSkipDir(string name)
 static bool ShouldSkipFile(string name)
 {
     var lower = name.ToLowerInvariant();
-    return lower.EndsWith(".zip") || lower.EndsWith(".nupkg") || lower.EndsWith(".user") || lower.EndsWith(".suo") || lower.EndsWith(".tmp");
+    return lower.EndsWith(".zip")
+        || lower.EndsWith(".nupkg")
+        || lower.EndsWith(".user")
+        || lower.EndsWith(".suo")
+        || lower.EndsWith(".tmp")
+        || lower.EndsWith(".log");
 }
 
 static bool IsSubPathOf(string parentDir, string childPath)

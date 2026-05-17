@@ -17,6 +17,18 @@ public sealed class ScreenEffects
     public void FadeOut(float dur = 0.35f) => StartFade(0f, 1f, dur);
     public void Flash(Color color, float dur = 0.12f) { _flashColor = color; _flashDur = MathF.Max(0.01f, dur); _flashT = _flashDur; }
 
+    public void Reset()
+    {
+        _fadeAlpha = 0f;
+        _fadeFrom = 0f;
+        _fadeTo = 0f;
+        _fadeT = 0f;
+        _fadeDur = 0f;
+        _flashT = 0f;
+        _flashDur = 0f;
+        _flashColor = Color.White;
+    }
+
     private void StartFade(float from, float to, float dur)
     {
         _fadeFrom = from; _fadeTo = to; _fadeDur = MathF.Max(0.01f, dur); _fadeT = 0f; _fadeAlpha = from;

@@ -7,6 +7,7 @@ public sealed class AegisConfig
 {
     public int windowWidth { get; set; } = 1280;
     public int windowHeight { get; set; } = 720;
+    public string? displayMode { get; set; }
     public bool fullscreen { get; set; } = false;
     public bool vsync { get; set; } = true;
     public float masterVolume { get; set; } = 1f;
@@ -43,20 +44,30 @@ public static class ConfigManager
         Current.windowWidth = Math.Clamp(width, 320, 7680);
         Current.windowHeight = Math.Clamp(height, 240, 4320);
         Save();
-        AegisGame.Current?.ApplyWindowConfig(Current.windowWidth, Current.windowHeight, Current.fullscreen);
+        AegisGame.Current?.ApplyWindowConfig(Current.windowWidth, Current.windowHeight, Current.displayMode ?? "windowed");
     }
 
     public static void SetFullscreen(bool value)
     {
+        Current.displayMode = value ? "borderless" : "windowed";
         Current.fullscreen = value;
         Save();
-        AegisGame.Current?.ApplyWindowConfig(Current.windowWidth, Current.windowHeight, Current.fullscreen);
+        AegisGame.Current?.ApplyWindowConfig(Current.windowWidth, Current.windowHeight, Current.displayMode);
+    }
+
+    public static void SetDisplayMode(string? mode)
+    {
+        Current.displayMode = NormalizeDisplayMode(mode, Current.fullscreen);
+        Current.fullscreen = Current.displayMode != "windowed";
+        Save();
+        AegisGame.Current?.ApplyWindowConfig(Current.windowWidth, Current.windowHeight, Current.displayMode);
     }
 
     public static object? Load(string key) => key switch
     {
         "windowWidth" or "width" => Current.windowWidth,
         "windowHeight" or "height" => Current.windowHeight,
+        "displayMode" => Current.displayMode,
         "fullscreen" => Current.fullscreen,
         "vsync" => Current.vsync,
         "masterVolume" => Current.masterVolume,
@@ -67,6 +78,22 @@ public static class ConfigManager
     {
         Current.windowWidth = Math.Clamp(Current.windowWidth, 320, 7680);
         Current.windowHeight = Math.Clamp(Current.windowHeight, 240, 4320);
+        Current.displayMode = NormalizeDisplayMode(Current.displayMode, Current.fullscreen);
+        Current.fullscreen = Current.displayMode != "windowed";
         Current.masterVolume = Math.Clamp(Current.masterVolume, 0f, 1f);
+    }
+
+    private static string NormalizeDisplayMode(string? mode, bool legacyFullscreen)
+    {
+        mode = string.IsNullOrWhiteSpace(mode)
+            ? (legacyFullscreen ? "borderless" : "windowed")
+            : mode.Trim().ToLowerInvariant();
+
+        return mode switch
+        {
+            "window" or "windowed" => "windowed",
+            "borderless" or "fullscreen" or "fullscreen-borderless" => "borderless",
+            _ => legacyFullscreen ? "borderless" : "windowed"
+        };
     }
 }

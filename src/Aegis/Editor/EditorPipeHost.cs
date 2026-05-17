@@ -441,7 +441,7 @@ public sealed class EditorPipeHost : IDisposable
                 ScaleX = obj.ScaleX,
                 ScaleY = obj.ScaleY,
                 Rotation = obj.Rotation,
-                TexturePath = (obj as Bitmap)?.Texture?.Name.Replace('\\', '/'),
+                TexturePath = (obj as Bitmap)?.Texture?.Name?.Replace('\\', '/'),
                 Components = [],
                 Children = childrenIds,
                 ParentId = parentId,

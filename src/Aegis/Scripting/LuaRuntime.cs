@@ -272,6 +272,7 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.load",            nameof(Load));
         Reg("aegis.loadConfig",      nameof(LoadConfig));
         Reg("aegis.setFullscreen",   nameof(SetFullscreen));
+        Reg("aegis.setDisplayMode",  nameof(SetDisplayMode));
         Reg("aegis.setResolution",   nameof(SetResolution));
         Reg("aegis.burst",           nameof(Burst));
         Reg("aegis.newEmitter",      nameof(NewEmitter));
@@ -1142,6 +1143,8 @@ end
         _pools.Clear();
         _poolIdSeq   = 0;
         _components.ClearRuntimeState();
+        ScreenEffects.Instance.Reset();
+        ShaderManager.ClearScreenShader();
         _totalTime   = 0f;
     }
 
@@ -1204,6 +1207,7 @@ end
     public object? Load(string key) => SaveManager.Load(key);
     public object? LoadConfig(string key) => ConfigManager.Load(key);
     public void SetFullscreen(bool value) => ConfigManager.SetFullscreen(value);
+    public void SetDisplayMode(string mode) => ConfigManager.SetDisplayMode(mode);
     public void SetResolution(int width, int height) => ConfigManager.SetResolution(width, height);
 
     public void Burst(float x, float y, LuaTable? opts = null)
@@ -1274,6 +1278,7 @@ end
         _lua["aegis_update"]  = null;
         _lua["aegis_draw"]    = null;
         _lua["aegis_draw_ui"] = null;
+        _lua.DoFile(path);
         if (!HasFunction("aegis_init"))
             throw new InvalidOperationException("[Aegis|Lua] Função obrigatória aegis_init não encontrada após reload.");
         CallFunction("aegis_init");
@@ -1323,6 +1328,7 @@ end
         _lua["aegis_update"]  = null;
         _lua["aegis_draw"]    = null;
         _lua["aegis_draw_ui"] = null;
+        _lua.DoFile(full);
         if (!HasFunction("aegis_init"))
             throw new InvalidOperationException($"[Aegis|Lua] Função obrigatória aegis_init não encontrada na cena: {path}");
         CallFunction("aegis_init");

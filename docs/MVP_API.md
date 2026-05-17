@@ -169,8 +169,18 @@ Tipos estaveis para `aegis.create`:
 - `aegis.save`
 - `aegis.load`
 - `aegis.loadConfig`
+- `aegis.setDisplayMode`
 - `aegis.setFullscreen`
 - `aegis.setResolution`
+
+Modos de display estaveis no `aegis.cfg`:
+
+- `"displayMode": "windowed"`: janela normal.
+- `"displayMode": "borderless"`: tela cheia sem borda, recomendado para MVP.
+
+`fullscreen` continua existindo por compatibilidade. Codigo novo deve preferir
+`displayMode`, porque evita fullscreen exclusivo e reduz risco de tela preta em
+drivers/SDL/MonoGame.
 
 ### Tween e particulas simples
 
