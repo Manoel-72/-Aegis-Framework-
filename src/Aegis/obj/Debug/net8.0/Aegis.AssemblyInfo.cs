@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("Aegis 2D Game Engine - Lua scripted, sprites, animator, tilemaps, save/config, pa" +
     "rticles, tween, debug overlay and hot reload"))]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.98.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+5bab71e293a51fbe00cb30106525125139f9b15d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+29cd69e023441611ac8f2b13ec1e0261152c1b84")]
 [assembly: System.Reflection.AssemblyProductAttribute("Aegis")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Aegis")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.98.0.0")]
