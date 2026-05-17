@@ -24,8 +24,40 @@ para templates, exemplos e IA.
 - `aegis.registerScene(name, file)`
 - `aegis.transitionTo(name)`
 - `aegis.clearAll`
+- `aegis.uiClear`
 - `aegis.worldClear`
 - `aegis.destroy(obj)`
+
+### Camada UI / HUD (MVP)
+
+A engine mantem duas raizes de cena:
+
+- **Mundo (`S2D`)**: desenhada em `aegis_draw`, afetada pela camera quando ativa.
+- **UI (`Ui2D`)**: desenhada automaticamente em `aegis_draw_ui`, sempre em espaco de tela.
+
+Para criar HUD, menus e overlays fixos na tela:
+
+1. **Widgets declarativos** (recomendado): `hud = true` ou `layer = "ui"` em `aegis.create`, ou ultimo argumento `true` em `aegis.newLabel`, `aegis.newFlow`, `aegis.newRect`, etc.
+2. **Primitivas imediatas**: `aegis.drawText`, `aegis.drawRect` dentro de `aegis_draw_ui()` (suportam alpha opcional).
+
+Exemplo:
+
+```lua
+local hud = aegis.newFlow("vertical", { gap = 6, padding = 12, hud = true })
+local score = aegis.newLabelSize("Score 0", 18, true)
+aegis.flowAdd(hud, score)
+aegis.setPosition(hud, 16, 16)
+
+function aegis_draw_ui()
+    -- opcional: overlays imediatos
+    aegis.drawRect(0, 0, 4, aegis.screenHeight(), 0, 0, 0, 0.25)
+end
+```
+
+- `aegis.uiClear()` remove apenas objetos da camada UI (util ao trocar overlay sem resetar o mundo).
+- `aegis.clearAll()` limpa mundo **e** UI.
+- Botoes (`aegis.newButton`) em objetos UI usam coordenadas de tela; em objetos de mundo a engine converte via camera.
+- `aegis.floatText(x, y, text, { hud = true })` ou `{ screen = true }` para numeros flutuantes fixos na tela.
 
 ### Criacao de componentes
 
@@ -74,7 +106,10 @@ Tipos estaveis para `aegis.create`:
 - `aegis.setColor(label, r, g, b, a)`
 - `aegis.loadFont(path, size)`
 - `aegis.loadDefaultFont(size)`
-- `aegis.newLabelSize(text, size)`
+- `aegis.newLabel(text, hud)` — ultimo parametro opcional: `true` = camada UI
+- `aegis.newLabelSize(text, size, hud)`
+- `aegis.drawText(text, x, y, r, g, b, a)` — use em `aegis_draw_ui`
+- `aegis.drawRect(x, y, w, h, r, g, b, a)` — use em `aegis_draw_ui`
 - `aegis.newRichLabelSize(markup, size)`
 - `aegis.setFont(label, font)`
 - `aegis.setMarkup(richLabel, markup)`

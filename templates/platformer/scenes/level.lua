@@ -1,6 +1,7 @@
 -- Cena única para 3 fases. Usa tilemap, colisão automática, player, inimigos, coletáveis, HUD e câmera.
-local map, nav, player, rb, playerCol, atlas, anim, hud, scoreLabel, lifeLabel
+local map, nav, player, rb, playerCol, atlas, anim
 local enemies, coins, goal, jumpEmitter = {}, {}, nil, nil
+local hudRoot, hudPhase, hudScore, hudLives
 local levelComplete = false
 local hurtCooldown = 0
 local coyote = 0
@@ -9,6 +10,32 @@ local pendingRemoveCoins = {}
 
 local function levelIndex()
     return math.max(1, math.min(3, GAME.level or 1))
+end
+
+local function syncHud()
+    if not hudPhase then return end
+    local lives = GAME.lives or 0
+    local hearts = ""
+    for _ = 1, math.min(10, lives) do hearts = hearts .. "♥ " end
+    aegis.setText(hudPhase, "Fase " .. tostring(levelIndex()))
+    aegis.setText(hudScore, "Score " .. tostring(GAME.score or 0))
+    aegis.setText(hudLives, "Vidas " .. tostring(lives) .. "  " .. hearts)
+end
+
+local function buildHud()
+    hudRoot = aegis.newFlow("vertical", { gap = 6, padding = 14, align = "start", hud = true })
+    aegis.setPosition(hudRoot, 16, 16)
+    aegis.setZ(hudRoot, 1000)
+    hudPhase = aegis.newLabelSize("Fase " .. tostring(levelIndex()), 20, true)
+    hudScore = aegis.newLabelSize("Score " .. tostring(GAME.score or 0), 18, true)
+    hudLives = aegis.newLabelSize("Vidas " .. tostring(GAME.lives or 3), 18, true)
+    aegis.setColor(hudPhase, 0.72, 0.92, 0.78)
+    aegis.setColor(hudScore, 0.82, 1.0, 0.82)
+    aegis.setColor(hudLives, 1.0, 0.62, 0.62)
+    aegis.flowAdd(hudRoot, hudPhase)
+    aegis.flowAdd(hudRoot, hudScore)
+    aegis.flowAdd(hudRoot, hudLives)
+    aegis.flowLayout(hudRoot)
 end
 
 local function spawnCoin(x, y)
@@ -23,7 +50,7 @@ local function spawnCoin(x, y)
         if collectedCoins[s] then return end
         collectedCoins[s] = true
         GAME.score = (GAME.score or 0) + 10
-        aegis.setText(scoreLabel, "Score " .. GAME.score)
+        syncHud()
         aegis.playSound("coin.wav")
         aegis.burst(aegis.getX(s)+12, aegis.getY(s)+12, { count=18, speed=90, life=0.45, size=3, r=1, g=0.85, b=0.25 })
         pendingRemoveCoins[#pendingRemoveCoins + 1] = s
@@ -35,7 +62,7 @@ local function damagePlayer(enemy)
     if hurtCooldown > 0 then return end
     hurtCooldown = 0.9
     GAME.lives = (GAME.lives or 3) - 1
-    aegis.setText(lifeLabel, "Vida " .. GAME.lives)
+    syncHud()
     aegis.playSoundAt("hurt.wav", aegis.getX(enemy.obj), aegis.getY(enemy.obj), { maxDist = 500 })
     aegis.flashScreen({ r=1, g=0.1, b=0.1 }, 0.12)
     aegis.screenShake(5, 0.18)
@@ -60,21 +87,6 @@ local function spawnEnemy(x, y)
     aegis.setColliderMask(col, "PLAYER")
     aegis.onCollideEnter(col, function(a, b) damagePlayer(e) end)
     enemies[#enemies+1] = e
-end
-
-local function buildHud()
-    local icon = aegis.newSprite("sprites/heart.png")
-    lifeLabel = aegis.newLabel("Vida " .. tostring(GAME.lives or 3))
-    scoreLabel = aegis.newLabel("Score " .. tostring(GAME.score or 0))
-    aegis.setColor(lifeLabel, 1.0, 0.9, 0.92)
-    aegis.setColor(scoreLabel, 0.8, 1.0, 0.8)
-    hud = aegis.newFlow("horizontal", { gap = 10, padding = 10, align = "center" })
-    aegis.flowAdd(hud, icon)
-    aegis.flowAdd(hud, lifeLabel)
-    aegis.flowAdd(hud, scoreLabel)
-    aegis.setPosition(hud, 18, 18)
-    aegis.setZ(hud, 500)
-    aegis.flowLayout(hud)
 end
 
 function aegis_init()
@@ -210,5 +222,7 @@ function aegis_update(dt)
 end
 
 function aegis_draw()
-    aegis.drawText("Fase " .. tostring(levelIndex()) .. "  |  A/D mover, Space pular, controle funciona", 20, 64, 0.75, 0.9, 0.75)
+end
+
+function aegis_draw_ui()
 end

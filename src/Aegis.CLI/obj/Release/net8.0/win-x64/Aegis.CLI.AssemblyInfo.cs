@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Aegis Engine CLI - create, run, build and publish 2D Lua games")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.98.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+56827b1718be6753222760b656aaa9485120255f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.98.0+1f18c0d299e611f35497046fc7c00709f5dc17a1")]
 [assembly: System.Reflection.AssemblyProductAttribute("aegis-cli")]
 [assembly: System.Reflection.AssemblyTitleAttribute("aegis-cli")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.98.0.0")]

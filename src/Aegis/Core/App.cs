@@ -11,7 +11,10 @@ public sealed class App
 {
     public static App Instance { get; private set; } = null!;
 
+    /// <summary>Raiz da cena de mundo (afetada pela câmera quando ativa).</summary>
     public Scene.Scene2D S2D          { get; internal set; } = null!;
+    /// <summary>Raiz da camada UI/HUD (sempre em espaço de tela; desenhada em aegis_draw_ui).</summary>
+    public Scene.Scene2D Ui2D       { get; internal set; } = null!;
     public LuaRuntime    Lua          { get; private set; }  = null!;
     public string        Title        { get; }
     public int           ScreenWidth  { get; }

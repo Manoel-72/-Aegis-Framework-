@@ -89,7 +89,8 @@ public sealed class AegisGame : Game
 
         WindowIcon.TrySet(Window.Handle, Path.Combine("res", "aegis-logo.png"), GraphicsDevice);
 
-        _app.S2D = new Scene2D();
+        _app.S2D   = new Scene2D();
+        _app.Ui2D  = new Scene2D();
 
         _app.Lua.RegisterAll();
         _app.Lua.ExecuteFile(_luaEntry);
@@ -129,6 +130,7 @@ public sealed class AegisGame : Game
             }
 
             _app.S2D.Update(dt);
+            _app.Ui2D.Update(dt);
             SceneManager.Instance.Update(dt);
             Camera2D.Instance.Update(dt);
             TweenManager.Instance.Update(dt);
@@ -162,10 +164,9 @@ public sealed class AegisGame : Game
         if (cam.Active) _spriteBatch.End();
         else Renderer.End();
 
-        // BUG #3 fix: UI layer desenhada FORA da transformação da câmera.
-        // Use aegis_draw_ui() para HUDs, overlays e menus que não devem
-        // ser afetados pelo scroll/zoom da câmera.
+        // Camada UI: grafo Ui2D + primitivas imediatas (sem transformação da câmera).
         Renderer.Begin();
+        _app.Ui2D.Draw(_spriteBatch);
         _app.Lua.CallFunction("aegis_draw_ui");
         Renderer.End();
 

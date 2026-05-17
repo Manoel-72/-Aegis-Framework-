@@ -24,12 +24,12 @@ function aegis_init()
     GAME.level = 1
     GAME.won = false
 
-    bg = aegis.newRect(aegis.screenWidth(), aegis.screenHeight(), 0.08, 0.10, 0.16)
+    bg = aegis.newRect(aegis.screenWidth(), aegis.screenHeight(), 0.08, 0.10, 0.16, true)
     aegis.setPosition(bg, 0, 0)
     aegis.setZ(bg, -10)
-    title = aegis.newLabel("AEGIS DEMO PLATFORMER")
-    subtitle = aegis.newLabel("Enter/Space/Start: jogar")
-    hint = aegis.newLabel("Esc/Back: voltar ao menu")
+    title = aegis.newLabel("AEGIS DEMO PLATFORMER", true)
+    subtitle = aegis.newLabel("Enter/Space/Start: jogar", true)
+    hint = aegis.newLabel("Esc/Back: voltar ao menu", true)
     if uiFont then
         pcall(aegis.setFont, title, uiFont)
         pcall(aegis.setFont, subtitle, uiFont)
@@ -54,6 +54,7 @@ function aegis_update(dt)
         GAME.score = 0
         GAME.lives = 3
         GAME.level = 1
+        GAME.tutorialSeen = false
         if aegis.clearScreenShader then aegis.clearScreenShader() end
         aegis.transitionTo("level1", "fade", 0.35)
     end

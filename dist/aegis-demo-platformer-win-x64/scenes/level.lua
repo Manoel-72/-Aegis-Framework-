@@ -1,6 +1,8 @@
 -- Cena única para 3 fases. Usa tilemap, colisão automática, player, inimigos, coletáveis, HUD e câmera.
-local map, nav, player, rb, playerCol, atlas, anim, hud, scoreLabel, lifeLabel
+local map, nav, player, rb, playerCol, atlas, anim
 local enemies, coins, goal, jumpEmitter = {}, {}, nil, nil
+local hud = { lives = 3, score = 0, coins = 0, coinMax = 5 }
+local tutorial = { active = false, alpha = 0, pulse = 0 }
 local collectedCoins = {}
 local pendingRemoveCoins = {}
 local levelComplete = false
@@ -12,10 +14,6 @@ local jumpHeldPrev = false
 local airJumpUsed = false
 local fallCooldown = 0
 local jumpCooldown = 0
-local dbgJumpPressed = false
-local dbgSpaceDown = false
-local dbgSpacebarDown = false
-local dbgJumpHeld = false
 local jumpBoostFrames = 0
 
 local function levelIndex()
@@ -26,6 +24,119 @@ local function goToScene(scene, duration)
     if sceneChanging then return end
     sceneChanging = true
     aegis.transitionTo(scene, "fade", duration or 0.35)
+end
+
+local function syncHud()
+    hud.lives = GAME.lives or 3
+    hud.score = GAME.score or 0
+end
+
+local function buildHud()
+    hud.coins = 0
+    hud.coinMax = 5
+    syncHud()
+end
+
+local function drawHudChrome()
+    local sw = aegis.screenWidth()
+    local barH = 62
+    local iconY = 20
+    local heartScale = 1.45
+    local coinScale = 1.5
+
+    aegis.drawRect(0, 0, sw, barH + 4, 0.03, 0.05, 0.09, 0.82)
+    aegis.drawRect(0, barH, sw, 2, 0.35, 0.75, 0.55, 0.65)
+
+    -- Esquerda: fase + vidas
+    aegis.drawRect(14, 14, 78, 32, 0.10, 0.28, 0.22, 0.92)
+    aegis.drawRect(14, 14, 78, 3, 0.40, 0.82, 0.58, 1)
+    aegis.drawText("FASE", 26, 18, 0.45, 0.78, 0.68, 0.9)
+    aegis.drawText(tostring(levelIndex()), 26, 32, 0.20, 1.0, 0.78)
+
+    local heartStartX = 108
+    local heartGap = 30
+    for i = 1, 3 do
+        local hx = heartStartX + (i - 1) * heartGap
+        local alpha = i <= hud.lives and 1.0 or 0.28
+        aegis.drawSprite("sprites/heart.png", hx, iconY, heartScale, 1, 1, 1, alpha)
+    end
+
+    -- Direita superior: moedas
+    local coinIconX = sw - 72
+    local coinText = tostring(hud.coins) .. "/" .. tostring(hud.coinMax)
+    aegis.drawRect(coinIconX - 10, 12, 88, 34, 0.08, 0.09, 0.12, 0.75)
+    aegis.drawSprite("sprites/coin.png", coinIconX, iconY, coinScale, 1, 1, 1, 1)
+    aegis.drawText(coinText, coinIconX + 28, iconY + 5, 1.0, 0.88, 0.35)
+
+    -- Score abaixo das moedas (direita)
+    local scoreStr = tostring(hud.score)
+    local scoreX = sw - 90
+    aegis.drawText("SCORE", scoreX, 48, 0.5, 0.72, 0.55, 0.75)
+    aegis.drawText(scoreStr, scoreX + 2, 65, 0, 0, 0, 0.35)
+    aegis.drawText(scoreStr, scoreX, 63, 1.0, 0.95, 0.50)
+end
+
+local function tutorialConfirmPressed()
+    return aegis.padPressed(0, "RB")
+        or aegis.padPressed(0, "R1")
+        or aegis.padPressed(0, "RightShoulder")
+        or aegis.padPressed(0, "A")
+        or aegis.padPressed(0, "Start")
+        or aegis.keyPressed("Space")
+        or aegis.keyPressed("Spacebar")
+        or aegis.keyPressed("Enter")
+end
+
+local function dismissTutorial()
+    tutorial.active = false
+    tutorial.alpha = 0
+    tutorial.pulse = 0
+    GAME.tutorialSeen = true
+    jumpHeldPrev = false
+    jumpBuffer = 0
+end
+
+local function openTutorial()
+    tutorial.active = true
+    tutorial.alpha = 0
+    tutorial.pulse = 0
+end
+
+local function updateTutorial(dt)
+    if not tutorial.active then return end
+    tutorial.alpha = math.min(1, tutorial.alpha + dt * 3.5)
+    tutorial.pulse = tutorial.pulse + dt * 4
+
+    if tutorialConfirmPressed() then
+        dismissTutorial()
+    end
+end
+
+local function drawTutorialPopup()
+    if not tutorial.active then return end
+
+    local sw, sh = aegis.screenWidth(), aegis.screenHeight()
+    local a = tutorial.alpha
+    aegis.drawRect(0, 0, sw, sh, 0.02, 0.05, 0.09, 0.72 * a)
+
+    local pw, ph = math.min(520, sw - 80), 360
+    local px, py = (sw - pw) * 0.5, (sh - ph) * 0.5
+
+    aegis.drawRect(px - 4, py - 4, pw + 8, ph + 8, 0.35, 0.75, 0.55, 0.35 * a)
+    aegis.drawRect(px, py, pw, ph, 0.07, 0.10, 0.14, 0.96 * a)
+    aegis.drawRect(px, py, pw, 4, 0.35, 0.75, 0.55, a)
+
+    aegis.drawText("COMO JOGAR", px + 28, py + 22, 0.55, 0.95, 0.78, a)
+    aegis.drawText("Analógico esquerdo  —  mover", px + 28, py + 64, 0.88, 0.9, 0.92, a)
+    aegis.drawText("A / D no teclado  —  mover", px + 28, py + 88, 0.75, 0.82, 0.88, a)
+    aegis.drawText("Botão A  —  pular (pulo no ar 1x)", px + 28, py + 118, 0.88, 0.9, 0.92, a)
+    aegis.drawText("colete moedas  ·  evite inimigos vermelhos", px + 28, py + 148, 0.75, 0.82, 0.88, a)
+    aegis.drawText("alcance a porta verde para avançar de fase", px + 28, py + 174, 0.75, 0.82, 0.88, a)
+    aegis.drawText("ESC  —  voltar ao menu", px + 28, py + 200, 0.6, 0.68, 0.72, a)
+
+    local pulse = 0.55 + 0.45 * math.sin(tutorial.pulse)
+    aegis.drawRect(px + 28, py + ph - 58, pw - 56, 40, 0.12, 0.28, 0.22, 0.9 * a)
+    aegis.drawText("Pressione  RB / R1  para começar", px + 42, py + ph - 46, 0.4 * pulse + 0.6, 1.0, 0.7, a)
 end
 
 local function spawnCoin(x, y)
@@ -40,7 +151,8 @@ local function spawnCoin(x, y)
         if collectedCoins[s] then return end
         collectedCoins[s] = true
         GAME.score = (GAME.score or 0) + 10
-        aegis.setText(scoreLabel, "Score " .. GAME.score)
+        hud.coins = hud.coins + 1
+        syncHud()
         aegis.playSound("coin.wav")
         aegis.burst(aegis.getX(s)+12, aegis.getY(s)+12, { count=18, speed=90, life=0.45, size=3, r=1, g=0.85, b=0.25 })
         pendingRemoveCoins[#pendingRemoveCoins + 1] = s
@@ -52,7 +164,7 @@ local function damagePlayer(enemy)
     if hurtCooldown > 0 then return end
     hurtCooldown = 0.9
     GAME.lives = (GAME.lives or 3) - 1
-    aegis.setText(lifeLabel, "Vida " .. GAME.lives)
+    syncHud()
     aegis.playSoundAt("hurt.wav", aegis.getX(enemy.obj), aegis.getY(enemy.obj), { maxDist = 500 })
     aegis.flashScreen({ r=1, g=0.1, b=0.1 }, 0.12)
     aegis.screenShake(5, 0.18)
@@ -89,29 +201,39 @@ local function spawnEnemy(x, y, patrolLeft, patrolRight)
     enemies[#enemies+1] = enemy
 end
 
-local function buildHud()
-    local icon = aegis.newSprite("sprites/heart.png")
-    lifeLabel = aegis.newLabel("Vida " .. tostring(GAME.lives or 3))
-    scoreLabel = aegis.newLabel("Score " .. tostring(GAME.score or 0))
-    aegis.setColor(lifeLabel, 1.0, 0.9, 0.92)
-    aegis.setColor(scoreLabel, 0.8, 1.0, 0.8)
-    hud = aegis.newFlow("horizontal", { gap = 10, padding = 10, align = "center" })
-    aegis.flowAdd(hud, icon)
-    aegis.flowAdd(hud, lifeLabel)
-    aegis.flowAdd(hud, scoreLabel)
-    aegis.setPosition(hud, 18, 18)
-    aegis.setZ(hud, 500)
-    aegis.flowLayout(hud)
-end
-
 function aegis_init()
     aegis.log("[scene] level init: " .. tostring(levelIndex()))
     aegis.clearAll()
     local li = levelIndex()
-    local worldW = math.max(1600, aegis.screenWidth())
-    local worldH = math.max(900, aegis.screenHeight())
-    local cameraTop = -math.max(0, worldH - 680)
-    local cameraBottom = cameraTop + worldH
+    -- load tilemap early so we can derive correct world size from the map
+    map = aegis.loadTilemap("tilemaps/level" .. li .. ".json")
+    aegis.setZ(map, 0)
+    local before = 80 * 30
+    local generated = aegis.buildTilemapColliders(map, { solidGids = {1,2,3}, merge = true, layer = "WORLD" })
+    aegis.log("level " .. li .. ": tile colliders merge " .. tostring(before) .. " -> " .. tostring(generated))
+    nav = aegis.navFromTilemap(map, { solidGids = {1,2,3} })
+
+    -- derive world size from the tilemap (fallback to screen size)
+    local mapW = (map.PixelWidth and map.PixelWidth) or aegis.screenWidth()
+    local mapH = (map.PixelHeight and map.PixelHeight) or aegis.screenHeight()
+    local worldW = math.max(1600, mapW)
+    local worldH = math.max(900, mapH)
+
+    -- Camera limits: if the world is smaller than the viewport, center the camera limits
+    local sw, sh = aegis.screenWidth(), aegis.screenHeight()
+    local camLeft, camTop
+    if worldW <= sw then
+        camLeft = -((sw - worldW) * 0.5)
+    else
+        camLeft = 0
+    end
+    if worldH <= sh then
+        camTop = -((sh - worldH) * 0.5)
+    else
+        camTop = -math.max(0, worldH - 680)
+    end
+    local camRight = camLeft + worldW
+    local camBottom = camTop + worldH
     levelComplete = false
     sceneChanging = false
     enemies, coins = {}, {}
@@ -131,7 +253,7 @@ function aegis_init()
     if not aegis.musicPlaying() then aegis.playMusic("music.wav", true) end
 
     local sky = aegis.newRect(worldW, worldH, 0.32, 0.39, 0.52)
-    aegis.setPosition(sky, 0, cameraTop)
+    aegis.setPosition(sky, 0, camTop)
     aegis.setZ(sky, -50)
 
     local farMist = aegis.newRect(worldW, 170, 0.38, 0.45, 0.58)
@@ -154,12 +276,7 @@ function aegis_init()
     aegis.setPosition(lowerShade, 0, 780)
     aegis.setZ(lowerShade, -49)
 
-    map = aegis.loadTilemap("tilemaps/level" .. li .. ".json")
-    aegis.setZ(map, 0)
-    local before = 80 * 30
-    local generated = aegis.buildTilemapColliders(map, { solidGids = {1,2,3}, merge = true, layer = "WORLD" })
-    aegis.log("level " .. li .. ": tile colliders merge " .. tostring(before) .. " -> " .. tostring(generated))
-    nav = aegis.navFromTilemap(map, { solidGids = {1,2,3} })
+
 
     player = aegis.newSprite("sprites/player-sheet.png")
     atlas = aegis.loadAtlas("sprites/player-sheet.json")
@@ -182,9 +299,13 @@ function aegis_init()
     aegis.setCameraTarget(player, 7.5)
     aegis.setCameraDeadzone(140, 90)
     aegis.setCameraLookahead(80, 4.0)
-    aegis.setCameraLimits(0, cameraTop, worldW, cameraBottom)
+    aegis.setCameraLimits(camLeft, camTop, camRight, camBottom)
 
     buildHud()
+
+    if levelIndex() == 1 and not GAME.tutorialSeen then
+        openTutorial()
+    end
 
     local coinY = { 335, 175, 225, 285, 290 }
     for i=1,5 do spawnCoin(160 + i*150, coinY[((i+li-1)%#coinY)+1]) end
@@ -238,8 +359,6 @@ local function updatePlayer(dt)
 
     local spaceDown = aegis.keyDown("Space")
     local spacebarDown = aegis.keyDown("Spacebar")
-    dbgSpaceDown = spaceDown
-    dbgSpacebarDown = spacebarDown
     local mouseHeld = (aegis.mouseLeftDown and aegis.mouseLeftDown()) or false
     local mousePressed = (aegis.mouseLeftJust and aegis.mouseLeftJust()) or false
     local jumpHeld =
@@ -255,8 +374,6 @@ local function updatePlayer(dt)
         or mousePressed
         or aegis.padPressed(0, "A")
     jumpHeldPrev = jumpHeld
-    dbgJumpHeld = jumpHeld
-    dbgJumpPressed = jumpPressed
     if jumpPressed then jumpBuffer = 0.18 else jumpBuffer = math.max(0, jumpBuffer - dt) end
     -- Fallback robusto: se estiver segurando jump, mantém um buffer curto.
     if jumpHeld then jumpBuffer = math.max(jumpBuffer, 0.08) end
@@ -288,7 +405,7 @@ local function updatePlayer(dt)
     if aegis.getY(player) > 900 and fallCooldown <= 0 then
         fallCooldown = 0.8
         GAME.lives = GAME.lives - 1
-        aegis.setText(lifeLabel, "Vida " .. GAME.lives)
+        syncHud()
         if GAME.lives <= 0 then
             aegis.log("[scene] level -> transitionTo(gameover) [fell]")
             goToScene("gameover", 0.35)
@@ -343,6 +460,12 @@ end
 
 function aegis_update(dt)
     if sceneChanging then return end
+
+    if tutorial.active then
+        updateTutorial(dt)
+        return
+    end
+
     hurtCooldown = math.max(0, hurtCooldown - dt)
     fallCooldown = math.max(0, fallCooldown - dt)
     if aegis.keyPressed("Escape") or aegis.padPressed(0, "Back") then
@@ -362,8 +485,11 @@ function aegis_update(dt)
 end
 
 function aegis_draw()
-    aegis.drawText("Fase " .. tostring(levelIndex()) .. "  |  A/D mover, Space pular, controle funciona", 20, 64, 0.75, 0.9, 0.75)
-    aegis.drawText("DBG grounded=" .. tostring(aegis.isGrounded(rb)) .. "  coyote=" .. string.format("%.2f", coyote), 20, 88, 0.95, 0.8, 0.35)
-    aegis.drawText("DBG jumpPressed=" .. tostring(dbgJumpPressed) .. "  jumpBuf=" .. string.format("%.2f", jumpBuffer) .. "  vy=" .. string.format("%.1f", aegis.getVelocityY(rb)), 20, 110, 0.75, 0.9, 1.0)
-    aegis.drawText("DBG keyDown Space=" .. tostring(dbgSpaceDown) .. "  Spacebar=" .. tostring(dbgSpacebarDown) .. "  jumpHeld=" .. tostring(dbgJumpHeld), 20, 132, 0.9, 0.8, 0.5)
+end
+
+function aegis_draw_ui()
+    if not tutorial.active then
+        drawHudChrome()
+    end
+    drawTutorialPopup()
 end

@@ -61,7 +61,7 @@ public sealed class LuaRuntime : IDisposable
         _lua["aegis_init"]    = null;
         _lua["aegis_update"]  = null;
         _lua["aegis_draw"]    = null;
-        _lua["aegis_draw_ui"] = null; // BUG #3: UI layer sem transformação da câmera
+        _lua["aegis_draw_ui"] = null; // primitivas imediatas na camada UI (Ui2D já desenhado antes)
 
         // ── Core ────────────────────────────────────────────────────
         Reg("aegis.__apiWarning",    nameof(ApiWarning));
@@ -124,9 +124,11 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.randomInt",       nameof(RandomInt));
         Reg("aegis.randomFloat",     nameof(RandomFloat));
         Reg("aegis.clearAll",        nameof(ClearAll));
+        Reg("aegis.uiClear",         nameof(UiClear));
         Reg("aegis.worldClear",      nameof(WorldClear));
         Reg("aegis.drawText",        nameof(DrawText));
         Reg("aegis.drawRect",        nameof(DrawRect));
+        Reg("aegis.drawSprite",      nameof(DrawSprite));
         Reg("aegis.drawLine",        nameof(DrawLine));
         Reg("aegis.drawCircle",      nameof(DrawCircle));
 
@@ -416,13 +418,11 @@ end
     public void Destroy(Object2D obj)
         => RemoveObject(obj);
 
-    public SpriteNode NewSprite(string path)
-        => _components.CreateSprite(path);
+    public SpriteNode NewSprite(string path, bool hud = false)
+        => _components.CreateSprite(path, hud);
 
-    public Bitmap NewRect(int w, int h, float r, float g, float b)
-    {
-        return _components.CreateRect(w, h, new Color(r, g, b));
-    }
+    public Bitmap NewRect(int w, int h, float r, float g, float b, bool hud = false)
+        => _components.CreateRect(w, h, new Color(r, g, b), hud);
 
     public void RemoveObject(Object2D obj)
     {
@@ -484,10 +484,10 @@ end
     public int   GetHeight(Bitmap b) => b.TextureHeight;
 
     // ── Label ─────────────────────────────────────────────────────────
-    public Label NewLabel(string text)
-        => _components.CreateLabel(text);
-    public Label NewLabelSize(string text, int size)
-        => _components.CreateLabel(text, size);
+    public Label NewLabel(string text, bool hud = false)
+        => _components.CreateLabel(text, hud);
+    public Label NewLabelSize(string text, int size, bool hud = false)
+        => _components.CreateLabel(text, size, hud);
     public void SetText(Label l, string t)                                        => l.Text = t;
     /// <summary>Define cor do Label. Alpha opcional (padrão 1.0 = opaco).
     /// BUG #6 fix: parâmetro alpha adicionado para suportar texto semitransparente.</summary>
@@ -1122,6 +1122,12 @@ end
         foreach (var child in _app.S2D.Children.ToArray())
             child.RemoveFromParent();
 
+        if (_app.Ui2D is not null)
+        {
+            foreach (var child in _app.Ui2D.Children.ToArray())
+                child.RemoveFromParent();
+        }
+
         Camera2D.Instance.ResetForNewSession();
         SceneManager.Instance.ClearTriggers();
 
@@ -1151,17 +1157,45 @@ end
     /// Alias explícito para scripts antigos.
     public void WorldClear() => ClearAll();
 
-    /// Primitivas imediatas de debug no frame atual.
-    public void DrawText(string text, float x, float y, float r = 1f, float g = 1f, float b = 1f)
+    /// <summary>Remove apenas objetos da camada UI (Ui2D), mantendo o mundo.</summary>
+    public void UiClear()
     {
-        if (FontManager.Default is null) return;
-        Renderer.SpriteBatch.DrawString(FontManager.Default, text, new Vector2(x, y), new Color(r, g, b));
+        if (_app.Ui2D is null) return;
+
+        foreach (var child in _app.Ui2D.Children.ToArray())
+            child.RemoveFromParent();
+
+        _buttons.RemoveAll(b => IsUiObject(b.Obj));
+        for (int i = _floatTexts.Count - 1; i >= 0; i--)
+        {
+            if (!IsUiObject(_floatTexts[i].Lbl)) continue;
+            _floatTexts[i].Lbl.RemoveFromParent();
+            _floatTexts.RemoveAt(i);
+        }
     }
 
-    public void DrawRect(float x, float y, float w, float h, float r = 1f, float g = 1f, float b = 1f)
+    /// <summary>Primitivas imediatas em espaço de tela — use dentro de aegis_draw_ui().</summary>
+    public void DrawText(string text, float x, float y, float r = 1f, float g = 1f, float b = 1f, float a = 1f)
+    {
+        if (FontManager.Default is null) return;
+        Renderer.SpriteBatch.DrawString(FontManager.Default, text, new Vector2(x, y), new Color(r, g, b, a));
+    }
+
+    public void DrawRect(float x, float y, float w, float h, float r = 1f, float g = 1f, float b = 1f, float a = 1f)
     {
         if (w <= 0f || h <= 0f) return;
-        Renderer.SpriteBatch.Draw(ResManager.Pixel, new Rectangle((int)x, (int)y, (int)w, (int)h), new Color(r, g, b));
+        Renderer.SpriteBatch.Draw(ResManager.Pixel, new Rectangle((int)x, (int)y, (int)w, (int)h), new Color(r, g, b, a));
+    }
+
+    /// <summary>Desenha textura em espaço de tela (HUD). path relativo a res/.</summary>
+    public void DrawSprite(string path, float x, float y, float scale = 1f, float r = 1f, float g = 1f, float b = 1f, float a = 1f)
+    {
+        var tex = ResManager.LoadTexture(path);
+        if (tex is null) return;
+        scale = MathF.Max(0.1f, scale);
+        var w = tex.Width * scale;
+        var h = tex.Height * scale;
+        Renderer.SpriteBatch.Draw(tex, new Rectangle((int)x, (int)y, (int)w, (int)h), new Color(r, g, b, a));
     }
 
     public void DrawLine(float x1, float y1, float x2, float y2, float thickness = 1f, float r = 1f, float g = 1f, float b = 1f)
@@ -1480,15 +1514,11 @@ end
 
         public Button(Object2D obj) => Obj = obj;
 
-        public bool HitTest(int mx, int my)
+        public bool HitTest(int mx, int my, Func<Object2D, (float x, float y)> screenPos, Func<Object2D, (float w, float h)> size)
         {
-            if (Obj is Bitmap b)
-            {
-                float w = b.TextureWidth * b.ScaleX;
-                float h = b.TextureHeight * b.ScaleY;
-                return mx >= b.X && mx <= b.X + w && my >= b.Y && my <= b.Y + h;
-            }
-            return mx >= Obj.X && mx <= Obj.X + 64 && my >= Obj.Y && my <= Obj.Y + 64;
+            var (sx, sy) = screenPos(Obj);
+            var (w, h) = size(Obj);
+            return mx >= sx && mx <= sx + w && my >= sy && my <= sy + h;
         }
     }
 
@@ -1527,7 +1557,7 @@ end
 
         foreach (var btn in _buttons)
         {
-            bool hovered = btn.HitTest(mx, my);
+            bool hovered = btn.HitTest(mx, my, GetObjectScreenPosition, GetObjectScreenSize);
             bool pressed = hovered && leftDown;
 
             if (hovered && !btn.WasHovered) btn.OnHover?.Call(btn.Obj);
@@ -1571,7 +1601,9 @@ end
         float g        = TableFloat(opts, "g",        1f);
         float b        = TableFloat(opts, "b",        1f);
 
-        var lbl = new Label(FontManager.Default, _app.S2D)
+        var ui = ComponentFactory.IsUiLayer(opts)
+            || TableBool(opts, "screen", false);
+        var lbl = new Label(FontManager.Default, _components.ResolveRoot(ui))
         {
             Text  = text,
             X     = x,
@@ -1581,6 +1613,41 @@ end
         };
 
         _floatTexts.Add(new FloatTextEntry(lbl, duration, speed, y));
+    }
+
+    private bool IsUiObject(Object2D obj)
+    {
+        if (_app.Ui2D is null) return false;
+        for (var n = obj; n is not null; n = n.Parent)
+        {
+            if (ReferenceEquals(n, _app.Ui2D)) return true;
+        }
+        return false;
+    }
+
+    private (float x, float y) GetObjectScreenPosition(Object2D obj)
+    {
+        var m = obj.GetWorldMatrix();
+        var wx = m.M41;
+        var wy = m.M42;
+        if (IsUiObject(obj)) return (wx, wy);
+        var s = Camera2D.Instance.WorldToScreen(wx, wy);
+        return (s.X, s.Y);
+    }
+
+    private (float w, float h) GetObjectScreenSize(Object2D obj)
+    {
+        var m = obj.GetWorldMatrix();
+        var scaleX = MathF.Sqrt(m.M11 * m.M11 + m.M12 * m.M12);
+        var scaleY = MathF.Sqrt(m.M21 * m.M21 + m.M22 * m.M22);
+        if (obj is Bitmap b)
+            return (b.TextureWidth * scaleX, b.TextureHeight * scaleY);
+        if (obj is Label label && label.Font is not null && !string.IsNullOrEmpty(label.Text))
+        {
+            var size = label.Font.MeasureString(label.Text);
+            return (size.X * scaleX, size.Y * scaleY);
+        }
+        return (64f * scaleX, 64f * scaleY);
     }
 
     /// <summary>Chamado pelo AegisGame a cada frame — move, faz fade e remove labels expirados.</summary>

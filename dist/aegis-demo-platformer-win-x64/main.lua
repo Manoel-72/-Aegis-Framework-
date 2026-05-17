@@ -1,5 +1,5 @@
 -- Aegis demo platformer: registra cenas e abre menu.
-GAME = GAME or { score = 0, lives = 3, level = 1, maxLevel = 3 }
+GAME = GAME or { score = 0, lives = 3, level = 1, maxLevel = 3, tutorialSeen = false }
 local _booted = false
 
 function aegis_init()

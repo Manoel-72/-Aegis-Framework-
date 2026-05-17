@@ -1,6 +1,0 @@
-Aegis crash
-Time: 2026-05-17 02:40:57
-GameDir: D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\demo-platformer
-Entry: D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\demo-platformer\main.lua
-
-NLua.Exceptions.LuaScriptException: ...\Aegis-Framework-v0.9.0\demo-platformer\scenes\level.lua:156: Invalid arguments to method call
