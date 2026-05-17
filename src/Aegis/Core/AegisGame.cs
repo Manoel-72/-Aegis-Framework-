@@ -269,6 +269,13 @@ public sealed class AegisGame : Game
             DisplayWakeLock.Disable();
             EditorPipeHost.Instance.Shutdown();
             PhysicsWorld.Instance.Reset();
+            // Ensure audio resources are cleaned up to avoid OpenAL warnings
+            try
+            {
+                Aegis.Audio.AudioManager.StopMusic();
+                Aegis.Audio.AudioManager.Unload();
+            }
+            catch { /* best-effort cleanup; ignore errors during dispose */ }
         }
 
         base.Dispose(disposing);

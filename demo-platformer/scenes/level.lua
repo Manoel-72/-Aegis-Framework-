@@ -17,6 +17,7 @@ local dbgSpaceDown = false
 local dbgSpacebarDown = false
 local dbgJumpHeld = false
 local jumpBoostFrames = 0
+local debugTimer = 0
 
 local function levelIndex()
     return math.max(1, math.min(3, GAME.level or 1))
@@ -40,7 +41,7 @@ local function spawnCoin(x, y)
         if collectedCoins[s] then return end
         collectedCoins[s] = true
         GAME.score = (GAME.score or 0) + 10
-        aegis.setText(scoreLabel, "Score " .. GAME.score)
+        scoreText = "Score " .. GAME.score
         aegis.playSound("coin.wav")
         aegis.burst(aegis.getX(s)+12, aegis.getY(s)+12, { count=18, speed=90, life=0.45, size=3, r=1, g=0.85, b=0.25 })
         pendingRemoveCoins[#pendingRemoveCoins + 1] = s
@@ -52,7 +53,7 @@ local function damagePlayer(enemy)
     if hurtCooldown > 0 then return end
     hurtCooldown = 0.9
     GAME.lives = (GAME.lives or 3) - 1
-    aegis.setText(lifeLabel, "Vida " .. GAME.lives)
+    lifeText = "Vida " .. GAME.lives
     aegis.playSoundAt("hurt.wav", aegis.getX(enemy.obj), aegis.getY(enemy.obj), { maxDist = 500 })
     aegis.flashScreen({ r=1, g=0.1, b=0.1 }, 0.12)
     aegis.screenShake(5, 0.18)
@@ -89,29 +90,50 @@ local function spawnEnemy(x, y, patrolLeft, patrolRight)
     enemies[#enemies+1] = enemy
 end
 
+-- Simple screen-space HUD: use drawText in aegis_draw so it stays fixed on screen.
+local lifeText = ""
+local scoreText = ""
 local function buildHud()
-    local icon = aegis.newSprite("sprites/heart.png")
-    lifeLabel = aegis.newLabel("Vida " .. tostring(GAME.lives or 3))
-    scoreLabel = aegis.newLabel("Score " .. tostring(GAME.score or 0))
-    aegis.setColor(lifeLabel, 1.0, 0.9, 0.92)
-    aegis.setColor(scoreLabel, 0.8, 1.0, 0.8)
-    hud = aegis.newFlow("horizontal", { gap = 10, padding = 10, align = "center" })
-    aegis.flowAdd(hud, icon)
-    aegis.flowAdd(hud, lifeLabel)
-    aegis.flowAdd(hud, scoreLabel)
-    aegis.setPosition(hud, 18, 18)
-    aegis.setZ(hud, 500)
-    aegis.flowLayout(hud)
+    lifeText = "Vida " .. tostring(GAME.lives or 3)
+    scoreText = "Score " .. tostring(GAME.score or 0)
+    -- keep `lifeLabel`/`scoreLabel` nil to avoid accidental Object2D updates elsewhere
+    lifeLabel = nil
+    scoreLabel = nil
 end
 
 function aegis_init()
     aegis.log("[scene] level init: " .. tostring(levelIndex()))
     aegis.clearAll()
     local li = levelIndex()
-    local worldW = math.max(1600, aegis.screenWidth())
-    local worldH = math.max(900, aegis.screenHeight())
-    local cameraTop = -math.max(0, worldH - 680)
-    local cameraBottom = cameraTop + worldH
+    -- load tilemap early so we can derive correct world size from the map
+    map = aegis.loadTilemap("tilemaps/level" .. li .. ".json")
+    aegis.setZ(map, 0)
+    local before = 80 * 30
+    local generated = aegis.buildTilemapColliders(map, { solidGids = {1,2,3}, merge = true, layer = "WORLD" })
+    aegis.log("level " .. li .. ": tile colliders merge " .. tostring(before) .. " -> " .. tostring(generated))
+    nav = aegis.navFromTilemap(map, { solidGids = {1,2,3} })
+
+    -- derive world size from the tilemap (fallback to screen size)
+    local mapW = (map.PixelWidth and map.PixelWidth) or aegis.screenWidth()
+    local mapH = (map.PixelHeight and map.PixelHeight) or aegis.screenHeight()
+    local worldW = math.max(1600, mapW)
+    local worldH = math.max(900, mapH)
+
+    -- Camera limits: if the world is smaller than the viewport, center the camera limits
+    local sw, sh = aegis.screenWidth(), aegis.screenHeight()
+    local camLeft, camTop
+    if worldW <= sw then
+        camLeft = -((sw - worldW) * 0.5)
+    else
+        camLeft = 0
+    end
+    if worldH <= sh then
+        camTop = -((sh - worldH) * 0.5)
+    else
+        camTop = -math.max(0, worldH - 680)
+    end
+    local camRight = camLeft + worldW
+    local camBottom = camTop + worldH
     levelComplete = false
     sceneChanging = false
     enemies, coins = {}, {}
@@ -131,7 +153,7 @@ function aegis_init()
     if not aegis.musicPlaying() then aegis.playMusic("music.wav", true) end
 
     local sky = aegis.newRect(worldW, worldH, 0.32, 0.39, 0.52)
-    aegis.setPosition(sky, 0, cameraTop)
+    aegis.setPosition(sky, 0, camTop)
     aegis.setZ(sky, -50)
 
     local farMist = aegis.newRect(worldW, 170, 0.38, 0.45, 0.58)
@@ -154,12 +176,7 @@ function aegis_init()
     aegis.setPosition(lowerShade, 0, 780)
     aegis.setZ(lowerShade, -49)
 
-    map = aegis.loadTilemap("tilemaps/level" .. li .. ".json")
-    aegis.setZ(map, 0)
-    local before = 80 * 30
-    local generated = aegis.buildTilemapColliders(map, { solidGids = {1,2,3}, merge = true, layer = "WORLD" })
-    aegis.log("level " .. li .. ": tile colliders merge " .. tostring(before) .. " -> " .. tostring(generated))
-    nav = aegis.navFromTilemap(map, { solidGids = {1,2,3} })
+
 
     player = aegis.newSprite("sprites/player-sheet.png")
     atlas = aegis.loadAtlas("sprites/player-sheet.json")
@@ -182,7 +199,7 @@ function aegis_init()
     aegis.setCameraTarget(player, 7.5)
     aegis.setCameraDeadzone(140, 90)
     aegis.setCameraLookahead(80, 4.0)
-    aegis.setCameraLimits(0, cameraTop, worldW, cameraBottom)
+    aegis.setCameraLimits(camLeft, camTop, camRight, camBottom)
 
     buildHud()
 
@@ -288,7 +305,7 @@ local function updatePlayer(dt)
     if aegis.getY(player) > 900 and fallCooldown <= 0 then
         fallCooldown = 0.8
         GAME.lives = GAME.lives - 1
-        aegis.setText(lifeLabel, "Vida " .. GAME.lives)
+        lifeText = "Vida " .. GAME.lives
         if GAME.lives <= 0 then
             aegis.log("[scene] level -> transitionTo(gameover) [fell]")
             goToScene("gameover", 0.35)
@@ -359,11 +376,47 @@ function aegis_update(dt)
     end
     updatePlayer(dt)
     updateEnemies(dt)
+    -- periodic debug log to capture player/camera positions (helps repro fullscreen issue)
+    debugTimer = math.max(0, debugTimer - dt)
+    if debugTimer <= 0 then
+        debugTimer = 0.5
+        if player then
+            local px, py = aegis.getX(player), aegis.getY(player)
+            local cx, cy = aegis.cameraX and aegis.cameraX() or 0, aegis.cameraY and aegis.cameraY() or 0
+            aegis.log(string.format("[dbg] player=(%.1f,%.1f) cam=(%.1f,%.1f) vx=%.1f vy=%.1f", px, py, cx, cy, aegis.getVelocityX(rb), aegis.getVelocityY(rb)))
+        end
+    end
 end
 
 function aegis_draw()
-    aegis.drawText("Fase " .. tostring(levelIndex()) .. "  |  A/D mover, Space pular, controle funciona", 20, 64, 0.75, 0.9, 0.75)
-    aegis.drawText("DBG grounded=" .. tostring(aegis.isGrounded(rb)) .. "  coyote=" .. string.format("%.2f", coyote), 20, 88, 0.95, 0.8, 0.35)
-    aegis.drawText("DBG jumpPressed=" .. tostring(dbgJumpPressed) .. "  jumpBuf=" .. string.format("%.2f", jumpBuffer) .. "  vy=" .. string.format("%.1f", aegis.getVelocityY(rb)), 20, 110, 0.75, 0.9, 1.0)
-    aegis.drawText("DBG keyDown Space=" .. tostring(dbgSpaceDown) .. "  Spacebar=" .. tostring(dbgSpacebarDown) .. "  jumpHeld=" .. tostring(dbgJumpHeld), 20, 132, 0.9, 0.8, 0.5)
+    -- Get camera position for HUD offset (workaround para bug #3)
+        -- Draw HUD relative to camera so it stays fixed on screen when camera moves (workaround)
+        local cx, cy = 0, 0
+        if aegis.cameraX and aegis.cameraY then
+            cx, cy = aegis.cameraX(), aegis.cameraY()
+        end
+
+        aegis.drawText("Fase " .. tostring(levelIndex()) .. "  |  A/D mover, Space pular, controle funciona", cx + 20, cy + 64, 0.75, 0.9, 0.75)
+        aegis.drawText("DBG grounded=" .. tostring(aegis.isGrounded(rb)) .. "  coyote=" .. string.format("%.2f", coyote), cx + 20, cy + 88, 0.95, 0.8, 0.35)
+        aegis.drawText("DBG jumpPressed=" .. tostring(dbgJumpPressed) .. "  jumpBuf=" .. string.format("%.2f", jumpBuffer) .. "  vy=" .. string.format("%.1f", aegis.getVelocityY(rb)), cx + 20, cy + 110, 0.75, 0.9, 1.0)
+        aegis.drawText("DBG keyDown Space=" .. tostring(dbgSpaceDown) .. "  Spacebar=" .. tostring(dbgSpacebarDown) .. "  jumpHeld=" .. tostring(dbgJumpHeld), cx + 20, cy + 132, 0.9, 0.8, 0.5)
+
+        -- Screen-space HUD drawn in world coords offset by camera (workaround)
+        if scoreText and scoreText ~= "" then
+            aegis.drawText(scoreText, cx + 20, cy + 20, 0.8, 1.0, 0.8)
+        end
+        local lives = GAME.lives or 0
+        local hearts = ""
+        for i = 1, math.min(10, lives) do hearts = hearts .. "♥ " end
+        aegis.drawText("Vidas: " .. tostring(lives) .. " " .. hearts, cx + 20, cy + 44, 1.0, 0.6, 0.6)
+
+        if player then
+            local px, py = aegis.getX(player), aegis.getY(player)
+            aegis.drawText(string.format("DBG player=(%.1f,%.1f)", px, py), cx + 20, cy + 156, 0.95, 0.85, 0.4)
+    end
+end
+
+-- UI layer: deixada vazia pois bug #3 faz texto ser renderizado em world space
+-- TODO: corrigir no engine para que aegis_draw_ui funcione corretamente
+function aegis_draw_ui()
 end
