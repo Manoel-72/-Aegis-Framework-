@@ -24,6 +24,8 @@ public sealed class LuaRuntime : IDisposable
     private readonly Lua _lua;
     private readonly App _app;
     private readonly ComponentFactory _components;
+    private readonly Dictionary<string, LuaApiStatus> _apiStatuses = new();
+    private readonly HashSet<string> _warnedExperimentalApis = new(StringComparer.Ordinal);
     private static readonly Random _rng = new();
 
     private float _shakeTime;
@@ -36,6 +38,13 @@ public sealed class LuaRuntime : IDisposable
 
     private string _mainLuaFullPath = string.Empty;
     private ParticleSystem2D? _particles;
+
+    private enum LuaApiStatus
+    {
+        Stable,
+        Legacy,
+        Experimental
+    }
 
     public LuaRuntime(App app)
     {
@@ -55,13 +64,15 @@ public sealed class LuaRuntime : IDisposable
         _lua["aegis_draw_ui"] = null; // BUG #3: UI layer sem transformação da câmera
 
         // ── Core ────────────────────────────────────────────────────
+        Reg("aegis.__apiWarning",    nameof(ApiWarning));
+
         // Stable MVP API. Prefer this for new templates; legacy aliases remain registered below.
         Reg("aegis.create",          nameof(Create));
         Reg("aegis.destroy",         nameof(Destroy));
 
-        Reg("aegis.newSprite",       nameof(NewSprite));
-        Reg("aegis.newRect",         nameof(NewRect));
-        Reg("aegis.removeObject",    nameof(RemoveObject));
+        RegLegacy("aegis.newSprite",       nameof(NewSprite));
+        RegLegacy("aegis.newRect",         nameof(NewRect));
+        RegLegacy("aegis.removeObject",    nameof(RemoveObject));
 
         // ── Transform ───────────────────────────────────────────────
         Reg("aegis.setPosition",     nameof(SetPosition));
@@ -69,8 +80,8 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.centerX",         nameof(CenterX));
         Reg("aegis.setZ",            nameof(SetZ));
         Reg("aegis.getZ",            nameof(GetZ));
-        Reg("aegis.setZOrder",       nameof(SetZ));
-        Reg("aegis.getZOrder",       nameof(GetZ));
+        RegLegacy("aegis.setZOrder",       nameof(SetZ));
+        RegLegacy("aegis.getZOrder",       nameof(GetZ));
         Reg("aegis.move",            nameof(Move));
         Reg("aegis.setScale",        nameof(SetScale));
         Reg("aegis.setRotation",     nameof(SetRotation));
@@ -83,7 +94,8 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.getHeight",       nameof(GetHeight));
 
         // ── Label ───────────────────────────────────────────────────
-        Reg("aegis.newLabel",        nameof(NewLabel));
+        RegLegacy("aegis.newLabel",        nameof(NewLabel));
+        Reg("aegis.newLabelSize",          nameof(NewLabelSize));
         Reg("aegis.setText",         nameof(SetText));
         Reg("aegis.setColor",        nameof(SetColor));
 
@@ -119,7 +131,7 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.drawCircle",      nameof(DrawCircle));
 
         // ── v0.2 AnimatedSprite ─────────────────────────────────────
-        Reg("aegis.newAnim",         nameof(NewAnim));
+        RegLegacy("aegis.newAnim",         nameof(NewAnim));
         Reg("aegis.playAnim",        nameof(PlayAnim));
         Reg("aegis.stopAnim",        nameof(StopAnim));
         Reg("aegis.resumeAnim",      nameof(ResumeAnim));
@@ -158,19 +170,21 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.playMusicLooped",  nameof(PlayMusicLooped));
 
         // ── v0.3 RichLabel ──────────────────────────────────────────
-        Reg("aegis.newRichLabel",    nameof(NewRichLabel));
+        RegLegacy("aegis.newRichLabel",    nameof(NewRichLabel));
+        Reg("aegis.newRichLabelSize",      nameof(NewRichLabelSize));
         Reg("aegis.setMarkup",       nameof(SetMarkup));
         Reg("aegis.setPivotRich",    nameof(SetPivotRich));
 
         // ── v0.3 Font TTF ───────────────────────────────────────────
         Reg("aegis.loadFont",        nameof(LoadFont));
+        Reg("aegis.loadDefaultFont", nameof(LoadDefaultFont));
         Reg("aegis.setFont",         nameof(SetFont));
         Reg("aegis.setFontRich",     nameof(SetFontRich));
 
         // ── v0.3 NineSlice ──────────────────────────────────────────
-        Reg("aegis.newPanel",        nameof(NewPanel));
+        RegLegacy("aegis.newPanel",        nameof(NewPanel));
         Reg("aegis.setPanelSize",    nameof(SetPanelSize));
-        Reg("aegis.newFlow",         nameof(NewFlow));
+        RegLegacy("aegis.newFlow",         nameof(NewFlow));
         Reg("aegis.flowAdd",         nameof(FlowAdd));
         Reg("aegis.flowLayout",      nameof(FlowLayout));
         Reg("aegis.flowSet",         nameof(FlowSet));
@@ -178,13 +192,13 @@ public sealed class LuaRuntime : IDisposable
         // ── v0.4 Collider & CollisionSystem ─────────────────────────
         Reg("aegis.addCollider",        nameof(AddCollider));
         Reg("aegis.addCircleCollider",  nameof(AddCircleCollider));
-        Reg("aegis.addSlopeCollider",   nameof(AddSlopeCollider));   // Slope/Ramp
-        Reg("aegis.setSlopeDir",        nameof(SetSlopeDir));        // "left" | "right"
+        RegExperimental("aegis.addSlopeCollider",   nameof(AddSlopeCollider));   // Slope/Ramp
+        RegExperimental("aegis.setSlopeDir",        nameof(SetSlopeDir));        // "left" | "right"
         Reg("aegis.removeCollider",     nameof(RemoveCollider));
         Reg("aegis.setColliderLayer",nameof(SetColliderLayer));
         Reg("aegis.setColliderMask", nameof(SetColliderMask));
         Reg("aegis.setTrigger",      nameof(SetTrigger));
-        Reg("aegis.setOneWay",       nameof(SetOneWay));   // Sprint 4: plataformas one-way
+        RegExperimental("aegis.setOneWay",       nameof(SetOneWay));   // Sprint 4: plataformas one-way
         Reg("aegis.setColliderOffset",nameof(SetColliderOffset));
         Reg("aegis.onCollide",       nameof(OnCollide));
         Reg("aegis.onCollideEnter",  nameof(OnCollideEnter));
@@ -286,7 +300,7 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.onHover",         nameof(OnHover));
         Reg("aegis.onPress",         nameof(OnPress));
         Reg("aegis.floatText",       nameof(FloatText));
-        Reg("aegis.newProgressBar",  nameof(NewProgressBar));
+        RegLegacy("aegis.newProgressBar",  nameof(NewProgressBar));
         Reg("aegis.setBarValue",     nameof(SetBarValue));
         Reg("aegis.setBarColors",    nameof(SetBarColors));
 
@@ -300,11 +314,11 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.poolCount",       nameof(PoolCount));
 
         // ── Drag & Drop ──────────────────────────────────────────────────
-        Reg("aegis.newDraggable",    nameof(NewDraggable));
-        Reg("aegis.onDragStart",     nameof(OnDragStart));
-        Reg("aegis.onDragMove",      nameof(OnDragMove));
-        Reg("aegis.onDragEnd",       nameof(OnDragEnd));
-        Reg("aegis.getDragTarget",   nameof(GetDragTarget));
+        RegExperimental("aegis.newDraggable",    nameof(NewDraggable));
+        RegExperimental("aegis.onDragStart",     nameof(OnDragStart));
+        RegExperimental("aegis.onDragMove",      nameof(OnDragMove));
+        RegExperimental("aegis.onDragEnd",       nameof(OnDragEnd));
+        RegExperimental("aegis.getDragTarget",   nameof(GetDragTarget));
 
         // ── Z-order dinâmico ─────────────────────────────────────────────
         Reg("aegis.bringToFront",    nameof(BringToFront));
@@ -312,28 +326,77 @@ public sealed class LuaRuntime : IDisposable
         Reg("aegis.setZRelative",    nameof(SetZRelative));
 
         // ── Hand / Card Layout ───────────────────────────────────────────
-        Reg("aegis.newHand",         nameof(NewHand));
-        Reg("aegis.handAdd",         nameof(HandAdd));
-        Reg("aegis.handRemove",      nameof(HandRemove));
-        Reg("aegis.handLayout",      nameof(HandLayout));
-        Reg("aegis.handSetHover",    nameof(HandSetHover));
+        RegExperimental("aegis.newHand",         nameof(NewHand));
+        RegExperimental("aegis.handAdd",         nameof(HandAdd));
+        RegExperimental("aegis.handRemove",      nameof(HandRemove));
+        RegExperimental("aegis.handLayout",      nameof(HandLayout));
+        RegExperimental("aegis.handSetHover",    nameof(HandSetHover));
 
         // ── Camera Autozoom ──────────────────────────────────────────────
-        Reg("aegis.setCameraAutozoom", nameof(SetCameraAutozoom));
+        RegExperimental("aegis.setCameraAutozoom", nameof(SetCameraAutozoom));
 
         // ── Upgrade / Skill Tree ─────────────────────────────────────────
-        Reg("aegis.addUpgrade",      nameof(AddUpgrade));
-        Reg("aegis.onUpgradeChosen", nameof(OnUpgradeChosen));
-        Reg("aegis.getUpgradeLevel", nameof(GetUpgradeLevel));
-        Reg("aegis.showUpgrades",    nameof(ShowUpgrades));
-        Reg("aegis.hideUpgrades",    nameof(HideUpgrades));
+        RegExperimental("aegis.addUpgrade",      nameof(AddUpgrade));
+        RegExperimental("aegis.onUpgradeChosen", nameof(OnUpgradeChosen));
+        RegExperimental("aegis.getUpgradeLevel", nameof(GetUpgradeLevel));
+        RegExperimental("aegis.showUpgrades",    nameof(ShowUpgrades));
+        RegExperimental("aegis.hideUpgrades",    nameof(HideUpgrades));
 
         // ── Audio Spatial 3D ─────────────────────────────────────────────
-        Reg("aegis.playSoundAt3D",   nameof(PlaySoundAt3D));
+        RegExperimental("aegis.playSoundAt3D",   nameof(PlaySoundAt3D));
     }
 
-    private void Reg(string lua, string method)
-        => _lua.RegisterFunction(lua, this, GetType().GetMethod(method)!);
+    private void Reg(string lua, string method, LuaApiStatus status = LuaApiStatus.Stable)
+    {
+        _apiStatuses[lua] = status;
+        _lua.RegisterFunction(lua, this, GetType().GetMethod(method)!);
+
+        if (status == LuaApiStatus.Experimental)
+            WrapExperimentalApi(lua);
+    }
+
+    private void RegLegacy(string lua, string method)
+        => Reg(lua, method, LuaApiStatus.Legacy);
+
+    private void RegExperimental(string lua, string method)
+        => Reg(lua, method, LuaApiStatus.Experimental);
+
+    public void ApiWarning(string apiName, string status)
+    {
+        if (!string.Equals(status, nameof(LuaApiStatus.Experimental), StringComparison.Ordinal))
+            return;
+
+        if (_warnedExperimentalApis.Add(apiName))
+            AegisLog.Warn("LuaAPI", $"{apiName} e experimental e pode mudar antes do MVP.");
+    }
+
+    private void WrapExperimentalApi(string luaName)
+    {
+        var dotIndex = luaName.LastIndexOf('.');
+        if (dotIndex <= 0 || dotIndex >= luaName.Length - 1)
+            return;
+
+        var tableName = luaName[..dotIndex];
+        var functionName = luaName[(dotIndex + 1)..];
+        var escapedApiName = EscapeLuaString(luaName);
+        var escapedStatus = EscapeLuaString(nameof(LuaApiStatus.Experimental));
+        var escapedFunctionName = EscapeLuaString(functionName);
+
+        _lua.DoString($$"""
+do
+  local api_table = {{tableName}}
+  local original = api_table["{{escapedFunctionName}}"]
+  api_table["{{escapedFunctionName}}"] = function(...)
+    aegis.__apiWarning("{{escapedApiName}}", "{{escapedStatus}}")
+    return original(...)
+  end
+end
+""");
+    }
+
+    private static string EscapeLuaString(string value)
+        => value.Replace("\\", "\\\\", StringComparison.Ordinal)
+                .Replace("\"", "\\\"", StringComparison.Ordinal);
 
     private static T Require<T>(T? value, string apiName) where T : class
         => value ?? throw new ArgumentNullException(apiName, $"[Aegis|Lua] Argumento obrigatório nulo em {apiName}.");
@@ -422,6 +485,8 @@ public sealed class LuaRuntime : IDisposable
     // ── Label ─────────────────────────────────────────────────────────
     public Label NewLabel(string text)
         => _components.CreateLabel(text);
+    public Label NewLabelSize(string text, int size)
+        => _components.CreateLabel(text, size);
     public void SetText(Label l, string t)                                        => l.Text = t;
     /// <summary>Define cor do Label. Alpha opcional (padrão 1.0 = opaco).
     /// BUG #6 fix: parâmetro alpha adicionado para suportar texto semitransparente.</summary>
@@ -503,11 +568,14 @@ public sealed class LuaRuntime : IDisposable
     // ── RichLabel ─────────────────────────────────────────────────────
     public RichLabel NewRichLabel(string markup)
         => _components.CreateRichLabel(markup);
+    public RichLabel NewRichLabelSize(string markup, int size)
+        => _components.CreateRichLabel(markup, size);
     public void SetMarkup(RichLabel rl, string m)             => rl.Markup = m;
     public void SetPivotRich(RichLabel rl, float px, float py) => rl.Pivot = new Vector2(px, py);
 
     // ── Font ──────────────────────────────────────────────────────────
     public SpriteFont LoadFont(string file, int size) => FontManager.Load(file, size);
+    public SpriteFont LoadDefaultFont(int size) => FontManager.LoadDefault(size);
     public void SetFont(Label l, SpriteFont font)     => l.Font = font;
     public void SetFontRich(RichLabel rl, SpriteFont font) => rl.Font = font;
 

@@ -1,5 +1,9 @@
 # Aegis Stable Lua API
 
+Nota: a lista congelada do MVP e a separacao oficial entre Stable, Legacy e Experimental
+fica em `docs/MVP_API.md`.
+O build Windows do MVP deve passar com `aegis build meu-jogo --target win-x64`.
+
 Este documento define a API recomendada para novos jogos e templates da Aegis Engine.
 As APIs antigas continuam funcionando por compatibilidade, mas novo código deve preferir
 a superfície menor abaixo.
@@ -13,6 +17,13 @@ a superfície menor abaixo.
 - Métodos antigos como `newSprite`, `newLabel`, `newRect` e `newProgressBar` são aliases legados.
 
 ## Criação Recomendada
+
+Labels usam uma fonte padrao automatica. O jogo pode fornecer uma fonte melhor em
+`res/fonts/Inter-Regular.ttf`, `res/fonts/NotoSans-Regular.ttf` ou carregar uma fonte
+manual com `aegis.loadFont`.
+Para texto grande, prefira `aegis.create("label", { size = 30 })` ou
+`aegis.newLabelSize(text, 30)` em vez de ampliar com `setScale`, porque escalar
+texto rasterizado deixa a fonte pixelada.
 
 ```lua
 local player = aegis.create("sprite", {

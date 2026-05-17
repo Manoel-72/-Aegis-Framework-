@@ -36,8 +36,10 @@ internal sealed class ComponentFactory
                 TableInt(opts, "width", TableInt(opts, "w", 32)),
                 TableInt(opts, "height", TableInt(opts, "h", 32)),
                 ReadColor(opts, Color.White)), opts),
-            "label" => ApplyCommon(CreateLabel(TableString(opts, "text", "")), opts),
-            "richlabel" => ApplyCommon(CreateRichLabel(TableString(opts, "text", TableString(opts, "markup", ""))), opts),
+            "label" => ApplyCommon(CreateLabel(TableString(opts, "text", ""), TableInt(opts, "size", FontManager.DefaultSize)), opts),
+            "richlabel" => ApplyCommon(CreateRichLabel(
+                TableString(opts, "text", TableString(opts, "markup", "")),
+                TableInt(opts, "size", FontManager.DefaultSize)), opts),
             "panel" => ApplyCommon(CreatePanel(
                 RequiredString(opts, "path", normalized),
                 TableInt(opts, "border", 8),
@@ -75,13 +77,21 @@ internal sealed class ComponentFactory
     }
 
     public Label CreateLabel(string text)
-        => new(FontManager.Default, _app.S2D) { Text = text };
+        => CreateLabel(text, FontManager.DefaultSize);
+
+    public Label CreateLabel(string text, int size)
+        => new(FontManager.LoadDefault(size), _app.S2D) { Text = text };
 
     public RichLabel CreateRichLabel(string markup)
+        => CreateRichLabel(markup, FontManager.DefaultSize);
+
+    public RichLabel CreateRichLabel(string markup, int size)
     {
-        var richLabel = new RichLabel(_app.S2D) { Markup = markup };
-        if (FontManager.Default is not null)
-            richLabel.Font = FontManager.Default;
+        var richLabel = new RichLabel(_app.S2D)
+        {
+            Markup = markup,
+            Font = FontManager.LoadDefault(size)
+        };
         return richLabel;
     }
 

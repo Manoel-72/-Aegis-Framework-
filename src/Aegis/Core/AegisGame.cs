@@ -132,7 +132,7 @@ public sealed class AegisGame : Game
         var cam = Camera2D.Instance;
         if (cam.Active)
         {
-            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, null, null, cam.GetTransform());
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, null, null, null, cam.GetTransform());
         }
         else
         {

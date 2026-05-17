@@ -153,6 +153,26 @@ static bool ShouldSkipFile(string name)
     return lower.EndsWith(".zip") || lower.EndsWith(".nupkg") || lower.EndsWith(".user") || lower.EndsWith(".suo") || lower.EndsWith(".tmp");
 }
 
+static bool IsSubPathOf(string parentDir, string childPath)
+{
+    var parent = Path.GetFullPath(parentDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+    var child = Path.GetFullPath(childPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+    return child.StartsWith(parent, StringComparison.OrdinalIgnoreCase);
+}
+
+static void RecreateDirectoryInside(string allowedRoot, string targetDir)
+{
+    var root = Path.GetFullPath(allowedRoot);
+    var target = Path.GetFullPath(targetDir);
+    if (!IsSubPathOf(root, target))
+        throw new InvalidOperationException($"recusando limpar pasta fora de '{root}': {target}");
+
+    if (Directory.Exists(target))
+        Directory.Delete(target, recursive: true);
+
+    Directory.CreateDirectory(target);
+}
+
 static void CopyGameFiles(string sourceDir, string destDir)
 {
     Directory.CreateDirectory(destDir);
@@ -171,6 +191,46 @@ static void CopyGameFiles(string sourceDir, string destDir)
         Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
         File.Copy(file, dst, overwrite: true);
     }
+}
+
+static int ValidateBuildOutput(string outDir, string target)
+{
+    var exeName = target.StartsWith("win", StringComparison.OrdinalIgnoreCase)
+        ? "aegis-cli.exe"
+        : "aegis-cli";
+
+    var required = new[]
+    {
+        "main.lua",
+        "aegis.toml",
+        Path.Combine("res", "aegis-logo.png"),
+        exeName
+    };
+
+    var missing = required
+        .Where(rel => !File.Exists(Path.Combine(outDir, rel)))
+        .ToArray();
+
+    if (missing.Length == 0)
+        return 0;
+
+    return Fail("build incompleto; faltando: " + string.Join(", ", missing));
+}
+
+static void WriteBuildManifest(string outDir, string packageName, string target, string gameDir)
+{
+    var manifest = $$"""
+{
+  "engine": "Aegis",
+  "package": "{{packageName}}",
+  "target": "{{target}}",
+  "gameDir": "{{gameDir.Replace("\\", "\\\\", StringComparison.Ordinal)}}",
+  "createdAt": "{{DateTimeOffset.Now:O}}",
+  "entry": "main.lua",
+  "runner": "{{(target.StartsWith("win", StringComparison.OrdinalIgnoreCase) ? "aegis-cli.exe" : "aegis-cli")}}"
+}
+""";
+    File.WriteAllText(Path.Combine(outDir, "aegis-build.json"), manifest, Encoding.UTF8);
 }
 
 static int RunProcess(string exe, string arguments, string? workingDir = null)
@@ -230,8 +290,7 @@ static int UpdateSelf()
 static int BuildWebStub(string gameDir, string distRoot, string packageName)
 {
     var outDir = Path.Combine(distRoot, packageName + "-web");
-    if (Directory.Exists(outDir)) Directory.Delete(outDir, recursive: true);
-    Directory.CreateDirectory(outDir);
+    RecreateDirectoryInside(distRoot, outDir);
     CopyGameFiles(gameDir, Path.Combine(outDir, "game"));
     File.WriteAllText(Path.Combine(outDir, "index.html"), """
 <!doctype html>
@@ -270,6 +329,8 @@ static int Build(string[] args)
     var gameDir = Path.GetFullPath(gameArg);
     if (!Directory.Exists(gameDir)) return Fail($"pasta do jogo não encontrada: {gameDir}");
     if (!File.Exists(Path.Combine(gameDir, "main.lua"))) return Fail($"main.lua não encontrado em: {gameDir}");
+    if (!File.Exists(Path.Combine(gameDir, "aegis.toml")))
+        return Fail($"aegis.toml não encontrado em: {gameDir}. O MVP exige aegis.toml para builds reprodutíveis.");
 
     var cfg = ReadToml(Path.Combine(gameDir, "aegis.toml"));
     var packageName = SanitizeName(cfg.title == "Aegis Game" ? new DirectoryInfo(gameDir).Name : cfg.title);
@@ -282,8 +343,7 @@ static int Build(string[] args)
     if (target == "web") return BuildWebStub(gameDir, distRoot, packageName);
 
     var outDir = Path.Combine(distRoot, packageName + "-" + target);
-    if (Directory.Exists(outDir)) Directory.Delete(outDir, recursive: true);
-    Directory.CreateDirectory(outDir);
+    RecreateDirectoryInside(distRoot, outDir);
 
     var csproj = Path.Combine(repoRoot, "src", "Aegis.CLI", "Aegis.CLI.csproj");
     var publishArgs = $"publish \"{csproj}\" -c Release -r {target} --self-contained true " +
@@ -293,6 +353,7 @@ static int Build(string[] args)
 
     CopyGameFiles(gameDir, outDir);
     CopyOfficialLogo(Path.Combine(outDir, "res"));
+    WriteBuildManifest(outDir, packageName, target, gameDir);
 
     if (target.StartsWith("win", StringComparison.OrdinalIgnoreCase))
     {
@@ -313,6 +374,10 @@ static int Build(string[] args)
         "Windows: abra JOGAR.bat para ver erros, ou execute aegis-cli.exe na pasta do build.\n" +
         "Não copie apenas o .exe: mantenha DLLs, runtimes, res/, main.lua e aegis.toml juntos.\n" +
         "Se fechar, leia crash.log.\n");
+
+    var validationCode = ValidateBuildOutput(outDir, target);
+    if (validationCode != 0) return validationCode;
+
     var zipPath = Path.Combine(distRoot, packageName + "-" + target + ".zip");
     if (File.Exists(zipPath)) File.Delete(zipPath);
     ZipFile.CreateFromDirectory(outDir, zipPath, CompressionLevel.SmallestSize, includeBaseDirectory: false);

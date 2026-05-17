@@ -21,7 +21,7 @@ public static class Renderer
         _sb.Begin(
             SpriteSortMode.Deferred,
             BlendState.AlphaBlend,
-            SamplerState.PointClamp,
+            SamplerState.LinearClamp,
             null, null, null, null
         );
         _on = true;

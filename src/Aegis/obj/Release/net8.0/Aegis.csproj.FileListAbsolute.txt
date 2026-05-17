@@ -1,0 +1,12 @@
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\bin\Release\net8.0\Aegis.deps.json
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\bin\Release\net8.0\Aegis.dll
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\bin\Release\net8.0\AegisEditor.Shared.dll
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\Aegis.csproj.AssemblyReference.cache
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\Aegis.GeneratedMSBuildEditorConfig.editorconfig
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\Aegis.AssemblyInfoInputs.cache
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\Aegis.AssemblyInfo.cs
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\Aegis.csproj.CoreCompileInputs.cache
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\Aegis.csproj.Up2Date
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\Aegis.dll
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\refint\Aegis.dll
+D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\src\Aegis\obj\Release\net8.0\ref\Aegis.dll
