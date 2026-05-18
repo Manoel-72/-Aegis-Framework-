@@ -12,6 +12,24 @@ static int Fail(string msg)
 
 static void Info(string msg) => Console.WriteLine($"[aegis] {msg}");
 
+static string FormatException(Exception ex)
+{
+    var sb = new StringBuilder();
+    var current = ex;
+    var depth = 0;
+    while (current is not null)
+    {
+        if (depth > 0)
+            sb.AppendLine().AppendLine($"--- Inner exception #{depth} ---");
+
+        sb.AppendLine(current.ToString());
+        current = current.InnerException;
+        depth++;
+    }
+
+    return sb.ToString();
+}
+
 static void PrintHelp()
 {
     Console.WriteLine("Aegis Engine CLI");
@@ -504,7 +522,7 @@ static int RunGame(string gameDirArg)
             $"Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
             $"GameDir: {fullGameDir}\n" +
             $"Entry: {entry}\n\n" +
-            ex + "\n");
+            FormatException(ex) + "\n");
         Console.Error.WriteLine("[aegis] O jogo fechou com erro.");
         Console.Error.WriteLine($"[aegis] Log: {log}");
         Console.Error.WriteLine(ex.Message);
