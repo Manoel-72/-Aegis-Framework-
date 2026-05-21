@@ -1,0 +1,26 @@
+# .NET build outputs
+bin/
+obj/
+
+# Aegis generated exports
+dist/
+
+# Runtime/editor local files
+*.log
+*.tmp
+*.bak
+*.old
+*.orig
+
+# Local IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Local release archives
+*.zip
+
+# OS files
+Thumbs.db
+.DS_Store
