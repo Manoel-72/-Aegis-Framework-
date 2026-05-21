@@ -1,9 +1,0 @@
-﻿{
-  "engine": "Aegis",
-  "package": "arcanos-da-mesa",
-  "target": "win-x64",
-  "gameDir": "D:\\Teste_site\\aegis-engine-v2\\aegis-engine\\release\\Aegis-Framework-v0.9.0\\card-battle",
-  "createdAt": "2026-05-17T00:26:48.3656868-03:00",
-  "entry": "main.lua",
-  "runner": "aegis-cli.exe"
-}

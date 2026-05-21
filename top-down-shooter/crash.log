@@ -1,6 +1,0 @@
-Aegis crash
-Time: 2026-04-27 05:59:40
-GameDir: D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\top-down-shooter
-Entry: D:\Teste_site\aegis-engine-v2\aegis-engine\release\Aegis-Framework-v0.9.0\top-down-shooter\main.lua
-
-NLua.Exceptions.LuaScriptException: ...release\Aegis-Framework-v0.9.0\top-down-shooter\main.lua:51: A .NET exception occurred in user-code
