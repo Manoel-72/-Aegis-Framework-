@@ -508,7 +508,7 @@ public sealed class EditorPipeHost : IDisposable
         try
         {
             var asm = Assembly.GetExecutingAssembly().GetName();
-            var v = asm.Version?.ToString() ?? "0.98.0";
+            var v = asm.Version?.ToString() ?? "0.9.9";
             var conn = new ConnectedPayload { RuntimeVersion = "Aegis " + v };
 
             _outboundLines.Enqueue(SerializeEnvelope(RuntimeEvent.Connected, conn));

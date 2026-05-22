@@ -8,7 +8,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
     <RootNamespace>AegisEditor</RootNamespace>
-    <Version>0.98.0</Version>
+    <Version>0.9.9</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -4,7 +4,7 @@ namespace Aegis.CLI;
 
 public static class Doctor
 {
-    private const string ToolVersion = "0.98.0";
+    private const string ToolVersion = "0.9.9";
 
     public static void Run(string[] args)
     {

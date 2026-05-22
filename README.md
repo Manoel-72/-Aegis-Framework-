@@ -1,4 +1,4 @@
-# Aegis Engine v0.98
+# Aegis Engine v0.9.9
 
 Engine/framework 2D em C# + MonoGame com scripting Lua.
 
@@ -147,7 +147,7 @@ Arquivos automáticos:
 
 ---
 
-# Aegis v0.98 — Build, Publish e Bundling
+# Aegis v0.9.9 — Build, Publish e Bundling
 
 ## Build nativo
 

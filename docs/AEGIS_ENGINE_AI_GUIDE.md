@@ -2,7 +2,7 @@
 
 Documento para orientar IAs e agentes de codigo a entender, modificar e criar jogos na Aegis Engine.
 
-Versao observada do projeto: Aegis Engine v0.98/v0.99 em desenvolvimento.
+Versao observada do projeto: Aegis Engine v0.9.9 em desenvolvimento.
 
 ## 1. O que e a Aegis Engine
 
@@ -538,4 +538,3 @@ end
 O projeto esta em desenvolvimento. Algumas areas possuem APIs registradas e recursos experimentais. Se a build falhar em arquivos da engine, verifique primeiro `src/Aegis/Scripting/LuaRuntime.cs`, pois ele concentra muitas APIs e pode conter trechos em evolucao.
 
 Quando gerar um jogo, prefira depender das APIs ja usadas pelas demos existentes.
-

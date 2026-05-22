@@ -1,6 +1,6 @@
-# Aegis Engine v0.98 - Instalacao Rapida
+# Aegis Engine v0.9.9 - Instalacao Rapida
 
-Este pacote contem o framework original da Aegis Engine, CLI, templates e demos.
+Este pacote contem a versao limpa da Aegis Engine 0.9.9, CLI, templates, demos e documentacao para testes de criacao de jogos.
 
 ## Requisitos
 
@@ -9,34 +9,34 @@ Este pacote contem o framework original da Aegis Engine, CLI, templates e demos.
 
 ## 1) Extrair o zip
 
-Extraia o arquivo `Aegis-Framework-v0.98-site.zip` em uma pasta local, por exemplo:
+Extraia o arquivo `Aegis-Framework-v0.9.9.zip` em uma pasta local, por exemplo:
 
-`D:\Aegis-Framework-v0.98`
+`D:\Aegis-Framework-v0.9.9`
 
 ## 2) Rodar pela CLI local (recomendado)
 
 No PowerShell, entre na raiz do pacote e execute:
 
-`dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- --help`
+`.\aegis.cmd --help`
 
 Exemplos:
 
-- `dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- run physics-lab`
-- `dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- run hyper-casual`
-- `dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- run demo-platformer`
+- `.\aegis.cmd run physics-lab`
+- `.\aegis.cmd run hyper-casual`
+- `.\aegis.cmd run demo-platformer`
 
 ## 3) Atalho opcional (Windows)
 
 Tambem e possivel usar:
 
-`aegis.cmd run physics-lab`
+`.\aegis.cmd run physics-lab`
 
 ## 4) Criar novo jogo
 
-- `dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- new meu-jogo`
-- `dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- new platformer meu-platformer`
-- `dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- new topdown meu-topdown`
-- `dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- new puzzle meu-puzzle`
+- `.\aegis.cmd new meu-jogo`
+- `.\aegis.cmd new platformer meu-platformer`
+- `.\aegis.cmd new topdown meu-topdown`
+- `.\aegis.cmd new puzzle meu-puzzle`
 
 ## 5) Dica importante
 

@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.98.0</Version>
+    <Version>0.9.9</Version>
     <Authors>Aegis Engine</Authors>
     <Description>Aegis 2D Game Engine - Lua scripted, sprites, animator, tilemaps, save/config, particles, tween, debug overlay and hot reload</Description>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>

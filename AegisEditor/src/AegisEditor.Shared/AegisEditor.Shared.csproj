@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>AegisEditor.Shared</RootNamespace>
     <AssemblyName>AegisEditor.Shared</AssemblyName>
-    <Version>0.98.0</Version>
+    <Version>0.9.9</Version>
   </PropertyGroup>
 
   <ItemGroup>
