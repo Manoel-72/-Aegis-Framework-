@@ -54,7 +54,7 @@ internal static class AegisEngineLocator
 
     internal static string? DefaultDemoNearRepo(string repoRoot)
     {
-        var demo = Path.Combine(repoRoot, "demo-platformer");
+        var demo = Path.Combine(repoRoot, "examples", "demo-platformer");
         return Directory.Exists(demo) && File.Exists(Path.Combine(demo, "main.lua"))
             ? demo
             : null;

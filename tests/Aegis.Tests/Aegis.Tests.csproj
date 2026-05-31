@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Aegis.Tests</AssemblyName>
+    <RootNamespace>Aegis.Tests</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Aegis\Aegis.csproj" />
+    <ProjectReference Include="..\..\src\Aegis.CLI\Aegis.CLI.csproj" />
+  </ItemGroup>
+</Project>

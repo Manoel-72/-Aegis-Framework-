@@ -27,7 +27,7 @@ O codigo Raylib antigo esta mantido apenas como referencia historica em
 Na raiz do pacote:
 
 ```bat
-aegis.cmd run demo-platformer
+aegis.cmd run examples/demo-platformer
 ```
 
 Dentro de uma pasta de jogo:
@@ -39,7 +39,7 @@ Dentro de uma pasta de jogo:
 ## Como gerar build Windows
 
 ```bat
-aegis.cmd build demo-platformer --target win-x64
+aegis.cmd build examples/demo-platformer --target win-x64
 ```
 
 O resultado sai em:

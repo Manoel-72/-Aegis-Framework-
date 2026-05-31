@@ -14,6 +14,7 @@ public static class AudioManager
 {
     private static readonly Dictionary<string, SoundEffect> _sfx = new();
     private static readonly Dictionary<string, Song> _songs = new();
+    private static SoundEffectInstance? _musicSfxInstance;
 
     private static float _sfxVolume = 1f;
     private static float _musicVolume = 1f;
@@ -40,6 +41,18 @@ public static class AudioManager
 
     public static void PlayMusic(string file, bool loop = true)
     {
+        StopMusic();
+        if (Path.GetExtension(file).Equals(".wav", StringComparison.OrdinalIgnoreCase))
+        {
+            var sfx = LoadSfx(file);
+            _musicSfxInstance = sfx.CreateInstance();
+            _musicSfxInstance.IsLooped = loop;
+            _musicSfxInstance.Volume = _musicVolume * GetGroupVolume("music");
+            _musicSfxInstance.Play();
+            _musicPaused = false;
+            return;
+        }
+
         var song = LoadSong(file);
         MediaPlayer.IsRepeating = loop;
         MediaPlayer.Volume = _musicVolume * GetGroupVolume("music");
@@ -50,27 +63,37 @@ public static class AudioManager
     public static void StopMusic()
     {
         MediaPlayer.Stop();
+        _musicSfxInstance?.Stop();
+        _musicSfxInstance?.Dispose();
+        _musicSfxInstance = null;
         _musicPaused = false;
     }
 
     public static void PauseMusic()
     {
         MediaPlayer.Pause();
+        _musicSfxInstance?.Pause();
         _musicPaused = true;
     }
 
     public static void ResumeMusic()
     {
-        if (_musicPaused) { MediaPlayer.Resume(); _musicPaused = false; }
+        if (!_musicPaused) return;
+        if (_musicSfxInstance is not null) _musicSfxInstance.Resume();
+        else MediaPlayer.Resume();
+        _musicPaused = false;
     }
 
     public static void SetMusicVolume(float v)
     {
         _musicVolume = Math.Clamp(float.IsFinite(v) ? v : 1f, 0f, 1f);
         MediaPlayer.Volume = _musicVolume * GetGroupVolume("music");
+        if (_musicSfxInstance is not null)
+            _musicSfxInstance.Volume = _musicVolume * GetGroupVolume("music");
     }
 
-    public static bool IsMusicPlaying => MediaPlayer.State == MediaState.Playing;
+    public static bool IsMusicPlaying => MediaPlayer.State == MediaState.Playing
+        || _musicSfxInstance?.State == SoundState.Playing;
 
 
     public static void SetGroupVolume(string group, float volume)
@@ -78,6 +101,8 @@ public static class AudioManager
         if (string.IsNullOrWhiteSpace(group)) group = "sfx";
         _groupVolumes[group] = Math.Clamp(float.IsFinite(volume) ? volume : 1f, 0f, 1f);
         MediaPlayer.Volume = _musicVolume * GetGroupVolume("music");
+        if (_musicSfxInstance is not null)
+            _musicSfxInstance.Volume = _musicVolume * GetGroupVolume("music");
     }
 
     public static float GetGroupVolume(string group)
@@ -158,6 +183,8 @@ public static class AudioManager
 
     public static void Unload()
     {
+        _musicSfxInstance?.Dispose();
+        _musicSfxInstance = null;
         foreach (var s in _sfx.Values) s.Dispose();
         _sfx.Clear();
         _songs.Clear();

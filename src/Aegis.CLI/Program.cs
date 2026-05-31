@@ -1,5 +1,6 @@
 using Aegis.Audio;
 using Aegis.Core;
+using Aegis.Resource;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
@@ -44,7 +45,7 @@ static void PrintHelp()
     Console.WriteLine("  aegis update");
     Console.WriteLine();
     Console.WriteLine("Exemplos:");
-    Console.WriteLine("  aegis build physics-lab --target win-x64");
+    Console.WriteLine("  aegis build examples/physics-lab --target win-x64");
     Console.WriteLine("  aegis publish --itch manoel/meu-jogo --target win-x64");
 }
 
@@ -298,6 +299,65 @@ static int Doctor()
     return 0;
 }
 
+static int DoctorCommand(string[] args)
+{
+    var target = PositionalAfterCommand(args);
+    if (!string.IsNullOrWhiteSpace(target) && target.Equals("--fix", StringComparison.OrdinalIgnoreCase))
+        target = null;
+
+    if (!string.IsNullOrWhiteSpace(target))
+        return DoctorProject(target);
+
+    var isFrameworkRoot = File.Exists(Path.Combine("src", "Aegis.CLI", "Aegis.CLI.csproj"))
+        && Directory.Exists("templates");
+    if (isFrameworkRoot && !File.Exists("main.lua"))
+    {
+        Console.WriteLine("Aegis Doctor");
+        Console.WriteLine($"OS: {Environment.OSVersion}");
+        Console.WriteLine($".NET runtime: {Environment.Version}");
+        Console.WriteLine($"Dir: {Directory.GetCurrentDirectory()}");
+        Console.WriteLine("OK raiz do framework detectada");
+        Console.WriteLine("INFO para validar um jogo: aegis doctor examples/demo-platformer");
+
+        var dotnetCode = RunProcess("dotnet", "--version");
+        Console.WriteLine(dotnetCode == 0 ? "OK dotnet encontrado" : "WARN dotnet nao encontrado no PATH");
+
+        var butlerCode = RunProcess("butler", "-V");
+        Console.WriteLine(butlerCode == 0 ? "OK butler encontrado" : "INFO butler nao encontrado; necessario para aegis publish --itch");
+        return 0;
+    }
+
+    return Doctor();
+}
+
+static int DoctorProject(string gameDir)
+{
+    var fullGameDir = Path.GetFullPath(gameDir);
+    Console.WriteLine("Aegis Doctor");
+    Console.WriteLine($"OS: {Environment.OSVersion}");
+    Console.WriteLine($".NET runtime: {Environment.Version}");
+    Console.WriteLine($"Project: {fullGameDir}");
+
+    var report = AssetValidator.ValidateProject(fullGameDir);
+    foreach (var issue in report.Issues)
+    {
+        var prefix = issue.Severity switch
+        {
+            AssetIssueSeverity.Info => "INFO",
+            AssetIssueSeverity.Warning => "WARN",
+            AssetIssueSeverity.Error => "ERROR",
+            _ => "INFO"
+        };
+
+        Console.WriteLine($"{prefix} {issue.Code}: {issue.Message}");
+        if (!string.IsNullOrWhiteSpace(issue.Path))
+            Console.WriteLine($"  {issue.Path}");
+    }
+
+    Console.WriteLine($"Summary: {report.ErrorCount} error(s), {report.WarningCount} warning(s)");
+    return report.HasErrors ? 1 : 0;
+}
+
 static int UpdateSelf()
 {
     Info("tentando atualizar a ferramenta global AegisEngine.CLI");
@@ -543,7 +603,7 @@ if (args.Length == 0)
 if (args[0] is "--help" or "-h") { PrintHelp(); return 0; }
 var cmd = args[0].ToLowerInvariant();
 
-if (cmd == "doctor") return Doctor();
+if (cmd == "doctor") return DoctorCommand(args);
 if (cmd == "update") return UpdateSelf();
 if (cmd == "build") return Build(args);
 if (cmd == "publish") return PublishItch(args);

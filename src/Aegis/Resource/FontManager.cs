@@ -116,6 +116,10 @@ public static class FontManager
             : Path.Combine(FontRoot, file);
     }
 
+    internal static string ResolveDefaultFontPathForTests() => ResolveDefaultFontPath();
+
+    internal static int NormalizeSizeForTests(int size) => NormalizeSize(size);
+
     private static string ResolveDefaultFontPath()
     {
         foreach (var candidate in ProjectFontCandidates())

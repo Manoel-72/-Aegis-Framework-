@@ -24,13 +24,13 @@ aegis.cmd doctor
 4. Teste o demo:
 
 ```bat
-aegis.cmd run demo-platformer
+aegis.cmd run examples/demo-platformer
 ```
 
 ## Criar build de jogo
 
 ```bat
-aegis.cmd build demo-platformer --target win-x64
+aegis.cmd build examples/demo-platformer --target win-x64
 ```
 
 O pacote do jogo sera criado em:

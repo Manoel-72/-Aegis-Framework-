@@ -18,10 +18,10 @@ Principais pastas:
 - `src/Aegis.CLI/`: ferramenta de linha de comando `aegis`.
 - `AegisEditor/`: editor visual desktop em Avalonia.
 - `templates/`: modelos de jogos (`platformer`, `topdown`, `puzzle`).
-- `demo-platformer/`: demo de plataforma.
-- `zone-recon/`: jogo top-down shooter de exemplo.
-- `physics-lab/`: laboratorio/demo de fisica.
-- `card-battle/`: prototipo de jogo de cartas criado como projeto separado.
+- `examples/demo-platformer/`: demo de plataforma.
+- `examples/zone-recon/`: jogo top-down shooter de exemplo.
+- `examples/physics-lab/`: laboratorio/demo de fisica.
+- `examples/card-battle/`: prototipo de jogo de cartas criado como projeto separado.
 - `docs/`: documentacao.
 
 Arquivos importantes:
@@ -70,13 +70,13 @@ height = 720
 Via wrapper local:
 
 ```powershell
-.\aegis.cmd run card-battle
+.\aegis.cmd run examples/card-battle
 ```
 
 Via dotnet direto:
 
 ```powershell
-dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- run card-battle
+dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- run examples/card-battle
 ```
 
 Comandos principais da CLI:
@@ -467,7 +467,7 @@ Arquivos:
 
 ## 10. Boas praticas para IAs
 
-1. Crie jogos novos em pastas novas. Nao altere `zone-recon`, `demo-platformer` ou `physics-lab` para prototipos novos, a menos que o usuario peca explicitamente.
+1. Crie jogos novos em pastas novas. Nao altere `examples/zone-recon`, `examples/demo-platformer` ou `examples/physics-lab` para prototipos novos, a menos que o usuario peca explicitamente.
 2. Use `aegis.clearAll()` no inicio de cada cena.
 3. Carregue fonte antes de criar labels.
 4. Use `pcall` para APIs opcionais quando a compatibilidade importar.

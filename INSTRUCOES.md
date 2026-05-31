@@ -13,7 +13,7 @@ Copie cada arquivo para o local indicado no seu projeto.
 ## Rodar (repo atual)
 
 ```bash
-dotnet run --project src/Aegis.CLI -- run physics-lab
+dotnet run --project src/Aegis.CLI -- run examples/physics-lab
 ```
 
 ## O que foi corrigido

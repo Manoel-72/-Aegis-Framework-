@@ -6,7 +6,7 @@ Engine/framework 2D em C# + MonoGame com scripting Lua.
 
 ```powershell
 dotnet build
-dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- run physics-lab
+dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- run examples/physics-lab
 ```
 
 ## Regras de física simples
@@ -154,16 +154,16 @@ Arquivos automáticos:
 Dentro do repositório da engine, rode:
 
 ```powershell
-dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- build physics-lab --target win-x64
+dotnet run --project src/Aegis.CLI/Aegis.CLI.csproj -- build examples/physics-lab --target win-x64
 ```
 
 Depois de instalar a CLI global:
 
 ```bash
-aegis build physics-lab --target win-x64
-aegis build physics-lab --target linux-x64
-aegis build physics-lab --target osx
-aegis build physics-lab --target osx-arm64
+aegis build examples/physics-lab --target win-x64
+aegis build examples/physics-lab --target linux-x64
+aegis build examples/physics-lab --target osx
+aegis build examples/physics-lab --target osx-arm64
 ```
 
 Saída:
@@ -213,7 +213,7 @@ butler login
 Publicar:
 
 ```bash
-aegis publish physics-lab --itch usuario/jogo --target win-x64
+aegis publish examples/physics-lab --itch usuario/jogo --target win-x64
 ```
 
 Canais usados:
@@ -229,7 +229,7 @@ web       -> html5
 ## Web / WASM
 
 ```bash
-aegis build physics-lab --target web
+aegis build examples/physics-lab --target web
 ```
 
 A engine atual usa DesktopGL/MonoGame. Por isso, o comando `web` gera um pacote explicativo preparado para itch.io, mas ainda não executa o jogo em WASM real. Para HTML5 real, a Aegis precisa de um backend WebGL/WASM separado.

@@ -2,14 +2,14 @@
 
 ## Demo completo
 
-Pasta: `demo-platformer/`
+Pasta: `examples/demo-platformer/`
 
 Inclui 3 fases pequenas de plataforma com player, inimigos, tilemap, colisão automática, pathfinding, coletáveis, HUD, shaders, partículas, áudio e gamepad.
 
 Rodar:
 
 ```bash
-aegis run demo-platformer
+aegis run examples/demo-platformer
 ```
 
 ## Templates

@@ -1,4 +1,6 @@
 using System.IO;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Text.Json;
 using AegisEditor.Services;
 using AegisEditor.Shared.Messages;
@@ -13,6 +15,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IEditorLogSink _log;
     private readonly ISceneSerializer _sceneSerializer;
     private readonly IRuntimeLauncher _runtimeLauncher;
+    private readonly string _recentProjectsFile;
 
     public HierarchyViewModel Hierarchy { get; }
 
@@ -44,6 +47,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _log = log;
         _sceneSerializer = sceneSerializer;
         _runtimeLauncher = runtimeLauncher;
+        _recentProjectsFile = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "AegisEditor",
+            "recent-projects.json");
 
         Hierarchy.SelectedEntityChanged += (_, entity) =>
             Inspector.ApplySelection(entity);
@@ -54,7 +61,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var demoNear = detectedRepo is not null ? AegisEngineLocator.DefaultDemoNearRepo(detectedRepo) : null;
         if (demoNear is not null)
             GamePreviewFolder = demoNear;
+
+        LoadRecentProjects();
     }
+
+    public ObservableCollection<string> RecentProjects { get; } = [];
+
+    [ObservableProperty]
+    private bool _isHubVisible = true;
+
+    [ObservableProperty]
+    private bool _isWorkspaceVisible;
+
+    [ObservableProperty]
+    private string _currentProjectName = "Nenhum projeto aberto";
+
+    [ObservableProperty]
+    private string _hubStatus = "Escolha uma acao para comecar.";
 
     [ObservableProperty]
     private string _sceneProjectPath = string.Empty;
@@ -66,6 +89,102 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>Raiz do repositório com <c>src/Aegis.CLI</c>; deixar vazio para detetar a partir da pasta do editor.</summary>
     [ObservableProperty]
     private string _engineRepoOverride = string.Empty;
+
+    public void OpenProject(string projectPath)
+    {
+        var fullPath = Path.GetFullPath(projectPath);
+        if (!Directory.Exists(fullPath))
+        {
+            HubStatus = "Pasta de projeto nao encontrada.";
+            _log.Post(EditorLogLevel.Error, $"Pasta de projeto nao encontrada: {fullPath}");
+            return;
+        }
+
+        if (!File.Exists(Path.Combine(fullPath, "main.lua")))
+        {
+            HubStatus = "A pasta escolhida nao parece ser um jogo Aegis.";
+            _log.Post(EditorLogLevel.Warning, $"Sem main.lua em: {fullPath}");
+            return;
+        }
+
+        GamePreviewFolder = fullPath;
+        CurrentProjectName = Path.GetFileName(fullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        IsHubVisible = false;
+        IsWorkspaceVisible = true;
+        HubStatus = $"Projeto aberto: {CurrentProjectName}";
+        AddRecentProject(fullPath);
+        _log.Post(EditorLogLevel.Info, $"Projeto aberto: {fullPath}");
+    }
+
+    [RelayCommand]
+    private void BackToHub()
+    {
+        IsWorkspaceVisible = false;
+        IsHubVisible = true;
+        HubStatus = "Escolha uma acao para comecar.";
+    }
+
+    [RelayCommand]
+    private void NewProject()
+    {
+        HubStatus = "Novo Projeto visual entra na Fase 6B. Por enquanto use a CLI: aegis.cmd new meu-jogo.";
+        _log.Post(EditorLogLevel.Info, "Novo Projeto visual ainda nao esta ativo. Use: aegis.cmd new meu-jogo");
+    }
+
+    [RelayCommand]
+    private void OpenExample()
+    {
+        var repo = !string.IsNullOrWhiteSpace(EngineRepoOverride)
+            ? Path.GetFullPath(EngineRepoOverride.Trim())
+            : AegisEngineLocator.FindRepoRootContainingCli();
+
+        var demo = repo is not null ? AegisEngineLocator.DefaultDemoNearRepo(repo) : null;
+        if (demo is null)
+        {
+            HubStatus = "Nao encontrei examples/demo-platformer perto da engine.";
+            _log.Post(EditorLogLevel.Warning, "Exemplo demo-platformer nao encontrado.");
+            return;
+        }
+
+        OpenProject(demo);
+    }
+
+    [RelayCommand]
+    private void OpenRecentProject(string? projectPath)
+    {
+        if (string.IsNullOrWhiteSpace(projectPath))
+            return;
+
+        OpenProject(projectPath);
+    }
+
+    [RelayCommand]
+    private void OpenDocumentation()
+    {
+        var repo = AegisEngineLocator.FindRepoRootContainingCli();
+        var docsPath = repo is not null ? Path.Combine(repo, "docs", "GUIA_CURSO_AEGIS_ENGINE_VERSAO_ATUAL.md") : null;
+        if (docsPath is null || !File.Exists(docsPath))
+        {
+            HubStatus = "Documentacao nao encontrada.";
+            _log.Post(EditorLogLevel.Warning, "Documentacao principal nao encontrada.");
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = docsPath,
+                UseShellExecute = true
+            });
+            HubStatus = "Documentacao aberta.";
+        }
+        catch (Exception ex)
+        {
+            HubStatus = "Nao foi possivel abrir a documentacao.";
+            _log.Post(EditorLogLevel.Error, $"Falha ao abrir documentacao: {ex.Message}");
+        }
+    }
 
     [RelayCommand]
     private async Task RunGameAndConnectAsync(CancellationToken cancellationToken)
@@ -390,6 +509,54 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex)
         {
             _log.Post(EditorLogLevel.Error, $"IPC parse failure ({e.Type}): {ex.Message}");
+        }
+    }
+
+    private void LoadRecentProjects()
+    {
+        try
+        {
+            if (!File.Exists(_recentProjectsFile))
+                return;
+
+            var items = JsonSerializer.Deserialize<List<string>>(File.ReadAllText(_recentProjectsFile));
+            if (items is null) return;
+
+            foreach (var item in items.Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase).Take(8))
+                RecentProjects.Add(item);
+        }
+        catch (Exception ex)
+        {
+            _log.Post(EditorLogLevel.Warning, $"Nao foi possivel carregar projetos recentes: {ex.Message}");
+        }
+    }
+
+    private void AddRecentProject(string projectPath)
+    {
+        var fullPath = Path.GetFullPath(projectPath);
+        for (var i = RecentProjects.Count - 1; i >= 0; i--)
+        {
+            if (RecentProjects[i].Equals(fullPath, StringComparison.OrdinalIgnoreCase))
+                RecentProjects.RemoveAt(i);
+        }
+
+        RecentProjects.Insert(0, fullPath);
+        while (RecentProjects.Count > 8)
+            RecentProjects.RemoveAt(RecentProjects.Count - 1);
+
+        SaveRecentProjects();
+    }
+
+    private void SaveRecentProjects()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_recentProjectsFile)!);
+            File.WriteAllText(_recentProjectsFile, JsonSerializer.Serialize(RecentProjects.ToArray(), new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch (Exception ex)
+        {
+            _log.Post(EditorLogLevel.Warning, $"Nao foi possivel salvar projetos recentes: {ex.Message}");
         }
     }
 }

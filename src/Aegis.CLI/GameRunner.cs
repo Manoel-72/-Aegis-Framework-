@@ -5,7 +5,7 @@ namespace Aegis.CLI;
 public static class GameRunner
 {
     /// <summary>
-    /// Se <paramref name="firstArg"/> for uma pasta existente (ex.: <c>physics-lab</c>),
+    /// Se <paramref name="firstArg"/> for uma pasta existente (ex.: <c>examples/physics-lab</c>),
     /// muda o cwd para ela antes de ler <c>aegis.toml</c>. Retorna <c>true</c> se entrou
     /// na pasta (o argumento não é um override de script Lua).
     /// </summary>
@@ -57,9 +57,9 @@ public static class GameRunner
         {
             Console.WriteLine($"[Aegis] Script não encontrado: '{script}'");
             Console.WriteLine("[Aegis] Rode 'aegis new <nome>' numa pasta de jogo, ou:");
-            Console.WriteLine("  aegis run physics-lab   |   aegis run hyper-casual");
+            Console.WriteLine("  aegis run examples/physics-lab   |   aegis run examples/hyper-casual");
             if (File.Exists(Path.Combine("src", "Aegis.CLI", "Aegis.CLI.csproj")))
-                Console.WriteLine("  Na raiz do engine: .\\aegis.cmd run physics-lab  (garante cwd + build certos)");
+                Console.WriteLine("  Na raiz do engine: .\\aegis.cmd run examples/physics-lab  (garante cwd + build certos)");
             return;
         }
 

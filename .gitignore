@@ -5,6 +5,9 @@ obj/
 # Aegis generated exports
 dist/
 
+# Local historical artifacts kept out of public packages
+archive/
+
 # Runtime/editor local files
 *.log
 *.tmp

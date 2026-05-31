@@ -21,15 +21,15 @@ No PowerShell, entre na raiz do pacote e execute:
 
 Exemplos:
 
-- `.\aegis.cmd run physics-lab`
-- `.\aegis.cmd run hyper-casual`
-- `.\aegis.cmd run demo-platformer`
+- `.\aegis.cmd run examples/physics-lab`
+- `.\aegis.cmd run examples/hyper-casual`
+- `.\aegis.cmd run examples/demo-platformer`
 
 ## 3) Atalho opcional (Windows)
 
 Tambem e possivel usar:
 
-`.\aegis.cmd run physics-lab`
+`.\aegis.cmd run examples/physics-lab`
 
 ## 4) Criar novo jogo
 

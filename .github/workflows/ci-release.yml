@@ -1,0 +1,52 @@
+name: Aegis CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release package version"
+        required: false
+        default: "0.9.9"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build, Test, Package
+    runs-on: windows-latest
+    env:
+      AEGIS_PACKAGE_VERSION: ${{ github.event.inputs.version || '0.9.9' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore Aegis.sln
+
+      - name: Verify source
+        shell: pwsh
+        run: ./scripts/verify.ps1 -Configuration Release -SkipZip
+
+      - name: Package release
+        shell: pwsh
+        run: ./scripts/package-release.ps1 -Version $env:AEGIS_PACKAGE_VERSION -Configuration Release
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aegis-Framework-v${{ env.AEGIS_PACKAGE_VERSION }}
+          path: dist/Aegis-Framework-v${{ env.AEGIS_PACKAGE_VERSION }}.zip
+          if-no-files-found: error
