@@ -254,6 +254,9 @@ public sealed partial class LuaRuntime : IDisposable
         Reg("aegis.buildTilemapColliders", nameof(BuildTilemapColliders));
         Reg("aegis.clearTilemapColliders", nameof(ClearTilemapColliders));
         Reg("aegis.tilemapColliderCount",  nameof(TilemapColliderCount));
+        Reg("aegis.mapObjects",      nameof(MapObjects));
+        Reg("aegis.mapObjectsByType", nameof(MapObjectsByType));
+        Reg("aegis.spawnMapObjects", nameof(SpawnMapObjects));
         Reg("aegis.newNavGrid",      nameof(NewNavGrid));
         Reg("aegis.navFromTilemap",  nameof(NavFromTilemap));
         Reg("aegis.navFindPath",     nameof(NavFindPath));

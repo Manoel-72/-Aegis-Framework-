@@ -338,6 +338,10 @@ static int DoctorProject(string gameDir)
     Console.WriteLine($".NET runtime: {Environment.Version}");
     Console.WriteLine($"Project: {fullGameDir}");
 
+    var manifest = AssetManifest.Build(fullGameDir);
+    Console.WriteLine(
+        $"Assets: {manifest.Entries.Count} total, {manifest.SpriteCount} sprite(s), {manifest.AudioCount} audio, {manifest.FontCount} font(s), {manifest.TilemapCount} tilemap(s)");
+
     var report = AssetValidator.ValidateProject(fullGameDir);
     foreach (var issue in report.Issues)
     {

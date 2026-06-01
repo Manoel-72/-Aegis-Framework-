@@ -12,6 +12,10 @@ Versao limpa para testes de criacao de jogos e distribuicao inicial no site.
 - `displayMode` com suporte a `windowed` e `borderless`.
 - `DisplayWakeLock` no Windows para reduzir risco de tela apagar durante jogo.
 - Build/export Windows mais confiavel com validacao e `aegis-build.json`.
+- `aegis doctor <jogo>` com validacao inicial de projeto e assets.
+- `AssetValidator` inicial para detectar arquivos ausentes e formatos invalidos.
+- Aegis Editor com Hub inicial para abrir projeto, exemplo, documentacao e recentes.
+- `demo-platformer` validado sem `[Audio|WARN]` no teste principal.
 - Codigo Raylib antigo isolado em `legacy/raylib-v0`.
 - `.gitignore` configurado para ignorar `bin`, `obj`, `dist`, logs e zips.
 
@@ -48,7 +52,10 @@ O resultado sai em:
 dist/
 ```
 
-## Observacao
+## Status do preview
 
-Esta versao e recomendada para testes, cursos e criacao de jogos pequenos.
-Ainda nao deve ser tratada como release publica final da engine.
+Esta versao e recomendada para testes, cursos, criacao de jogos pequenos e
+download publico preview.
+
+Ainda nao deve ser tratada como release final de mercado. O foco pos-0.9.9 e
+fortalecer asset pipeline, map pipeline 2D, debug visual e editor.

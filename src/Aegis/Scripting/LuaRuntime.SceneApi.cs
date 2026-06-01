@@ -44,6 +44,27 @@ public sealed partial class LuaRuntime
 
     public int TilemapColliderCount(TilemapNode map) => map.GeneratedColliderCount;
 
+    public LuaTable MapObjects(TilemapNode map)
+        => ToLuaMapObjects(map.Objects);
+
+    public LuaTable MapObjectsByType(TilemapNode map, string type)
+        => ToLuaMapObjects(map.GetObjectsByType(type));
+
+    public int SpawnMapObjects(TilemapNode map, LuaTable handlers)
+    {
+        var spawned = 0;
+        foreach (var obj in map.Objects)
+        {
+            var callback = FindMapObjectHandler(handlers, obj);
+            if (callback is null) continue;
+
+            callback.Call(ToLuaMapObject(obj));
+            spawned++;
+        }
+
+        return spawned;
+    }
+
     public NavGrid NewNavGrid(int width, int height, int cellSize, bool diagonal = false)
         => new(width, height, cellSize, diagonal);
 
@@ -104,4 +125,72 @@ public sealed partial class LuaRuntime
     public void CheckTrigger(AreaTrigger trigger, Object2D obj) => trigger.Check(obj);
 
     public void ClearTriggers() => SceneManager.Instance.ClearTriggers();
+
+    private LuaTable ToLuaMapObjects(IReadOnlyList<TiledMapObject> objects)
+    {
+        _lua.NewTable("_aegis_map_objects");
+        var table = (LuaTable)_lua["_aegis_map_objects"];
+
+        for (var i = 0; i < objects.Count; i++)
+        {
+            var obj = objects[i];
+            _lua.NewTable("_aegis_map_object");
+            var item = (LuaTable)_lua["_aegis_map_object"];
+            item["layer"] = obj.LayerName;
+            item["id"] = obj.Id;
+            item["name"] = obj.Name;
+            item["type"] = obj.Type;
+            item["x"] = obj.X;
+            item["y"] = obj.Y;
+            item["width"] = obj.Width;
+            item["height"] = obj.Height;
+            item["rotation"] = obj.Rotation;
+            item["visible"] = obj.Visible;
+
+            _lua.NewTable("_aegis_map_object_props");
+            var props = (LuaTable)_lua["_aegis_map_object_props"];
+            foreach (var prop in obj.Properties)
+                props[prop.Key] = prop.Value;
+            item["properties"] = props;
+
+            table[i + 1] = item;
+        }
+
+        return table;
+    }
+
+    private LuaTable ToLuaMapObject(TiledMapObject obj)
+    {
+        _lua.NewTable("_aegis_map_object");
+        var item = (LuaTable)_lua["_aegis_map_object"];
+        item["layer"] = obj.LayerName;
+        item["id"] = obj.Id;
+        item["name"] = obj.Name;
+        item["type"] = obj.Type;
+        item["x"] = obj.X;
+        item["y"] = obj.Y;
+        item["width"] = obj.Width;
+        item["height"] = obj.Height;
+        item["rotation"] = obj.Rotation;
+        item["visible"] = obj.Visible;
+
+        _lua.NewTable("_aegis_map_object_props");
+        var props = (LuaTable)_lua["_aegis_map_object_props"];
+        foreach (var prop in obj.Properties)
+            props[prop.Key] = prop.Value;
+        item["properties"] = props;
+
+        return item;
+    }
+
+    private static LuaFunction? FindMapObjectHandler(LuaTable handlers, TiledMapObject obj)
+    {
+        if (!string.IsNullOrWhiteSpace(obj.Type) && handlers[obj.Type] is LuaFunction byType)
+            return byType;
+
+        if (!string.IsNullOrWhiteSpace(obj.Name) && handlers[obj.Name] is LuaFunction byName)
+            return byName;
+
+        return handlers["default"] as LuaFunction;
+    }
 }

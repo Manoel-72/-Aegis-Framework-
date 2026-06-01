@@ -24,12 +24,14 @@ public sealed class TilemapNode : Object2D
 
     private readonly List<TileLayer> _layers = new();
     private readonly List<TilesetInfo> _tilesets = new();
+    private readonly List<TiledMapObject> _objects = new();
     private readonly List<Collider> _generatedColliders = new();
     private readonly List<Object2D> _generatedColliderNodes = new();
     private readonly HashSet<int> _tiledSolidGids = new();
 
     /// <summary>Caminho do .json relativo ao jogo, se criado por <see cref="LoadTiledJson"/>.</summary>
     public string? TiledSourcePath { get; private set; }
+    public IReadOnlyList<TiledMapObject> Objects => _objects;
 
     public int GeneratedColliderCount => _generatedColliders.Count;
     public bool CameraCulling { get; set; } = true;
@@ -123,7 +125,12 @@ public sealed class TilemapNode : Object2D
     {
         TiledSourcePath = relativePath.Replace('\\', '/').TrimStart('/');
         var full = ResolveSafe(relativePath);
-        using var doc = JsonDocument.Parse(File.ReadAllText(full));
+        var json = File.ReadAllText(full);
+        var tiledDocument = TiledMapDocument.Parse(json, full);
+        _objects.Clear();
+        _objects.AddRange(tiledDocument.Objects);
+
+        using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
         MapWidth = root.GetProperty("width").GetInt32();
@@ -242,6 +249,14 @@ public sealed class TilemapNode : Object2D
         layer.Data[y * layer.Width + x] = Math.Max(0, gid);
     }
 
+    public IReadOnlyList<TiledMapObject> GetObjectsByType(string type)
+    {
+        if (string.IsNullOrWhiteSpace(type)) return _objects;
+        return _objects
+            .Where(obj => obj.Type.Equals(type, StringComparison.OrdinalIgnoreCase)
+                || obj.Name.Equals(type, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+    }
 
 
     public bool AnyLayerHasSolidGid(int x, int y, HashSet<int> solidGids)

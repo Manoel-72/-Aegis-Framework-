@@ -21,8 +21,10 @@ internal static class Program
         Run("ComponentFactory creates group on world and UI roots", ComponentFactoryCreatesGroups);
         Run("FontManager resolves project fallback font candidates", FontManagerResolvesProjectFallbackFont);
         Run("FontManager normalizes font size", FontManagerNormalizesFontSize);
+        Run("AssetManifest categorizes project assets", AssetManifestCategorizesProjectAssets);
         Run("AssetValidator validates project assets", AssetValidatorValidatesProjectAssets);
         Run("AssetValidator reports missing references", AssetValidatorReportsMissingReferences);
+        Run("TiledMapDocument parses object layers and properties", TiledMapDocumentParsesObjects);
         Run("ProjectCreator creates a runnable project skeleton", ProjectCreatorCreatesSkeleton);
         Run("SceneManager transition none loads registered scene", SceneManagerTransitionLoadsScene);
         Run("CLI build web creates validated package", CliBuildWebCreatesPackage);
@@ -160,6 +162,28 @@ end
         AssertEqual(0, report.ErrorCount, "valid project should have no asset errors");
     }
 
+    private static void AssetManifestCategorizesProjectAssets()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(Path.Combine(dir.Path, "res", "sprites"));
+        Directory.CreateDirectory(Path.Combine(dir.Path, "res", "audio"));
+        Directory.CreateDirectory(Path.Combine(dir.Path, "res", "fonts"));
+        Directory.CreateDirectory(Path.Combine(dir.Path, "res", "tilemaps"));
+
+        File.WriteAllBytes(Path.Combine(dir.Path, "res", "sprites", "player.png"), [0x89, 0x50, 0x4E, 0x47]);
+        WriteMinimalWav(Path.Combine(dir.Path, "res", "audio", "jump.wav"));
+        File.WriteAllBytes(Path.Combine(dir.Path, "res", "fonts", "Inter-Regular.ttf"), [0, 1, 0, 0]);
+        File.WriteAllText(Path.Combine(dir.Path, "res", "tilemaps", "level1.json"), "{}");
+
+        var manifest = AssetManifest.Build(dir.Path);
+
+        AssertEqual(4, manifest.Entries.Count, "manifest should index all files in res");
+        AssertEqual(1, manifest.SpriteCount, "manifest should count sprites");
+        AssertEqual(1, manifest.AudioCount, "manifest should count audio");
+        AssertEqual(1, manifest.FontCount, "manifest should count fonts");
+        AssertEqual(1, manifest.TilemapCount, "manifest should count tilemaps");
+    }
+
     private static void AssetValidatorReportsMissingReferences()
     {
         using var dir = new TempDir();
@@ -176,6 +200,59 @@ end
 
         AssertTrue(report.ErrorCount >= 2, "missing audio and sprite should be reported");
         AssertTrue(report.Issues.Any(i => i.Code == "asset.reference.missing"), "missing references should use asset.reference.missing code");
+    }
+
+    private static void TiledMapDocumentParsesObjects()
+    {
+        var map = TiledMapDocument.Parse("""
+{
+  "width": 20,
+  "height": 12,
+  "tilewidth": 16,
+  "tileheight": 16,
+  "properties": [
+    { "name": "music", "type": "string", "value": "stage1.wav" }
+  ],
+  "tilesets": [
+    { "firstgid": 1, "name": "base", "image": "../sprites/tiles.png", "tilewidth": 16, "tileheight": 16, "columns": 4, "tilecount": 16 }
+  ],
+  "layers": [
+    { "type": "tilelayer", "name": "Ground", "width": 20, "height": 12, "visible": true, "opacity": 0.75, "data": [] },
+    {
+      "type": "objectgroup",
+      "name": "Objects",
+      "objects": [
+        {
+          "id": 1,
+          "name": "Start",
+          "type": "player_spawn",
+          "x": 32,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            { "name": "facing", "type": "string", "value": "right" },
+            { "name": "checkpoint", "type": "bool", "value": true }
+          ]
+        }
+      ]
+    }
+  ]
+}
+""");
+
+        AssertEqual(20, map.Width, "map width should parse");
+        AssertEqual(12, map.Height, "map height should parse");
+        AssertEqual("stage1.wav", map.Properties["music"], "map property should parse");
+        AssertEqual(2, map.Layers.Count, "layers should parse");
+        AssertEqual("Ground", map.Layers[0].Name, "tile layer name should parse");
+        AssertEqual(0.75f, map.Layers[0].Opacity, "layer opacity should parse");
+        AssertEqual(1, map.Objects.Count, "object layer item should parse");
+        AssertEqual("Objects", map.Objects[0].LayerName, "object layer name should parse");
+        AssertEqual("player_spawn", map.Objects[0].Type, "object type should parse");
+        AssertEqual("right", map.Objects[0].Properties["facing"], "object string property should parse");
+        AssertEqual("true", map.Objects[0].Properties["checkpoint"], "object bool property should parse");
+        AssertEqual(1, map.Tilesets.Count, "tileset refs should parse");
     }
 
     private static void ProjectCreatorCreatesSkeleton()

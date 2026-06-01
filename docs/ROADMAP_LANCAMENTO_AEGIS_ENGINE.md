@@ -51,10 +51,10 @@ Prioridade:
 | Release package 0.9.9 | `[x]` | P0 | Gerar ZIP limpo e verificavel |
 | CI/release workflow | `[x]` | P1 | Automatizar build/test/package |
 | Repo limpo | `[~]` | P0 | Reduzir ruido e artefatos locais |
-| Exemplos sem warnings | `[~]` | P0 | Demos publicas sem erro/warn normal |
+| Exemplos sem warnings | `[x]` | P0 | Demos publicas sem erro/warn normal |
 | Assets pipeline | `[~]` | P0 | Validar e organizar assets do jogo |
-| Map pipeline 2D | `[ ]` | P0 | Transformar mapas em fluxo oficial da engine |
-| Object layers/spawn | `[ ]` | P0 | Criar entidades a partir do mapa |
+| Map pipeline 2D | `[~]` | P0 | Transformar mapas em fluxo oficial da engine |
+| Object layers/spawn | `[~]` | P0 | Criar entidades a partir do mapa |
 | Tile batching | `[ ]` | P1 | Melhorar performance de mapas grandes |
 | Debug visual | `[~]` | P1 | Ver colliders, grid, stats e mapa |
 | Editor Hub | `[~]` | P1 | Tela inicial clara para iniciantes |
@@ -94,7 +94,7 @@ Objetivo: deixar o pacote publico sem sinais obvios de prototipo.
 
 | Tarefa | Status | Prioridade | Criterio De Pronto |
 | --- | --- | --- | --- |
-| Corrigir warnings de audio nos exemplos | `[~]` | P0 | `demo-platformer` roda sem `[Audio|WARN]` |
+| Corrigir warnings de audio nos exemplos | `[x]` | P0 | `demo-platformer` roda sem `[Audio|WARN]` |
 | Melhorar `aegis doctor` na raiz da engine | `[x]` | P1 | Doctor entende quando esta na raiz do framework |
 | Testar ZIP em pasta limpa | `[x]` | P0 | `doctor`, `run`, `build` passaram |
 | Atualizar release notes com estado real | `[~]` | P0 | Comandos usam `examples/...` e explicam preview |
@@ -123,13 +123,13 @@ Tarefas:
 
 | Tarefa | Status | Prioridade | Criterio De Pronto |
 | --- | --- | --- | --- |
-| Criar `AssetManifest` interno | `[ ]` | P0 | Lista sprites, audio, fontes, mapas |
+| Criar `AssetManifest` interno | `[x]` | P0 | Lista sprites, audio, fontes, mapas |
 | Criar `aegis doctor <jogo>` | `[x]` | P0 | Valida assets de uma pasta de jogo |
 | Validar imagem ausente com erro claro | `[x]` | P0 | Erro mostra caminho esperado e pasta `res/` |
 | Validar audio invalido | `[x]` | P0 | Doctor detecta `.wav` quebrado antes do runtime |
 | Validar fonte fallback | `[~]` | P1 | Doctor mostra fonte escolhida |
 | Padronizar pastas `res/` | `[~]` | P1 | Docs e templates usam mesmo padrao |
-| Criar doc `ASSET_PIPELINE.md` | `[ ]` | P1 | Explica sprites, audio, fontes e mapas |
+| Criar doc `ASSET_PIPELINE.md` | `[x]` | P1 | Explica sprites, audio, fontes e mapas |
 
 API futura desejada:
 
@@ -156,14 +156,14 @@ Tarefas:
 | Criar `MapApi` separada | `[ ]` | P0 | Registro Lua isolado do runtime principal |
 | Criar `aegis.loadMap` | `[ ]` | P0 | Fachada limpa para mapas novos |
 | Suportar layers nomeadas | `[ ]` | P0 | Buscar layer por nome, nao so indice |
-| Suportar opacidade/visibilidade de layer | `[ ]` | P1 | Tiled visible/opacity respeitado |
-| Suportar object layers do Tiled | `[ ]` | P0 | Objetos do mapa acessiveis via Lua |
-| Ler properties de map/layer/tile/object | `[ ]` | P0 | `solid`, `spawn`, `type`, etc. |
+| Suportar opacidade/visibilidade de layer | `[x]` | P1 | Tiled visible/opacity respeitado |
+| Suportar object layers do Tiled | `[x]` | P0 | Objetos do mapa acessiveis via Lua |
+| Ler properties de map/layer/tile/object | `[~]` | P0 | Map/layer/object ja leem propriedades; tile props parciais |
 | Suportar tilesets externos `.tsx` | `[ ]` | P1 | Tiled moderno funciona melhor |
 | Suportar collision por propriedade | `[ ]` | P0 | `solid=true` gera collider |
-| Suportar object spawn | `[ ]` | P0 | Entidades criadas a partir do mapa |
-| Criar testes de tilemap/mapa | `[ ]` | P0 | Testes cobrem load, layers, props, colliders |
-| Criar doc `2D_WORLD_AND_MAP_PIPELINE.md` | `[ ]` | P0 | Guia oficial para construir mapa |
+| Suportar object spawn | `[x]` | P0 | Handlers Lua criam entidades a partir do mapa |
+| Criar testes de tilemap/mapa | `[~]` | P0 | Testes cobrem parser Tiled e object layers |
+| Criar doc `2D_WORLD_AND_MAP_PIPELINE.md` | `[x]` | P0 | Guia oficial para construir mapa |
 
 API alvo:
 
@@ -320,7 +320,7 @@ Tarefas:
 | Guia para IA criar curso | `[x]` | P1 | `GUIA_CURSO...` atualizado |
 | MVP API documentada | `[x]` | P0 | `docs/MVP_API.md` |
 | Stable Lua API | `[x]` | P1 | `docs/STABLE_LUA_API.md` |
-| Guia de assets | `[ ]` | P1 | `ASSET_PIPELINE.md` |
+| Guia de assets | `[x]` | P1 | `ASSET_PIPELINE.md` |
 | Guia de mapas 2D | `[ ]` | P0 | `2D_WORLD_AND_MAP_PIPELINE.md` |
 | Tutorial primeiro jogo | `[ ]` | P1 | Do zero ao build |
 | Tutorial mapa com Tiled | `[ ]` | P0 | Criar mapa, colisao e spawn |
@@ -344,7 +344,7 @@ Checklist minimo:
 | Testes passam | `[x]` |
 | ZIP limpo gerado | `[x]` |
 | ZIP testado em pasta limpa | `[x]` |
-| Exemplo principal sem warnings | `[~]` |
+| Exemplo principal sem warnings | `[x]` |
 | Release notes atualizadas | `[~]` |
 | Install guide atualizado | `[x]` |
 | Site com comandos corretos | `[~]` |
@@ -381,7 +381,7 @@ Esta e a ordem mais segura para melhorar muito sem refatorar demais:
 2. Melhorar `aegis doctor <jogo>` para validar assets.
 3. Criar `docs/2D_WORLD_AND_MAP_PIPELINE.md`.
 4. Implementar leitura de object layers do Tiled.
-5. Implementar `aegis.spawnMapObjects`.
+5. Implementar `aegis.spawnMapObjects`. `[x]`
 6. Adicionar testes de tilemap/mapa.
 7. Criar debug visual de grid/object layers.
 8. Melhorar tilesets externos `.tsx`.
