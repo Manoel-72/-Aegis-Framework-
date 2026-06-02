@@ -16,6 +16,8 @@ public class Bitmap : Object2D
 
     /// Pivot normalizado: (0,0)=topo-esq, (0.5,0.5)=centro, (1,1)=baixo-dir
     public Vector2 Pivot { get; set; } = Vector2.Zero;
+    public bool FlipX { get; set; }
+    public bool FlipY { get; set; }
 
     public int TextureWidth  => SourceRect?.Width  ?? Texture?.Width  ?? 0;
     public int TextureHeight => SourceRect?.Height ?? Texture?.Height ?? 0;
@@ -43,16 +45,19 @@ public class Bitmap : Object2D
         float scY    = MathF.Sqrt(world.M12 * world.M12 + world.M22 * world.M22);
         float rot    = MathF.Atan2(world.M21, world.M11);
         var   origin = new Vector2(TextureWidth * Pivot.X, TextureHeight * Pivot.Y);
+        var   effects = SpriteEffects.None;
+        if (FlipX) effects |= SpriteEffects.FlipHorizontally;
+        if (FlipY) effects |= SpriteEffects.FlipVertically;
 
         var shader = Shader;
         if (shader?.Name == "outline")
         {
             var w = MathF.Max(1f, shader.Width);
             var outlineColor = shader.Color * eff;
-            sb.Draw(Texture, pos + new Vector2( w, 0), SourceRect, outlineColor, rot, origin, new Vector2(scX, scY), SpriteEffects.None, 0f);
-            sb.Draw(Texture, pos + new Vector2(-w, 0), SourceRect, outlineColor, rot, origin, new Vector2(scX, scY), SpriteEffects.None, 0f);
-            sb.Draw(Texture, pos + new Vector2(0,  w), SourceRect, outlineColor, rot, origin, new Vector2(scX, scY), SpriteEffects.None, 0f);
-            sb.Draw(Texture, pos + new Vector2(0, -w), SourceRect, outlineColor, rot, origin, new Vector2(scX, scY), SpriteEffects.None, 0f);
+            sb.Draw(Texture, pos + new Vector2( w, 0), SourceRect, outlineColor, rot, origin, new Vector2(scX, scY), effects, 0f);
+            sb.Draw(Texture, pos + new Vector2(-w, 0), SourceRect, outlineColor, rot, origin, new Vector2(scX, scY), effects, 0f);
+            sb.Draw(Texture, pos + new Vector2(0,  w), SourceRect, outlineColor, rot, origin, new Vector2(scX, scY), effects, 0f);
+            sb.Draw(Texture, pos + new Vector2(0, -w), SourceRect, outlineColor, rot, origin, new Vector2(scX, scY), effects, 0f);
         }
 
         var color = Color.White * eff;
@@ -64,7 +69,7 @@ public class Bitmap : Object2D
             Texture, pos, SourceRect,
             color,
             rot, origin, new Vector2(scX, scY),
-            SpriteEffects.None, 0f
+            effects, 0f
         );
 
         base.Draw(sb, eff);

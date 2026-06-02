@@ -10,6 +10,18 @@ public sealed partial class LuaRuntime
     public TilemapNode LoadTilemap(string tiledJsonPath)
         => TilemapNode.LoadTiledJson(tiledJsonPath, _app.S2D);
 
+    public TilemapNode CreateTilemap(LuaTable grid, LuaTable opts)
+    {
+        var width = opts["width"] is null ? InferGridWidth(grid) : Convert.ToInt32(opts["width"]);
+        var height = opts["height"] is null ? InferGridHeight(grid) : Convert.ToInt32(opts["height"]);
+        var tileW = opts["tileWidth"] is null ? 16 : Convert.ToInt32(opts["tileWidth"]);
+        var tileH = opts["tileHeight"] is null ? tileW : Convert.ToInt32(opts["tileHeight"]);
+        var tileset = TableString(opts, "tileset", "sprites/tiles.png");
+        var data = ReadGridData(grid, width, height);
+
+        return TilemapNode.CreateFromGrid(tileset, width, height, tileW, tileH, data, _app.S2D);
+    }
+
     public TilemapNode GenerateTilemap(
         string tilesetPath,
         int width,
@@ -125,6 +137,48 @@ public sealed partial class LuaRuntime
     public void CheckTrigger(AreaTrigger trigger, Object2D obj) => trigger.Check(obj);
 
     public void ClearTriggers() => SceneManager.Instance.ClearTriggers();
+
+    private static int InferGridWidth(LuaTable grid)
+    {
+        if (grid[1] is LuaTable row)
+            return Math.Max(1, row.Values.Count);
+        return Math.Max(1, grid.Values.Count);
+    }
+
+    private static int InferGridHeight(LuaTable grid)
+    {
+        if (grid[1] is LuaTable)
+            return Math.Max(1, grid.Values.Count);
+        return 1;
+    }
+
+    private static int[] ReadGridData(LuaTable grid, int width, int height)
+    {
+        var data = new int[Math.Max(1, width) * Math.Max(1, height)];
+        var isRows = grid[1] is LuaTable;
+
+        if (isRows)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                var row = grid[y + 1] as LuaTable;
+                for (var x = 0; x < width; x++)
+                    data[y * width + x] = ReadLuaInt(row?[x + 1], 0);
+            }
+            return data;
+        }
+
+        for (var i = 0; i < data.Length; i++)
+            data[i] = ReadLuaInt(grid[i + 1], 0);
+
+        return data;
+    }
+
+    private static int ReadLuaInt(object? value, int fallback)
+    {
+        try { return value is null ? fallback : Convert.ToInt32(value); }
+        catch { return fallback; }
+    }
 
     private LuaTable ToLuaMapObjects(IReadOnlyList<TiledMapObject> objects)
     {

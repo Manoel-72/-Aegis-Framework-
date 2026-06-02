@@ -162,6 +162,8 @@ Tarefas:
 | Suportar tilesets externos `.tsx` | `[ ]` | P1 | Tiled moderno funciona melhor |
 | Suportar collision por propriedade | `[ ]` | P0 | `solid=true` gera collider |
 | Suportar object spawn | `[x]` | P0 | Handlers Lua criam entidades a partir do mapa |
+| Suportar tilemap procedural por grid Lua | `[x]` | P0 | `aegis.createTilemap(grid, opts)` cria mapa em memoria |
+| Suportar seed controlada | `[x]` | P1 | `aegis.setRandomSeed(seed)` repete sorteios |
 | Criar testes de tilemap/mapa | `[~]` | P0 | Testes cobrem parser Tiled e object layers |
 | Criar doc `2D_WORLD_AND_MAP_PIPELINE.md` | `[x]` | P0 | Guia oficial para construir mapa |
 
@@ -345,6 +347,7 @@ Checklist minimo:
 | ZIP limpo gerado | `[x]` |
 | ZIP testado em pasta limpa | `[x]` |
 | Exemplo principal sem warnings | `[x]` |
+| Exemplo roguelite procedural | `[x]` |
 | Release notes atualizadas | `[~]` |
 | Install guide atualizado | `[x]` |
 | Site com comandos corretos | `[~]` |
@@ -397,6 +400,7 @@ A engine pode ser publicada como preview quando:
 - `aegis.cmd doctor` explica problemas de forma clara;
 - `aegis.cmd new` cria projeto funcional;
 - `aegis.cmd build` gera ZIP de jogo funcional;
+- `examples/roguelite-prototype` prova mapa procedural, seed e build;
 - docs explicam instalacao e primeiro jogo;
 - exemplos usam API Stable/MVP;
 - CI roda build/test/package;

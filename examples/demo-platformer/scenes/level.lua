@@ -1,5 +1,7 @@
 -- Cena única para 3 fases. Usa tilemap, colisão automática, player, inimigos, coletáveis, HUD e câmera.
-local map, nav, player, rb, playerCol, atlas, anim
+local map, nav, player, rb, playerCol
+local playerIdle, playerRun, playerJump, activePlayerState
+local playerFacing = 1
 local enemies, coins, goal, jumpEmitter = {}, {}, nil, nil
 local hud = { lives = 3, score = 0, coins = 0, coinMax = 5 }
 local tutorial = { active = false, alpha = 0, pulse = 0 }
@@ -15,6 +17,55 @@ local airJumpUsed = false
 local fallCooldown = 0
 local jumpCooldown = 0
 local jumpBoostFrames = 0
+
+local function syncPlayerVisual()
+    if not player then return end
+    local x = aegis.getX(player) - 6
+    local y = aegis.getY(player) - 4
+    if playerIdle then aegis.setPosition(playerIdle, x, y) end
+    if playerRun then aegis.setPosition(playerRun, x, y) end
+    if playerJump then aegis.setPosition(playerJump, x, y) end
+end
+
+local function syncPlayerFacing()
+    local flip = playerFacing < 0
+    if playerIdle then aegis.setFlip(playerIdle, flip) end
+    if playerRun then aegis.setFlip(playerRun, flip) end
+    if playerJump then aegis.setFlip(playerJump, flip) end
+end
+
+local function setPlayerState(state)
+    if activePlayerState == state then return end
+    activePlayerState = state
+    if playerIdle then aegis.setVisible(playerIdle, state == "idle") end
+    if playerRun then aegis.setVisible(playerRun, state == "run") end
+    if playerJump then aegis.setVisible(playerJump, state == "jump") end
+    if state == "jump" and playerJump then aegis.playAnim(playerJump, 0, 7, false, 7) end
+    if state == "run" and playerRun then aegis.playAnim(playerRun, 0, 5, true, 8) end
+    if state == "idle" and playerIdle then aegis.playAnim(playerIdle, 0, 3, true, 4) end
+end
+
+local function createPlayerVisuals()
+    playerIdle = aegis.newAnim("sprites/Idle.png", 36, 36)
+    playerRun = aegis.newAnim("sprites/Run.png", 36, 36)
+    playerJump = aegis.newAnim("sprites/Jump.png", 36, 36)
+
+    aegis.playAnim(playerIdle, 0, 3, true, 4)
+    aegis.playAnim(playerRun, 0, 5, true, 8)
+    aegis.playAnim(playerJump, 0, 7, false, 7)
+
+    aegis.setZ(playerIdle, 10)
+    aegis.setZ(playerRun, 10)
+    aegis.setZ(playerJump, 10)
+    aegis.setShader(playerIdle, "outline", { r=0, g=0, b=0, width=2 })
+    aegis.setShader(playerRun, "outline", { r=0, g=0, b=0, width=2 })
+    aegis.setShader(playerJump, "outline", { r=0, g=0, b=0, width=2 })
+
+    activePlayerState = nil
+    setPlayerState("idle")
+    syncPlayerFacing()
+    syncPlayerVisual()
+end
 
 local function levelIndex()
     return math.max(1, math.min(3, GAME.level or 1))
@@ -278,17 +329,12 @@ function aegis_init()
 
 
 
-    player = aegis.newSprite("sprites/player-sheet.png")
-    atlas = aegis.loadAtlas("sprites/player-sheet.json")
-    aegis.setAtlasFrame(player, atlas, "idle_00")
-    anim = aegis.newAtlasAnimator(player, atlas)
-    aegis.addAtlasClip(anim, "idle", {"idle_00"}, 1)
-    aegis.addAtlasClip(anim, "run", {"run_00", "run_01", "run_02", "run_03", "run_04", "run_05"}, 12)
-    aegis.play(anim, "idle")
+    player = aegis.newRect(24, 30, 0.25, 0.55, 0.95)
     aegis.setPosition(player, 45, 300)
     aegis.setZ(player, 10)
-    aegis.setShader(player, "outline", { r=0, g=0, b=0, width=2 })
-    playerCol = aegis.addCollider(player, 20, 28, 6, 4)
+    aegis.setAlpha(player, 0)
+    createPlayerVisuals()
+    playerCol = aegis.addCollider(player, 20, 28, 2, 1)
     aegis.setColliderLayer(playerCol, "PLAYER")
     aegis.setColliderMask(playerCol, "WORLD|ENEMY|PICKUP")
     rb = aegis.addRigidbody(player)
@@ -346,10 +392,19 @@ local function updatePlayer(dt)
     if math.abs(axis) > 0.18 then vx = axis * 230 end
     if aegis.keyDown("Left") or aegis.keyDown("A") then vx = -230 end
     if aegis.keyDown("Right") or aegis.keyDown("D") then vx = 230 end
+    if vx < -5 then playerFacing = -1 elseif vx > 5 then playerFacing = 1 end
+    syncPlayerFacing()
     aegis.setVelocityX(rb, vx)
-    if math.abs(vx) > 5 then aegis.play(anim, "run") else aegis.play(anim, "idle") end
 
     local grounded = aegis.isGrounded(rb)
+    if not grounded then
+        setPlayerState("jump")
+    elseif math.abs(vx) > 5 then
+        setPlayerState("run")
+    else
+        setPlayerState("idle")
+    end
+
     if grounded then
         coyote = 0.12
         airJumpUsed = false
@@ -412,6 +467,7 @@ local function updatePlayer(dt)
         else
             -- Respawn local para evitar loop de transição e manter controle responsivo.
             aegis.setPosition(player, 48, 320)
+            syncPlayerVisual()
             aegis.setVelocity(rb, 0, 0)
             coyote = 0.12
             jumpBuffer = 0
@@ -419,6 +475,8 @@ local function updatePlayer(dt)
             aegis.flashScreen({ r=1, g=0.2, b=0.2 }, 0.08)
         end
     end
+
+    syncPlayerVisual()
 end
 
 local function updateEnemies(dt)

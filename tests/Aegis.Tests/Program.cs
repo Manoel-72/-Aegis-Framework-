@@ -19,6 +19,7 @@ internal static class Program
         Run("ConfigManager sanitizes resolution and display mode", ConfigManagerSanitizesConfig);
         Run("ConfigManager writes and loads aegis.cfg", ConfigManagerPersistsConfig);
         Run("ComponentFactory creates group on world and UI roots", ComponentFactoryCreatesGroups);
+        Run("LuaRuntime seeded random is repeatable", LuaRuntimeSeededRandomIsRepeatable);
         Run("FontManager resolves project fallback font candidates", FontManagerResolvesProjectFallbackFont);
         Run("FontManager normalizes font size", FontManagerNormalizesFontSize);
         Run("AssetManifest categorizes project assets", AssetManifestCategorizesProjectAssets);
@@ -113,6 +114,24 @@ internal static class Program
         lua.DoString("ui_opts = { layer = 'ui' }");
         var uiObj = factory.Create("group", (LuaTable)lua["ui_opts"]);
         AssertTrue(ReferenceEquals(app.Ui2D, uiObj.Parent), "ui group should be parented to UI root");
+    }
+
+    private static void LuaRuntimeSeededRandomIsRepeatable()
+    {
+        var app = new App("Random Test", 640, 480)
+        {
+            S2D = new Scene2D(),
+            Ui2D = new Scene2D(),
+        };
+        using var lua = new Aegis.Scripting.LuaRuntime(app);
+
+        lua.SetRandomSeed(2026);
+        var a = lua.RandomInt(1, 1000);
+        var b = lua.RandomFloat(0f, 1f);
+
+        lua.SetRandomSeed(2026);
+        AssertEqual(a, lua.RandomInt(1, 1000), "same seed should repeat randomInt");
+        AssertEqual(b, lua.RandomFloat(0f, 1f), "same seed should repeat randomFloat");
     }
 
     private static void FontManagerResolvesProjectFallbackFont()

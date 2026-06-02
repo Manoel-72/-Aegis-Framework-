@@ -66,6 +66,53 @@ public sealed class TilemapNode : Object2D
         return map;
     }
 
+    public static TilemapNode CreateFromGrid(
+        string tilesetPath,
+        int width,
+        int height,
+        int tileW,
+        int tileH,
+        IReadOnlyList<int> data,
+        Scene2D? parent = null)
+    {
+        var mapWidth = Math.Max(1, width);
+        var mapHeight = Math.Max(1, height);
+        var expected = mapWidth * mapHeight;
+        if (data.Count < expected)
+            throw new ArgumentException($"Grid precisa de {expected} tiles, mas recebeu {data.Count}.", nameof(data));
+
+        var map = new TilemapNode(parent)
+        {
+            MapWidth = mapWidth,
+            MapHeight = mapHeight,
+            TileWidth = Math.Max(1, tileW),
+            TileHeight = Math.Max(1, tileH)
+        };
+
+        var tex = ResManager.LoadTexture(tilesetPath);
+        map._tilesets.Add(new TilesetInfo
+        {
+            FirstGid = 1,
+            TileWidth = map.TileWidth,
+            TileHeight = map.TileHeight,
+            Columns = Math.Max(1, tex.Width / map.TileWidth),
+            TileCount = Math.Max(1, (tex.Width / map.TileWidth) * (tex.Height / map.TileHeight)),
+            Texture = tex
+        });
+
+        map._layers.Add(new TileLayer
+        {
+            Name = "procedural",
+            Width = map.MapWidth,
+            Height = map.MapHeight,
+            Data = data.Take(expected).Select(gid => Math.Max(0, gid)).ToArray(),
+            Visible = true,
+            Opacity = 1f
+        });
+
+        return map;
+    }
+
     public static TilemapNode GenerateProcedural(
         string tilesetPath,
         int width,

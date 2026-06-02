@@ -26,7 +26,7 @@ public sealed partial class LuaRuntime : IDisposable
     private readonly ComponentFactory _components;
     private readonly Dictionary<string, LuaApiStatus> _apiStatuses = new();
     private readonly HashSet<string> _warnedExperimentalApis = new(StringComparer.Ordinal);
-    private static readonly Random _rng = new();
+    private static Random _rng = new();
 
     private float _shakeTime;
     private float _shakeIntensity;
@@ -87,6 +87,7 @@ public sealed partial class LuaRuntime : IDisposable
         Reg("aegis.setRotation",     nameof(SetRotation));
         Reg("aegis.setAlpha",        nameof(SetAlpha));
         Reg("aegis.setVisible",      nameof(SetVisible));
+        Reg("aegis.setFlip",         nameof(SetFlip));
         Reg("aegis.setPivot",        nameof(SetPivot));
         Reg("aegis.getX",            nameof(GetX));
         Reg("aegis.getY",            nameof(GetY));
@@ -121,6 +122,7 @@ public sealed partial class LuaRuntime : IDisposable
 
         // ── Utils ───────────────────────────────────────────────────
         Reg("aegis.log",             nameof(Log));
+        Reg("aegis.setRandomSeed",   nameof(SetRandomSeed));
         Reg("aegis.randomInt",       nameof(RandomInt));
         Reg("aegis.randomFloat",     nameof(RandomFloat));
         Reg("aegis.clearAll",        nameof(ClearAll));
@@ -247,6 +249,7 @@ public sealed partial class LuaRuntime : IDisposable
 
         // ── v0.7 Tilemaps, Procedural, SceneManager ──────────────────
         Reg("aegis.loadTilemap",     nameof(LoadTilemap));
+        Reg("aegis.createTilemap",   nameof(CreateTilemap));
         Reg("aegis.generateTilemap", nameof(GenerateTilemap));
         Reg("aegis.setTile",         nameof(SetTile));
         Reg("aegis.getTile",         nameof(GetTile));

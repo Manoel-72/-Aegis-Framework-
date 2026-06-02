@@ -76,6 +76,7 @@ public sealed partial class LuaRuntime
     public void  SetRotation(Object2D o, float rad)        { Require(o, nameof(SetRotation)); o.Rotation = RequireFinite(rad, nameof(rad)); }
     public void  SetAlpha(Object2D o, float a)             => o.Alpha = Math.Clamp(a, 0f, 1f);
     public void  SetVisible(Object2D o, bool v)            => o.Visible = v;
+    public void  SetFlip(Bitmap b, bool flipX, bool flipY = false) { b.FlipX = flipX; b.FlipY = flipY; }
     public void  SetPivot(Bitmap b, float px, float py)    => b.Pivot = new Vector2(px, py);
     public float GetX(Object2D o)    => o.X;
     public float GetY(Object2D o)    => o.Y;
@@ -85,6 +86,7 @@ public sealed partial class LuaRuntime
     // ── Label ─────────────────────────────────────────────────────────
 
     public void  Log(string msg)                   => AegisLog.Info("Lua", msg);
+    public void  SetRandomSeed(int seed)           => _rng = new Random(seed);
     public int   RandomInt(int min, int max)        => _rng.Next(min, max + 1);
     public float RandomFloat(float min, float max)  =>
         min + (float)_rng.NextDouble() * (max - min);

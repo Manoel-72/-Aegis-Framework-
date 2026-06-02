@@ -47,6 +47,7 @@ Hoje o runtime suporta:
 - `visible` e `opacity` de layer;
 - propriedade `solid=true` em tile para gerar colisao;
 - object layers lidos como dados do mapa.
+- tilemap procedural criado por grid Lua.
 
 Ainda esta planejado:
 
@@ -62,6 +63,63 @@ Tile layers sao usadas para desenhar o mapa.
 ```lua
 local map = aegis.loadTilemap("tilemaps/fase1.json")
 ```
+
+## Mapas Procedurais Em Lua
+
+Para criar mapa sem arquivo JSON, monte uma tabela Lua com GIDs e passe para
+`aegis.createTilemap`.
+
+```lua
+local grid = {
+    { 1, 1, 1, 1, 1 },
+    { 1, 0, 0, 0, 1 },
+    { 1, 0, 2, 0, 1 },
+    { 1, 1, 1, 1, 1 }
+}
+
+local map = aegis.createTilemap(grid, {
+    tileset = "sprites/tiles.png",
+    tileWidth = 16,
+    tileHeight = 16
+})
+```
+
+Tambem pode usar tabela plana:
+
+```lua
+local grid = {
+    1, 1, 1,
+    1, 0, 1,
+    1, 1, 1
+}
+
+local map = aegis.createTilemap(grid, {
+    tileset = "sprites/tiles.png",
+    width = 3,
+    height = 3,
+    tileWidth = 16
+})
+```
+
+Depois disso, a colisao usa o mesmo fluxo dos mapas do Tiled:
+
+```lua
+aegis.buildTilemapColliders(map, {
+    solidGids = { 1 },
+    merge = true
+})
+```
+
+Para randomizacao repetivel:
+
+```lua
+aegis.setRandomSeed(12345)
+
+local x = aegis.randomInt(1, 10)
+local y = aegis.randomInt(1, 10)
+```
+
+Mesma seed, mesmo resultado.
 
 Para colisao por GID:
 
@@ -182,6 +240,7 @@ A leitura de dados do Tiled fica centralizada em `TiledMapDocument`, para que:
 
 ```lua
 local map = aegis.loadTilemap("tilemaps/fase1.json")
+local proc = aegis.createTilemap(grid, opts)
 local objects = aegis.mapObjects(map)
 local enemies = aegis.mapObjectsByType(map, "enemy")
 aegis.spawnMapObjects(map, handlers)
