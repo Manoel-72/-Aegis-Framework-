@@ -17,11 +17,26 @@ local airJumpUsed = false
 local fallCooldown = 0
 local jumpCooldown = 0
 local jumpBoostFrames = 0
+local MOVE_SPEED = 220
+local GROUND_ACCEL = 1550
+local AIR_ACCEL = 760
+local GROUND_DECEL = 2050
+local AIR_DECEL = 520
+
+local function approach(current, target, amount)
+    if current < target then
+        return math.min(current + amount, target)
+    end
+    if current > target then
+        return math.max(current - amount, target)
+    end
+    return target
+end
 
 local function syncPlayerVisual()
     if not player then return end
     local x = aegis.getX(player) - 6
-    local y = aegis.getY(player) - 4
+    local y = aegis.getY(player)
     if playerIdle then aegis.setPosition(playerIdle, x, y) end
     if playerRun then aegis.setPosition(playerRun, x, y) end
     if playerJump then aegis.setPosition(playerJump, x, y) end
@@ -40,9 +55,9 @@ local function setPlayerState(state)
     if playerIdle then aegis.setVisible(playerIdle, state == "idle") end
     if playerRun then aegis.setVisible(playerRun, state == "run") end
     if playerJump then aegis.setVisible(playerJump, state == "jump") end
-    if state == "jump" and playerJump then aegis.playAnim(playerJump, 0, 7, false, 7) end
-    if state == "run" and playerRun then aegis.playAnim(playerRun, 0, 5, true, 8) end
-    if state == "idle" and playerIdle then aegis.playAnim(playerIdle, 0, 3, true, 4) end
+    if state == "jump" and playerJump then aegis.playAnim(playerJump, 0, 7, false, 5) end
+    if state == "run" and playerRun then aegis.playAnim(playerRun, 0, 5, true, 5) end
+    if state == "idle" and playerIdle then aegis.playAnim(playerIdle, 0, 3, true, 5) end
 end
 
 local function createPlayerVisuals()
@@ -50,17 +65,13 @@ local function createPlayerVisuals()
     playerRun = aegis.newAnim("sprites/Run.png", 36, 36)
     playerJump = aegis.newAnim("sprites/Jump.png", 36, 36)
 
-    aegis.playAnim(playerIdle, 0, 3, true, 4)
-    aegis.playAnim(playerRun, 0, 5, true, 8)
-    aegis.playAnim(playerJump, 0, 7, false, 7)
+    aegis.playAnim(playerIdle, 0, 3, true, 5)
+    aegis.playAnim(playerRun, 0, 5, true, 5)
+    aegis.playAnim(playerJump, 0, 7, false, 5)
 
     aegis.setZ(playerIdle, 10)
     aegis.setZ(playerRun, 10)
     aegis.setZ(playerJump, 10)
-    aegis.setShader(playerIdle, "outline", { r=0, g=0, b=0, width=2 })
-    aegis.setShader(playerRun, "outline", { r=0, g=0, b=0, width=2 })
-    aegis.setShader(playerJump, "outline", { r=0, g=0, b=0, width=2 })
-
     activePlayerState = nil
     setPlayerState("idle")
     syncPlayerFacing()
@@ -330,7 +341,7 @@ function aegis_init()
 
 
     player = aegis.newRect(24, 30, 0.25, 0.55, 0.95)
-    aegis.setPosition(player, 45, 300)
+    aegis.setPosition(player, 48, 380)
     aegis.setZ(player, 10)
     aegis.setAlpha(player, 0)
     createPlayerVisuals()
@@ -387,29 +398,38 @@ function aegis_init()
 end
 
 local function updatePlayer(dt)
-    local vx = 0
+    local inputX = 0
     local axis = aegis.padAxis(0, "LeftX")
-    if math.abs(axis) > 0.18 then vx = axis * 230 end
-    if aegis.keyDown("Left") or aegis.keyDown("A") then vx = -230 end
-    if aegis.keyDown("Right") or aegis.keyDown("D") then vx = 230 end
-    if vx < -5 then playerFacing = -1 elseif vx > 5 then playerFacing = 1 end
-    syncPlayerFacing()
-    aegis.setVelocityX(rb, vx)
+    if math.abs(axis) > 0.18 then inputX = axis end
+    if aegis.keyDown("Left") or aegis.keyDown("A") then inputX = -1 end
+    if aegis.keyDown("Right") or aegis.keyDown("D") then inputX = 1 end
 
     local grounded = aegis.isGrounded(rb)
-    if not grounded then
-        setPlayerState("jump")
-    elseif math.abs(vx) > 5 then
-        setPlayerState("run")
-    else
-        setPlayerState("idle")
-    end
-
     if grounded then
         coyote = 0.12
         airJumpUsed = false
     else
         coyote = math.max(0, coyote - dt)
+    end
+
+    local targetVx = inputX * MOVE_SPEED
+    local currentVx = aegis.getVelocityX(rb)
+    local accel = grounded and GROUND_ACCEL or AIR_ACCEL
+    local decel = grounded and GROUND_DECEL or AIR_DECEL
+    local rate = math.abs(inputX) > 0.05 and accel or decel
+    local vx = approach(currentVx, targetVx, rate * dt)
+    aegis.setVelocityX(rb, vx)
+
+    if inputX < -0.05 then playerFacing = -1 elseif inputX > 0.05 then playerFacing = 1 end
+    syncPlayerFacing()
+
+    local visualGrounded = grounded or coyote > 0.04
+    if not visualGrounded then
+        setPlayerState("jump")
+    elseif math.abs(vx) > 5 then
+        setPlayerState("run")
+    else
+        setPlayerState("idle")
     end
 
     local spaceDown = aegis.keyDown("Space")
@@ -438,9 +458,9 @@ local function updatePlayer(dt)
     if jumpBuffer > 0 and canJump and jumpCooldown <= 0 then
         local currVx = aegis.getVelocityX(rb)
         -- Nudge para sair do contato com o chão antes do impulso vertical.
-        aegis.setPosition(player, aegis.getX(player), aegis.getY(player) - 2)
-        aegis.setVelocity(rb, currVx, -430)
-        jumpBoostFrames = 2
+        aegis.setPosition(player, aegis.getX(player), aegis.getY(player) - 1)
+        aegis.setVelocity(rb, currVx, -335)
+        jumpBoostFrames = 1
         if coyote <= 0 then
             airJumpUsed = true
         end
@@ -454,7 +474,7 @@ local function updatePlayer(dt)
     if jumpBoostFrames > 0 then
         jumpBoostFrames = jumpBoostFrames - 1
         local currVx = aegis.getVelocityX(rb)
-        aegis.setVelocity(rb, currVx, -430)
+        aegis.setVelocity(rb, currVx, -335)
     end
 
     if aegis.getY(player) > 900 and fallCooldown <= 0 then
@@ -466,7 +486,7 @@ local function updatePlayer(dt)
             goToScene("gameover", 0.35)
         else
             -- Respawn local para evitar loop de transição e manter controle responsivo.
-            aegis.setPosition(player, 48, 320)
+            aegis.setPosition(player, 48, 380)
             syncPlayerVisual()
             aegis.setVelocity(rb, 0, 0)
             coyote = 0.12
