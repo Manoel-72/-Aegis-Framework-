@@ -4,6 +4,7 @@ using Aegis.Scene;
 using Aegis.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using NLua;
 
 namespace Aegis.World;
 
@@ -19,8 +20,10 @@ public sealed class SceneManager
     private App? _app;
     private readonly Dictionary<string, string> _scenes = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<AreaTrigger> _triggers = new();
+    private string? _currentScene;
 
     private string? _pendingScene;
+    private LuaTable? _pendingData;
     private string _transition = "fade";
     private float _transitionTime = 0.35f;
     private float _timer;
@@ -36,6 +39,8 @@ public sealed class SceneManager
         _scenes.Clear();
         _triggers.Clear();
         _pendingScene = null;
+        _pendingData = null;
+        _currentScene = null;
         _timer = 0f;
         _loading = false;
         FadeAlpha = 0f;
@@ -48,7 +53,7 @@ public sealed class SceneManager
         _scenes[name.Trim()] = luaFile.Replace('\\', '/').TrimStart('/');
     }
 
-    public void TransitionTo(string scene, string transition = "fade", float duration = 0.35f)
+    public void TransitionTo(string scene, string transition = "fade", float duration = 0.35f, LuaTable? data = null)
     {
         if (_lua is null || _app is null) return;
         if (string.IsNullOrWhiteSpace(scene))
@@ -60,6 +65,7 @@ public sealed class SceneManager
             return;
 
         _pendingScene = scene;
+        _pendingData = data;
         _transition = string.IsNullOrWhiteSpace(transition) ? "fade" : transition.ToLowerInvariant();
         _transitionTime = Math.Clamp(duration, 0.01f, 10f);
         _timer = 0f;
@@ -68,6 +74,7 @@ public sealed class SceneManager
         {
             LoadPending();
             _pendingScene = null;
+            _pendingData = null;
             _loading = false;
             FadeAlpha = 0f;
         }
@@ -103,6 +110,7 @@ public sealed class SceneManager
             if (_timer >= _transitionTime)
             {
                 _pendingScene = null;
+                _pendingData = null;
                 _loading = false;
                 FadeAlpha = 0f;
             }
@@ -111,10 +119,18 @@ public sealed class SceneManager
 
     public void DrawOverlay(SpriteBatch sb)
     {
-        if (FadeAlpha <= 0.001f) return;
         var cam = Camera2D.Instance;
         var w = Math.Max(1, cam.ViewWidth);
         var h = Math.Max(1, cam.ViewHeight);
+        if (_transition == "slide" && _pendingScene is not null)
+        {
+            var coverWidth = Math.Clamp((int)MathF.Ceiling(w * FadeAlpha), 0, w);
+            if (coverWidth > 0)
+                sb.Draw(Aegis.Resource.ResManager.Pixel, new Rectangle(0, 0, coverWidth, h), Color.Black);
+            return;
+        }
+
+        if (FadeAlpha <= 0.001f) return;
         sb.Draw(Aegis.Resource.ResManager.Pixel, new Rectangle(0, 0, w, h), Color.Black * FadeAlpha);
     }
 
@@ -123,7 +139,12 @@ public sealed class SceneManager
         if (_pendingScene is null || _lua is null) return;
         var name = _pendingScene;
         var file = _scenes.TryGetValue(name, out var mapped) ? mapped : name;
+        if (!string.IsNullOrWhiteSpace(_currentScene))
+            _lua.NotifySceneExit(_currentScene, name, _pendingData);
+        _lua.SetSceneData(_pendingData);
         _lua.LoadSceneFile(file);
+        _currentScene = name;
+        _lua.NotifySceneEnter(name, _pendingData);
         _loading = true;
     }
 }

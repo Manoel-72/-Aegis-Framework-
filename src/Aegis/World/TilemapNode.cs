@@ -288,12 +288,29 @@ public sealed class TilemapNode : Object2D
         return layer.Data[y * layer.Width + x];
     }
 
+    public int GetTile(string layerName, int x, int y)
+        => GetTile(FindLayerIndex(layerName), x, y);
+
     public void SetTile(int layerIndex, int x, int y, int gid)
     {
         if (layerIndex < 0 || layerIndex >= _layers.Count) return;
         var layer = _layers[layerIndex];
         if (x < 0 || y < 0 || x >= layer.Width || y >= layer.Height) return;
         layer.Data[y * layer.Width + x] = Math.Max(0, gid);
+    }
+
+    public void SetTile(string layerName, int x, int y, int gid)
+        => SetTile(FindLayerIndex(layerName), x, y, gid);
+
+    private int FindLayerIndex(string layerName)
+    {
+        if (string.IsNullOrWhiteSpace(layerName)) return -1;
+        for (var i = 0; i < _layers.Count; i++)
+        {
+            if (_layers[i].Name.Equals(layerName, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+        return -1;
     }
 
     public IReadOnlyList<TiledMapObject> GetObjectsByType(string type)

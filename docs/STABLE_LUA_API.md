@@ -88,6 +88,64 @@ Todos os tipos aceitam:
 
 Para cores, use `r`, `g`, `b`, `a` com valores entre `0` e `1`.
 
+## Animacao Recomendada
+
+Use `newAnimator` para spritesheet em grade e `newAtlasAnimator` para atlas
+Aseprite JSON.
+
+```lua
+local sprite = aegis.create("sprite", { path = "sprites/player.png" })
+local anim = aegis.newAnimator(sprite, 32, 32)
+
+aegis.addClip(anim, "idle", { 0, 1, 2, 3 }, 5, true)
+aegis.addClip(anim, "attack", { 4, 5, 6 }, 10, false)
+aegis.play(anim, "idle")
+
+aegis.onAnimEnd(anim, function(a, clip)
+  if clip == "attack" then
+    aegis.play(a, "idle")
+  end
+end)
+```
+
+APIs uteis:
+
+- `aegis.animFinished(anim)`
+- `aegis.isAnimFinished(anim)`
+- `aegis.currentClip(anim)`
+- `aegis.setFlip(sprite, flipX, flipY?)`
+- `aegis.setAnimFlip(sprite, flipX, flipY?)`
+
+## Cenas E Dados
+
+```lua
+aegis.registerScene("gameover", "scenes/gameover.lua")
+aegis.transitionTo("gameover", "fade", 0.35, { score = 120 })
+
+aegis.onSceneEnter(function(scene, data)
+  if data then aegis.log("score: " .. tostring(data.score)) end
+end)
+
+aegis.onSceneExit(function(scene, nextScene, data)
+  aegis.log(scene .. " -> " .. nextScene)
+end)
+```
+
+Modos de transicao:
+
+- `fade`
+- `none`
+- `slide`
+
+## Tilemap
+
+`aegis.setTile` e `aegis.getTile` aceitam indice numerico ou nome da layer:
+
+```lua
+aegis.setTile(map, 0, 10, 8, 2)
+aegis.setTile(map, "Ground", 10, 8, 2)
+```
+
 ## Como Evoluir
 
 Para adicionar um novo componente:

@@ -77,6 +77,7 @@ Objetivo: registrar o que ja esta bom para nao refazer trabalho.
 | LuaRuntime modularizado | `[x]` | `LuaRuntime.*Api.cs` |
 | Fonte fallback automatica | `[x]` | `FontManager` |
 | Display `windowed` e `borderless` | `[x]` | config/display |
+| Flip de sprite via Lua | `[x]` | `aegis.setFlip(sprite, flipX, flipY?)` |
 | Exemplos em `examples/` | `[x]` | `examples/*` |
 | Release ZIP 0.9.9 | `[x]` | `dist/Aegis-Framework-v0.9.9.zip` |
 | Checklist de release | `[x]` | `docs/RELEASE_CHECKLIST_0.9.9.md` |
@@ -157,6 +158,7 @@ Tarefas:
 | Criar `aegis.loadMap` | `[ ]` | P0 | Fachada limpa para mapas novos |
 | Suportar layers nomeadas | `[ ]` | P0 | Buscar layer por nome, nao so indice |
 | Suportar opacidade/visibilidade de layer | `[x]` | P1 | Tiled visible/opacity respeitado |
+| `setTile/getTile` por nome de layer | `[x]` | P1 | Aceita indice ou nome da layer |
 | Suportar object layers do Tiled | `[x]` | P0 | Objetos do mapa acessiveis via Lua |
 | Ler properties de map/layer/tile/object | `[~]` | P0 | Map/layer/object ja leem propriedades; tile props parciais |
 | Suportar tilesets externos `.tsx` | `[ ]` | P1 | Tiled moderno funciona melhor |

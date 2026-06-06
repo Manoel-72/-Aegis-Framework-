@@ -38,6 +38,9 @@ public sealed partial class LuaRuntime : IDisposable
 
     private string _mainLuaFullPath = string.Empty;
     private ParticleSystem2D? _particles;
+    private LuaFunction? _onSceneEnter;
+    private LuaFunction? _onSceneExit;
+    private LuaTable? _sceneData;
 
     private enum LuaApiStatus
     {
@@ -88,6 +91,7 @@ public sealed partial class LuaRuntime : IDisposable
         Reg("aegis.setAlpha",        nameof(SetAlpha));
         Reg("aegis.setVisible",      nameof(SetVisible));
         Reg("aegis.setFlip",         nameof(SetFlip));
+        Reg("aegis.setAnimFlip",     nameof(SetFlip));
         Reg("aegis.setPivot",        nameof(SetPivot));
         Reg("aegis.getX",            nameof(GetX));
         Reg("aegis.getY",            nameof(GetY));
@@ -239,6 +243,9 @@ public sealed partial class LuaRuntime : IDisposable
         Reg("aegis.play",            nameof(Play));
         Reg("aegis.stopAnimator",    nameof(StopAnimator));
         Reg("aegis.currentClip",     nameof(CurrentClip));
+        Reg("aegis.animFinished",    nameof(AnimFinished));
+        Reg("aegis.isAnimFinished",  nameof(AnimFinished));
+        Reg("aegis.onAnimEnd",       nameof(OnAnimEnd));
         Reg("aegis.newAtlasAnimator", nameof(NewAtlasAnimator));
         Reg("aegis.addAtlasClip",    nameof(AddAtlasClip));
 
@@ -268,6 +275,9 @@ public sealed partial class LuaRuntime : IDisposable
         Reg("aegis.perlin",          nameof(Perlin));
         Reg("aegis.registerScene",   nameof(RegisterScene));
         Reg("aegis.transitionTo",    nameof(TransitionTo));
+        Reg("aegis.sceneData",       nameof(SceneData));
+        Reg("aegis.onSceneEnter",    nameof(OnSceneEnter));
+        Reg("aegis.onSceneExit",     nameof(OnSceneExit));
         Reg("aegis.newAreaTrigger",  nameof(NewAreaTrigger));
         Reg("aegis.onTriggerEnter",  nameof(OnTriggerEnter));
         Reg("aegis.onTriggerStay",   nameof(OnTriggerStay));
@@ -425,6 +435,8 @@ public sealed partial class LuaRuntime : IDisposable
         _lua["aegis_update"]  = null;
         _lua["aegis_draw"]    = null;
         _lua["aegis_draw_ui"] = null;
+        _onSceneEnter = null;
+        _onSceneExit = null;
         _lua.DoFile(full);
         if (!HasFunction("aegis_init"))
             throw new InvalidOperationException($"[Aegis|Lua] Função obrigatória aegis_init não encontrada na cena: {path}");

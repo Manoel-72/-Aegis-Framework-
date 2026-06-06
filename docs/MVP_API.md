@@ -22,11 +22,26 @@ para templates, exemplos e IA.
 ### Cena
 
 - `aegis.registerScene(name, file)`
-- `aegis.transitionTo(name)`
+- `aegis.transitionTo(name, mode?, seconds?, data?)`
+- `aegis.sceneData()`
+- `aegis.onSceneEnter(callback)`
+- `aegis.onSceneExit(callback)`
 - `aegis.clearAll`
 - `aegis.uiClear`
 - `aegis.worldClear`
 - `aegis.destroy(obj)`
+
+Exemplo de dados entre cenas:
+
+```lua
+aegis.transitionTo("gameover", "fade", 0.35, { score = 120 })
+
+aegis.onSceneEnter(function(scene, data)
+    if data then aegis.log("score: " .. tostring(data.score)) end
+end)
+```
+
+`mode` aceita `fade`, `none` e `slide`.
 
 ### Camada UI / HUD (MVP)
 
@@ -85,6 +100,8 @@ Tipos estaveis para `aegis.create`:
 - `aegis.setRotation(obj, radians)`
 - `aegis.setAlpha(obj, alpha)`
 - `aegis.setVisible(obj, visible)`
+- `aegis.setFlip(bitmap, flipX, flipY?)`
+- `aegis.setAnimFlip(bitmap, flipX, flipY?)`
 - `aegis.setPivot(bitmap, px, py)`
 - `aegis.setZ(obj, z)`
 - `aegis.getZ(obj)`
@@ -108,6 +125,28 @@ Tipos estaveis para `aegis.create`:
 - `aegis.loadDefaultFont(size)`
 - `aegis.newLabel(text, hud)` — ultimo parametro opcional: `true` = camada UI
 - `aegis.newLabelSize(text, size, hud)`
+
+### Animacao
+
+- `aegis.newAnimator(sprite, frameWidth, frameHeight)` para spritesheet em grade.
+- `aegis.newAtlasAnimator(sprite, atlas)` para atlas Aseprite JSON.
+- `aegis.addClip(anim, name, frames, fps, loop?)`
+- `aegis.addAtlasClip(anim, name, frameNames, fps, loop?)`
+- `aegis.play(anim, name, restart?)`
+- `aegis.stopAnimator(anim)`
+- `aegis.currentClip(anim)`
+- `aegis.animFinished(anim)`
+- `aegis.isAnimFinished(anim)`
+- `aegis.onAnimEnd(anim, callback)`
+
+Exemplo:
+
+```lua
+aegis.addAtlasClip(anim, "attack", { "attack_00", "attack_01", "attack_02" }, 10, false)
+aegis.onAnimEnd(anim, function(a, clip)
+    if clip == "attack" then attacking = false end
+end)
+```
 - `aegis.drawText(text, x, y, r, g, b, a)` — use em `aegis_draw_ui`
 - `aegis.drawRect(x, y, w, h, r, g, b, a)` — use em `aegis_draw_ui`
 - `aegis.newRichLabelSize(markup, size)`

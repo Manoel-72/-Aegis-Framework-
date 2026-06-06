@@ -24,12 +24,15 @@ public sealed class Animator : Object2D
     private int _frameIndex;
     private float _elapsed;
     private bool _playing;
+    private bool _finished = true;
 
     public int FrameWidth { get; }
     public int FrameHeight { get; }
     public bool UsesAtlas => _atlas is not null;
     public string? CurrentClip => _currentName;
     public bool IsPlaying => _playing;
+    public bool IsFinished => _finished;
+    public event Action<Animator, string>? Completed;
 
     public Animator(SpriteNode target, int frameWidth, int frameHeight)
     {
@@ -100,7 +103,11 @@ public sealed class Animator : Object2D
         return false;
     }
 
-    public void Stop() => _playing = false;
+    public void Stop()
+    {
+        _playing = false;
+        _finished = true;
+    }
 
     public override void Update(float dt)
     {
@@ -131,6 +138,15 @@ public sealed class Animator : Object2D
         _frameIndex = 0;
         _elapsed = 0f;
         _playing = true;
+        _finished = false;
+    }
+
+    private void Finish()
+    {
+        if (_finished) return;
+        _playing = false;
+        _finished = true;
+        Completed?.Invoke(this, _currentName ?? string.Empty);
     }
 
     private void AdvanceGrid()
@@ -139,7 +155,7 @@ public sealed class Animator : Object2D
         if (_frameIndex >= clip.Frames.Length)
         {
             if (clip.Loop) _frameIndex = 0;
-            else { _frameIndex = clip.Frames.Length - 1; _playing = false; }
+            else { _frameIndex = clip.Frames.Length - 1; Finish(); }
         }
         ApplyGridFrame(clip.Frames[_frameIndex]);
     }
@@ -150,7 +166,7 @@ public sealed class Animator : Object2D
         if (_frameIndex >= clip.Frames.Length)
         {
             if (clip.Loop) _frameIndex = 0;
-            else { _frameIndex = clip.Frames.Length - 1; _playing = false; }
+            else { _frameIndex = clip.Frames.Length - 1; Finish(); }
         }
         ApplyAtlasFrame(clip.Frames[_frameIndex]);
     }

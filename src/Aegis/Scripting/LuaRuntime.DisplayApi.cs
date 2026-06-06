@@ -165,6 +165,13 @@ public sealed partial class LuaRuntime
 
     public void StopAnimator(Animator anim) => anim.Stop();
     public string CurrentClip(Animator anim) => anim.CurrentClip ?? string.Empty;
+    public bool AnimFinished(Animator anim) => anim.IsFinished;
+    public void OnAnimEnd(Animator anim, LuaFunction callback)
+    {
+        Require(anim, nameof(OnAnimEnd));
+        Require(callback, nameof(OnAnimEnd));
+        anim.Completed += (_, clip) => callback.Call(anim, clip);
+    }
 
     // ── Utils ─────────────────────────────────────────────────────────
     public void DrawText(string text, float x, float y, float r = 1f, float g = 1f, float b = 1f, float a = 1f)

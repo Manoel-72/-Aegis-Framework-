@@ -32,9 +32,14 @@ public sealed partial class LuaRuntime
         float scale = 0.08f)
         => TilemapNode.GenerateProcedural(tilesetPath, width, height, tileW, tileH, seed, scale, parent: _app.S2D);
 
-    public void SetTile(TilemapNode map, int layer, int x, int y, int gid) => map.SetTile(layer, x, y, gid);
+    public void SetTile(TilemapNode map, object layer, int x, int y, int gid)
+    {
+        if (layer is string layerName) map.SetTile(layerName, x, y, gid);
+        else map.SetTile(Convert.ToInt32(layer), x, y, gid);
+    }
 
-    public int GetTile(TilemapNode map, int layer, int x, int y) => map.GetTile(layer, x, y);
+    public int GetTile(TilemapNode map, object layer, int x, int y)
+        => layer is string layerName ? map.GetTile(layerName, x, y) : map.GetTile(Convert.ToInt32(layer), x, y);
 
     public void SetTileCulling(TilemapNode map, bool enabled, int padding = 2)
     {
@@ -115,8 +120,24 @@ public sealed partial class LuaRuntime
 
     public void RegisterScene(string name, string luaFile) => SceneManager.Instance.RegisterScene(name, luaFile);
 
-    public void TransitionTo(string scene, string mode = "fade", float seconds = 0.35f)
-        => SceneManager.Instance.TransitionTo(scene, mode, seconds);
+    public void TransitionTo(string scene, string mode = "fade", float seconds = 0.35f, LuaTable? data = null)
+        => SceneManager.Instance.TransitionTo(scene, mode, seconds, data);
+
+    public LuaTable? SceneData() => _sceneData;
+
+    public void OnSceneEnter(LuaFunction callback)
+        => _onSceneEnter = Require(callback, nameof(OnSceneEnter));
+
+    public void OnSceneExit(LuaFunction callback)
+        => _onSceneExit = Require(callback, nameof(OnSceneExit));
+
+    internal void SetSceneData(LuaTable? data) => _sceneData = data;
+
+    internal void NotifySceneEnter(string scene, LuaTable? data)
+        => _onSceneEnter?.Call(scene, data);
+
+    internal void NotifySceneExit(string scene, string nextScene, LuaTable? data)
+        => _onSceneExit?.Call(scene, nextScene, data);
 
     public AreaTrigger NewAreaTrigger(string name, float x, float y, float w, float h, bool oneShot = false)
     {
