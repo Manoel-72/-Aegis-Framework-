@@ -453,6 +453,17 @@ local function updatePlayer(dt)
     -- Fallback robusto: se estiver segurando jump, mantém um buffer curto.
     if jumpHeld then jumpBuffer = math.max(jumpBuffer, 0.08) end
 
+    local vy = aegis.getVelocityY(rb)
+    if grounded then
+        aegis.setGravity(rb, 1.0)
+    elseif vy > 25 then
+        aegis.setGravity(rb, 1.38)
+    elseif vy < -25 and not jumpHeld then
+        aegis.setGravity(rb, 1.22)
+    else
+        aegis.setGravity(rb, 0.92)
+    end
+
     jumpCooldown = math.max(0, jumpCooldown - dt)
     local canJump = coyote > 0 or (not airJumpUsed)
     if jumpBuffer > 0 and canJump and jumpCooldown <= 0 then

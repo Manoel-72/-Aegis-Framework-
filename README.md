@@ -1,4 +1,4 @@
-# ⚔️ Aegis Engine
+# Aegis Framework
 
 > Framework 2D code-first para criar jogos com código.
 
@@ -117,7 +117,7 @@ A documentação completa — guias de instalação, API Lua, arquitetura, exemp
 
 ## Status do Projeto
 
-**v0.9.0 — pré-lançamento**
+**v0.9.9 — pré-lançamento**
 
 | Sistema | Status |
 |---|---|
