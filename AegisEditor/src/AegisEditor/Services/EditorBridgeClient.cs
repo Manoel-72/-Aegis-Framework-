@@ -154,6 +154,26 @@ public sealed class EditorBridgeClient : IDisposable, IEditorBridgeClient
         {
             _log.Post(EditorLogLevel.Error, $"Pipe read error: {ex.Message}");
         }
+        finally
+        {
+            var wasUnexpectedClose = !ct.IsCancellationRequested;
+
+            try { _writer?.Dispose(); }
+            catch { /* ignore */ }
+
+            _writer = null;
+            _reader = null;
+
+            if (_pipe is not null)
+            {
+                try { _pipe.Dispose(); }
+                catch { /* ignore */ }
+                _pipe = null;
+            }
+
+            if (wasUnexpectedClose)
+                _log.Post(EditorLogLevel.Warning, "Runtime desconectado; a janela do jogo foi fechada ou o processo terminou.");
+        }
     }
 
     public void Dispose()

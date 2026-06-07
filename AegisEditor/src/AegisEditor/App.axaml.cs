@@ -45,6 +45,7 @@ public partial class App : Application
         sc.AddSingleton<HierarchyViewModel>();
         sc.AddSingleton<InspectorViewModel>();
         sc.AddSingleton<ViewportViewModel>();
+        sc.AddSingleton<AssetBrowserViewModel>();
         sc.AddSingleton<LuaEditorViewModel>();
         sc.AddSingleton<NamedPipeBridgeOptions>(_ => NamedPipeBridgeOptions.Default);
         sc.AddSingleton<EditorBridgeClient>();

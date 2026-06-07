@@ -129,7 +129,8 @@ A documentação completa — guias de instalação, API Lua, arquitetura, exemp
 | Sistema de Cenas / Entidades | ✅ Pronto |
 | Integração Lua | ✅ Pronto |
 | Editor Visual | ✅ Pronto |
-| Loader de Tilemap (.tmx) | 🔧 Planejado |
+| Tilemap Tiled JSON | ✅ Pronto |
+| Loader de Tilemap (.tmx) | 🔧 Pós-v1.0 |
 | Sistema de Animações | 🔧 Planejado |
 | API Lua estável e documentada | 🔧 Em andamento |
 

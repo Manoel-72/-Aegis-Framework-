@@ -8,20 +8,31 @@
              d:DesignHeight="400"
              x:Class="AegisEditor.Controls.LuaEditor">
 
-    <DockPanel Margin="8">
-        <TextBlock DockPanel.Dock="Top"
-                   Text="Lua"
-                   Foreground="{DynamicResource AeTextBrush}"
-                   FontSize="13"
-                   Margin="0 0 0 6" />
+    <Border Background="{DynamicResource AeSurfaceBrush}"
+            BorderBrush="{DynamicResource AeBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="2">
+        <DockPanel>
+            <Border DockPanel.Dock="Top"
+                    Height="26"
+                    Background="#0d2c48"
+                    BorderBrush="{DynamicResource AeBorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="8,4">
+                <TextBlock Text="Lua Script Editor"
+                           Foreground="{DynamicResource AeTextBrush}"
+                           FontSize="12" />
+            </Border>
 
-        <ae:TextEditor x:Name="Editor"
-                       ShowLineNumbers="True"
-                       FontFamily="{DynamicResource AeFontMono}"
-                       FontSize="12"
-                       Foreground="{DynamicResource AeTextBrush}"
-                       HorizontalScrollBarVisibility="Auto"
-                       VerticalScrollBarVisibility="Auto"
-                       Padding="10" />
-    </DockPanel>
+            <ae:TextEditor x:Name="Editor"
+                           ShowLineNumbers="True"
+                           FontFamily="{DynamicResource AeFontMono}"
+                           FontSize="12"
+                           Foreground="{DynamicResource AeTextBrush}"
+                           Background="#081b2b"
+                           HorizontalScrollBarVisibility="Auto"
+                           VerticalScrollBarVisibility="Auto"
+                           Padding="10" />
+        </DockPanel>
+    </Border>
 </UserControl>

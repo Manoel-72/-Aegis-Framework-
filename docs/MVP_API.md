@@ -23,6 +23,8 @@ para templates, exemplos e IA.
 
 - `aegis.registerScene(name, file)`
 - `aegis.transitionTo(name, mode?, seconds?, data?)`
+- `aegis.pushScene(name, data?)`
+- `aegis.popScene()`
 - `aegis.sceneData()`
 - `aegis.onSceneEnter(callback)`
 - `aegis.onSceneExit(callback)`
@@ -42,6 +44,22 @@ end)
 ```
 
 `mode` aceita `fade`, `none` e `slide`.
+
+Para pause menu, inventario e modais, use `pushScene`:
+
+```lua
+aegis.pushScene("pause", { from = "level1" })
+
+-- dentro da cena pause:
+function aegis_update(dt)
+    if aegis.keyPressed("Escape") then
+        aegis.popScene()
+    end
+end
+```
+
+`pushScene` preserva o mundo atual e carrega uma cena por cima. `popScene`
+remove os objetos criados pelo overlay e restaura os callbacks Lua anteriores.
 
 ### Camada UI / HUD (MVP)
 

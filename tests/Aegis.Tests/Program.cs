@@ -1,10 +1,12 @@
 using Aegis.CLI;
 using Aegis.Core;
+using Aegis.Physics;
 using Aegis.Resource;
 using Aegis.Scene;
 using Aegis.Scripting.Components;
 using Aegis.Systems;
 using Aegis.World;
+using AegisEditor.Shared.Models;
 using NLua;
 using System.Diagnostics;
 
@@ -25,9 +27,13 @@ internal static class Program
         Run("AssetManifest categorizes project assets", AssetManifestCategorizesProjectAssets);
         Run("AssetValidator validates project assets", AssetValidatorValidatesProjectAssets);
         Run("AssetValidator reports missing references", AssetValidatorReportsMissingReferences);
+        Run("AssetValidator reports missing scene references", AssetValidatorReportsMissingSceneReferences);
         Run("TiledMapDocument parses object layers and properties", TiledMapDocumentParsesObjects);
+        Run("SceneJsonLoader instantiates editor scene entities", SceneJsonLoaderInstantiatesEntities);
+        Run("SceneJsonLoader reads component-style scene JSON", SceneJsonLoaderReadsComponentStyleScene);
         Run("ProjectCreator creates a runnable project skeleton", ProjectCreatorCreatesSkeleton);
         Run("SceneManager transition none loads registered scene", SceneManagerTransitionLoadsScene);
+        Run("SceneManager push and pop restores Lua callbacks", SceneManagerPushPopRestoresCallbacks);
         Run("CLI build web creates validated package", CliBuildWebCreatesPackage);
 
         if (Failures.Count == 0)
@@ -221,6 +227,37 @@ end
         AssertTrue(report.Issues.Any(i => i.Code == "asset.reference.missing"), "missing references should use asset.reference.missing code");
     }
 
+    private static void AssetValidatorReportsMissingSceneReferences()
+    {
+        using var dir = new TempDir();
+        File.WriteAllText(Path.Combine(dir.Path, "main.lua"), "function aegis_init() end\n");
+        File.WriteAllText(Path.Combine(dir.Path, "aegis.toml"), "entry = \"main.lua\"\n");
+        Directory.CreateDirectory(Path.Combine(dir.Path, "res"));
+        Directory.CreateDirectory(Path.Combine(dir.Path, "scenes"));
+        File.WriteAllText(Path.Combine(dir.Path, "scenes", "main.scene.json"), """
+{
+  "format": "aegis.scene",
+  "version": 2,
+  "entities": [
+    {
+      "id": "player",
+      "name": "Player",
+      "type": "Sprite",
+      "components": {
+        "SpriteRenderer": { "sprite": "sprites/missing.png" },
+        "Script": { "file": "scripts/player.lua" }
+      }
+    }
+  ]
+}
+""");
+
+        var report = AssetValidator.ValidateProject(dir.Path);
+
+        AssertTrue(report.ErrorCount >= 2, "missing scene sprite and script should be reported");
+        AssertTrue(report.Issues.Any(i => i.Path?.Contains("main.scene.json", StringComparison.OrdinalIgnoreCase) == true), "scene file should be mentioned in issue path");
+    }
+
     private static void TiledMapDocumentParsesObjects()
     {
         var map = TiledMapDocument.Parse("""
@@ -272,6 +309,101 @@ end
         AssertEqual("right", map.Objects[0].Properties["facing"], "object string property should parse");
         AssertEqual("true", map.Objects[0].Properties["checkpoint"], "object bool property should parse");
         AssertEqual(1, map.Tilesets.Count, "tileset refs should parse");
+    }
+
+    private static void SceneJsonLoaderInstantiatesEntities()
+    {
+        using var dir = new TempDir();
+        var scenePath = Path.Combine(dir.Path, "main.scene.json");
+        File.WriteAllText(scenePath, """
+{
+  "format": "aegis.scene",
+  "version": 2,
+  "name": "Runtime Test",
+  "kind": "2d",
+  "entities": [
+    { "id": "root", "name": "Root", "type": "Group", "x": 10, "y": 20, "scaleX": 1, "scaleY": 1 },
+    { "id": "cam", "name": "Camera", "type": "Camera", "parentId": "root", "x": 30, "y": 40, "scaleX": 2, "scaleY": 3 }
+  ],
+  "tilemaps": []
+}
+""");
+
+        var root = new Scene2D();
+        var result = new SceneJsonLoader().Load(scenePath, root);
+
+        AssertEqual("Runtime Test", result.Name, "scene name should load");
+        AssertEqual(2, result.EntityCount, "entity count should load");
+        AssertEqual(1, root.Children.Count, "only root entity should be parented to scene root");
+
+        var group = root.Children[0];
+        AssertEqual(10f, group.X, "group x should apply");
+        AssertEqual(20f, group.Y, "group y should apply");
+        AssertEqual(1, group.Children.Count, "child entity should be parented by parentId");
+
+        var cameraMarker = group.Children[0];
+        AssertEqual(30f, cameraMarker.X, "child x should apply");
+        AssertEqual(40f, cameraMarker.Y, "child y should apply");
+        AssertEqual(2f, cameraMarker.ScaleX, "child scaleX should apply");
+        AssertEqual(3f, cameraMarker.ScaleY, "child scaleY should apply");
+    }
+
+    private static void SceneJsonLoaderReadsComponentStyleScene()
+    {
+        PhysicsWorld.Instance.Reset();
+        using var dir = new TempDir();
+        var scenePath = Path.Combine(dir.Path, "component.scene.json");
+        File.WriteAllText(scenePath, """
+{
+  "format": "aegis.scene",
+  "version": 2,
+  "name": "Component Scene",
+  "kind": "2d",
+  "entities": [
+    {
+      "id": "entity-42",
+      "name": "Player",
+      "type": "Group",
+      "components": {
+        "Transform": {
+          "position": [100, 200],
+          "rotation": 0.25,
+          "scale": [2, 3]
+        },
+        "Collider2D": {
+          "shape": "box",
+          "size": [32, 48],
+          "offset": [1, 2],
+          "is_trigger": true
+        },
+        "Rigidbody2D": {
+          "type": "kinematic",
+          "gravity_scale": 0,
+          "linear_drag": 4
+        }
+      }
+    }
+  ],
+  "tilemaps": []
+}
+""");
+
+        var root = new Scene2D();
+        var result = new SceneJsonLoader().Load(scenePath, root);
+
+        AssertEqual("Component Scene", result.Name, "component scene name should load");
+        AssertEqual(1, result.EntityCount, "component entity count should load");
+        AssertEqual(1, root.Children.Count, "component entity should be created");
+
+        var player = root.Children[0];
+        AssertEqual(100f, player.X, "Transform.position x should apply");
+        AssertEqual(200f, player.Y, "Transform.position y should apply");
+        AssertEqual(2f, player.ScaleX, "Transform.scale x should apply");
+        AssertEqual(3f, player.ScaleY, "Transform.scale y should apply");
+        AssertEqual(0.25f, player.Rotation, "Transform.rotation should apply");
+        AssertEqual(1, CollisionSystem.Instance.ColliderCount, "Collider2D should register collider");
+        AssertEqual(1, PhysicsWorld.Instance.BodyCount, "Rigidbody2D should register body");
+        PhysicsWorld.Instance.Reset();
     }
 
     private static void ProjectCreatorCreatesSkeleton()
@@ -332,6 +464,60 @@ end
         }
     }
 
+    private static void SceneManagerPushPopRestoresCallbacks()
+    {
+        using var dir = new TempDir();
+        var previous = Directory.GetCurrentDirectory();
+        try
+        {
+            Directory.SetCurrentDirectory(dir.Path);
+            Directory.CreateDirectory(Path.Combine(dir.Path, "scenes"));
+            File.WriteAllText(Path.Combine(dir.Path, "scenes", "pause.lua"), """
+function aegis_init()
+    overlay_inited = true
+end
+
+function aegis_update(dt)
+    overlay_updated = true
+end
+""");
+
+            var app = new App("Scene Stack Test", 640, 480)
+            {
+                S2D = new Scene2D(),
+                Ui2D = new Scene2D(),
+            };
+            using var lua = new Aegis.Scripting.LuaRuntime(app);
+            lua.RegisterAll();
+            lua.ExecuteString("""
+base_updated = false
+overlay_updated = false
+overlay_inited = false
+
+function aegis_update(dt)
+    base_updated = true
+end
+""");
+
+            SceneManager.Instance.RegisterScene("pause", "scenes/pause.lua");
+            SceneManager.Instance.PushScene("pause");
+
+            AssertTrue(IsLuaTrue(lua.GetGlobal("overlay_inited")), "pushScene should run overlay init");
+            lua.CallFunction("aegis_update", 0.016f);
+            AssertTrue(IsLuaTrue(lua.GetGlobal("overlay_updated")), "pushScene should replace update callback");
+            AssertTrue(!IsLuaTrue(lua.GetGlobal("base_updated")), "base update should be paused while overlay is active");
+
+            AssertTrue(SceneManager.Instance.PopScene(), "popScene should return true when a scene is stacked");
+            lua.CallFunction("aegis_update", 0.016f);
+            AssertTrue(IsLuaTrue(lua.GetGlobal("base_updated")), "popScene should restore previous update callback");
+            AssertTrue(!SceneManager.Instance.PopScene(), "popScene should return false when stack is empty");
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previous);
+        }
+    }
+
     private static void CliBuildWebCreatesPackage()
     {
         using var dir = new TempDir();
@@ -365,6 +551,9 @@ entry = "main.lua"
     {
         if (!condition) throw new InvalidOperationException(message);
     }
+
+    private static bool IsLuaTrue(object? value)
+        => value is bool b && b;
 
     private static void AssertEqual<T>(T expected, T actual, string message)
     {

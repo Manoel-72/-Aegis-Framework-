@@ -98,7 +98,19 @@ public sealed class AegisGame : Game
         if (!_app.Lua.HasFunction("aegis_init"))
             throw new InvalidOperationException("[Aegis|Lua] Função obrigatória aegis_init não encontrada no script principal.");
         _app.Lua.CallFunction("aegis_init");
+        LoadInitialEditorSceneIfRequested();
         InputManager.HardSyncFromHardware();
+    }
+
+    private void LoadInitialEditorSceneIfRequested()
+    {
+        var scenePath = Environment.GetEnvironmentVariable("AEGIS_START_SCENE");
+        if (string.IsNullOrWhiteSpace(scenePath))
+            return;
+
+        var normalized = scenePath.Trim().Replace('\\', '/');
+        _app.Lua.LoadScene(normalized, clear: true);
+        AegisLog.Info("Scene", $"initial scene override: {normalized}");
     }
 
     protected override void Update(GameTime gameTime)
@@ -122,6 +134,9 @@ public sealed class AegisGame : Game
             _app.Lua.UpdateAutozoom(dt);      // Final: câmera autozoom por densidade
             _app.Lua.CallFunction("aegis_update", dt);
 
+            var sceneStackPaused = SceneManager.Instance.IsSceneStackActive;
+            if (!sceneStackPaused)
+            {
             _physicsAccumulator = MathF.Min(_physicsAccumulator + dt, MaxFrameDelta);
             for (var steps = 0; steps < MaxPhysicsSteps && _physicsAccumulator >= FixedDeltaTime; steps++)
             {
@@ -130,9 +145,10 @@ public sealed class AegisGame : Game
             }
 
             _app.S2D.Update(dt);
+            Camera2D.Instance.Update(dt);
+            }
             _app.Ui2D.Update(dt);
             SceneManager.Instance.Update(dt);
-            Camera2D.Instance.Update(dt);
             TweenManager.Instance.Update(dt);
             ScreenEffects.Instance.Update(dt);
             HotReloadManager.Instance.Update(dt);

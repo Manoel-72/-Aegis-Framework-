@@ -10,39 +10,137 @@
     <Border Background="{DynamicResource AeSurfaceBrush}"
             BorderBrush="{DynamicResource AeBorderBrush}"
             BorderThickness="1"
-            CornerRadius="6"
-            Padding="8">
+            CornerRadius="2"
+            Padding="0">
 
-        <StackPanel Spacing="14">
-            <TextBlock Text="Inspector"
-                       FontSize="13"
-                       Margin="2 4"
-                       Foreground="{DynamicResource AeTextBrush}" />
+        <DockPanel>
+            <Border DockPanel.Dock="Top"
+                    Height="26"
+                    Background="#0d2c48"
+                    BorderBrush="{DynamicResource AeBorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="8,4">
+                <TextBlock Text="Inspector"
+                           FontSize="12"
+                           Foreground="{DynamicResource AeTextBrush}" />
+            </Border>
 
-            <StackPanel Spacing="6">
-                <TextBlock Text="Name" FontSize="11" Foreground="#6b7280" />
-                <TextBox Text="{Binding Target.Name}" AcceptsReturn="False" />
-            </StackPanel>
+            <ScrollViewer>
+                <StackPanel Margin="8"
+                            Spacing="8">
+                    <TextBox Text="{Binding Target.Name}"
+                             AcceptsReturn="False"
+                             FontWeight="SemiBold" />
 
-            <StackPanel Spacing="6">
-                <TextBlock Text="Type" FontSize="11" Foreground="#6b7280" />
-                <TextBox Text="{Binding Target.Type}" IsReadOnly="True" />
-            </StackPanel>
+                    <Grid ColumnDefinitions="56,*"
+                          ColumnSpacing="8">
+                        <TextBlock Text="Type"
+                                   VerticalAlignment="Center"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding Target.Type}"
+                                 IsReadOnly="True"
+                                 FontFamily="{DynamicResource AeFontMono}" />
+                    </Grid>
 
-            <Grid ColumnDefinitions="*, *" ColumnSpacing="12">
-                <StackPanel Grid.Column="0" Spacing="6">
-                    <TextBlock Text="X" FontSize="11" Foreground="#6b7280" />
-                    <TextBlock Text="{Binding Target.X}"
-                               FontFamily="{DynamicResource AeFontMono}"
-                               FontSize="13" />
+                    <Border Background="#0d2c48"
+                            BorderBrush="{DynamicResource AeBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="3">
+                        <StackPanel>
+                            <Border Background="#134060"
+                                    Padding="8,5"
+                                    BorderBrush="{DynamicResource AeBorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <TextBlock Text="Transform"
+                                           FontSize="12"
+                                           FontWeight="SemiBold" />
+                            </Border>
+
+                            <Grid Margin="8"
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="70,*,*"
+                                  RowSpacing="8"
+                                  ColumnSpacing="8">
+                                <TextBlock Text="Position"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding Target.X, Mode=TwoWay}"
+                                         FontFamily="{DynamicResource AeFontMono}" />
+                                <TextBox Grid.Column="2"
+                                         Text="{Binding Target.Y, Mode=TwoWay}"
+                                         FontFamily="{DynamicResource AeFontMono}" />
+
+                                <TextBlock Grid.Row="1"
+                                           Text="Scale"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Text="{Binding Target.ScaleX, Mode=TwoWay}"
+                                         FontFamily="{DynamicResource AeFontMono}" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="2"
+                                         Text="{Binding Target.ScaleY, Mode=TwoWay}"
+                                         FontFamily="{DynamicResource AeFontMono}" />
+
+                                <TextBlock Grid.Row="2"
+                                           Text="Rotation"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                                <TextBox Grid.Row="2"
+                                         Grid.Column="1"
+                                         Grid.ColumnSpan="2"
+                                         Text="{Binding Target.Rotation, Mode=TwoWay}"
+                                         FontFamily="{DynamicResource AeFontMono}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#0d2c48"
+                            BorderBrush="{DynamicResource AeBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="3">
+                        <StackPanel>
+                            <Border Background="#134060"
+                                    Padding="8,5"
+                                    BorderBrush="{DynamicResource AeBorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <TextBlock Text="Sprite Renderer"
+                                           FontSize="12"
+                                           FontWeight="SemiBold" />
+                            </Border>
+                            <Grid Margin="8"
+                                  RowDefinitions="Auto,Auto"
+                                  ColumnDefinitions="70,*"
+                                  RowSpacing="8"
+                                  ColumnSpacing="8">
+                                <TextBlock Text="Texture"
+                                           FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding Target.TexturePath, Mode=TwoWay}"
+                                         FontFamily="{DynamicResource AeFontMono}" />
+                                <TextBlock Grid.Row="1"
+                                           Text="Script"
+                                           FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Text="{Binding Target.ScriptPath, Mode=TwoWay}"
+                                         FontFamily="{DynamicResource AeFontMono}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="6">
-                    <TextBlock Text="Y" FontSize="11" Foreground="#6b7280" />
-                    <TextBlock Text="{Binding Target.Y}"
-                               FontFamily="{DynamicResource AeFontMono}"
-                               FontSize="13" />
-                </StackPanel>
-            </Grid>
-        </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
     </Border>
 </UserControl>

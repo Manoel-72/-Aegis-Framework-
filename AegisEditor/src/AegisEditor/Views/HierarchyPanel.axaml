@@ -10,34 +10,96 @@
     <Border Background="{DynamicResource AeSurfaceBrush}"
             BorderBrush="{DynamicResource AeBorderBrush}"
             BorderThickness="1"
-            CornerRadius="6"
-            Padding="8">
+            CornerRadius="2"
+            Padding="0">
 
         <DockPanel>
-            <TextBlock DockPanel.Dock="Top"
-                       Text="Hierarchy"
-                       FontSize="13"
-                       Margin="2 4 2 12"
-                       Foreground="{DynamicResource AeTextBrush}" />
+            <Border DockPanel.Dock="Top"
+                    Height="26"
+                    Background="#0d2c48"
+                    BorderBrush="{DynamicResource AeBorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="8,4">
+                <TextBlock Text="Scene View"
+                           FontSize="12"
+                           Foreground="{DynamicResource AeTextBrush}" />
+            </Border>
+
+            <Border DockPanel.Dock="Top"
+                    Padding="6"
+                    Background="#082033"
+                    BorderBrush="{DynamicResource AeBorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="6">
+                    <Button Content="+ Empty"
+                            Padding="8,5"
+                            Command="{Binding CreateEmptyCommand}" />
+                    <Button Content="+ Sprite"
+                            Padding="8,5"
+                            Command="{Binding CreateSpriteCommand}" />
+                    <Button Content="+ Camera"
+                            Padding="8,5"
+                            Command="{Binding CreateCameraCommand}" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel DockPanel.Dock="Top"
+                        Margin="8,8,8,2"
+                        Spacing="4">
+                <TextBlock Text="Scene"
+                           FontSize="12"
+                           Foreground="{DynamicResource AeTextBrush}" />
+                <TextBlock Text="MainCamera"
+                           Margin="12,0,0,0"
+                           FontSize="11"
+                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                <TextBlock Text="LevelRoot"
+                           Margin="12,0,0,0"
+                           FontSize="11"
+                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+            </StackPanel>
 
             <ListBox ItemsSource="{Binding Entities}"
                      SelectedItem="{Binding SelectedEntity}"
-                     Margin="2"
+                     Margin="4"
                      BorderThickness="0"
                      Background="Transparent">
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Create Empty"
+                                  Command="{Binding CreateEmptyCommand}" />
+                        <MenuItem Header="Create Sprite"
+                                  Command="{Binding CreateSpriteCommand}" />
+                        <MenuItem Header="Create Camera"
+                                  Command="{Binding CreateCameraCommand}" />
+                        <Separator />
+                        <MenuItem Header="Delete Selected"
+                                  Command="{Binding DeleteSelectedCommand}" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
 
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <DockPanel Margin="2 6">
-                            <Border Width="8" Height="8" Margin="8 8 14 8" DockPanel.Dock="Left"
-                                    CornerRadius="12" VerticalAlignment="Center"
-                                    Background="{DynamicResource AeAccent}" />
+                        <DockPanel Margin="4,3">
+                            <Border Width="22" Height="22" Margin="4,3,8,3" DockPanel.Dock="Left"
+                                    CornerRadius="3" VerticalAlignment="Center"
+                                    Background="#12395b"
+                                    BorderBrush="{DynamicResource AeBorderBrush}"
+                                    BorderThickness="1">
+                                <TextBlock Text="{Binding Type}"
+                                           FontSize="8"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="#9dd7ff" />
+                            </Border>
                             <StackPanel>
                                 <TextBlock Text="{Binding Name}" FontFamily="{DynamicResource AeFontMono}"
-                                           FontSize="12" FontWeight="Bold"
+                                           FontSize="12"
                                            Foreground="{DynamicResource AeTextBrush}" />
                                 <TextBlock Text="{Binding Type}" FontSize="11"
-                                           Foreground="#6b7280" Margin="0 2 0 0" />
+                                           Foreground="{DynamicResource AeTextSecondaryBrush}" Margin="0 1 0 0" />
                             </StackPanel>
                         </DockPanel>
                     </DataTemplate>

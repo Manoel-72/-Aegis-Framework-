@@ -123,6 +123,12 @@ public sealed partial class LuaRuntime
     public void TransitionTo(string scene, string mode = "fade", float seconds = 0.35f, LuaTable? data = null)
         => SceneManager.Instance.TransitionTo(scene, mode, seconds, data);
 
+    public void PushScene(string scene, LuaTable? data = null)
+        => SceneManager.Instance.PushScene(scene, data);
+
+    public bool PopScene()
+        => SceneManager.Instance.PopScene();
+
     public LuaTable? SceneData() => _sceneData;
 
     public void OnSceneEnter(LuaFunction callback)

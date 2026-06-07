@@ -3,24 +3,67 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             x:Class="AegisEditor.Views.ConsolePanel"
-             Width="980"
-             Height="220">
+             x:Class="AegisEditor.Views.ConsolePanel">
 
     <Border Background="{DynamicResource AeSurfaceBrush}"
             BorderBrush="{DynamicResource AeBorderBrush}"
             BorderThickness="1"
-            CornerRadius="6"
-            Padding="10">
+            CornerRadius="2"
+            Padding="0">
 
-        <DockPanel>
-            <TextBlock DockPanel.Dock="Top" Text="Console" FontWeight="SemiBold"
-                       Foreground="{DynamicResource AeTextBrush}" Margin="0 0 0 8" />
-            <ListBox ItemsSource="{Binding Lines}"
-                     BorderThickness="0"
-                     Background="Transparent"
-                     FontFamily="{DynamicResource AeFontMono}"
-                     FontSize="11.5" />
-        </DockPanel>
+        <TabControl Background="#081b2b"
+                    BorderThickness="0"
+                    Padding="0">
+            <TabControl.Styles>
+                <Style Selector="TabItem">
+                    <Setter Property="FontSize" Value="12" />
+                    <Setter Property="MinHeight" Value="24" />
+                    <Setter Property="Padding" Value="8,3" />
+                </Style>
+                <Style Selector="TabItem TextBlock">
+                    <Setter Property="FontSize" Value="12" />
+                </Style>
+            </TabControl.Styles>
+            <TabItem Header="Console">
+                <ListBox ItemsSource="{Binding Lines}"
+                         BorderThickness="0"
+                         Background="#081b2b"
+                         FontFamily="{DynamicResource AeFontMono}"
+                         FontSize="11.5"
+                         Margin="0" />
+            </TabItem>
+            <TabItem Header="Problems">
+                <ListBox ItemsSource="{Binding Problems}"
+                         BorderThickness="0"
+                         Background="#081b2b"
+                         Foreground="{DynamicResource AeError}"
+                         FontFamily="{DynamicResource AeFontMono}"
+                         FontSize="11.5"
+                         Margin="0" />
+            </TabItem>
+            <TabItem Header="Sample">
+                <ListBox ItemsSource="{Binding Samples}"
+                         BorderThickness="0"
+                         Background="#081b2b"
+                         FontSize="11.5"
+                         Margin="0" />
+            </TabItem>
+            <TabItem Header="Tags">
+                <ListBox ItemsSource="{Binding Tags}"
+                         BorderThickness="0"
+                         Background="#081b2b"
+                         FontFamily="{DynamicResource AeFontMono}"
+                         FontSize="11.5"
+                         Margin="0" />
+            </TabItem>
+            <TabItem Header="Format">
+                <ListBox ItemsSource="{Binding FormatLines}"
+                         BorderThickness="0"
+                         Background="#081b2b"
+                         FontFamily="{DynamicResource AeFontMono}"
+                         FontSize="11.5"
+                         Margin="0" />
+            </TabItem>
+        </TabControl>
     </Border>
 </UserControl>

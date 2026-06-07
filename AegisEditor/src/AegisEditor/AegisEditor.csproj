@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AegisEditor.Shared\AegisEditor.Shared.csproj" />
+    <ProjectReference Include="..\..\..\src\Aegis\Aegis.csproj" />
   </ItemGroup>
 
 </Project>

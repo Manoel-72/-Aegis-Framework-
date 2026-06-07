@@ -5,6 +5,20 @@ namespace AegisEditor.Services;
 
 public sealed class RuntimeLauncherService(IEditorLogSink log) : IRuntimeLauncher
 {
+    private readonly object _gate = new();
+    private Process? _runtimeProcess;
+
+    public event EventHandler? RuntimeExited;
+
+    public bool IsRuntimeRunning
+    {
+        get
+        {
+            lock (_gate)
+                return _runtimeProcess is { HasExited: false };
+        }
+    }
+
     public Task<int> LaunchAsync(RuntimeLaunchArguments args, CancellationToken cancellationToken = default)
     {
         try
@@ -32,6 +46,22 @@ public sealed class RuntimeLauncherService(IEditorLogSink log) : IRuntimeLaunche
         errorMessage = null;
         try
         {
+            lock (_gate)
+            {
+                if (_runtimeProcess is { HasExited: false })
+                {
+                    log.Post(EditorLogLevel.Info, $"Runtime ja esta rodando (PID {_runtimeProcess.Id}); nao vou abrir outra janela.");
+                    return true;
+                }
+
+                if (_runtimeProcess is not null)
+                {
+                    try { _runtimeProcess.Dispose(); }
+                    catch { /* ignore */ }
+                    _runtimeProcess = null;
+                }
+            }
+
             var psi = CreateProcessStartInfo(args);
             // dotnet no PATH: convém UseShellExecute para o Windows resolver o host.
             // Exe local (aegis-cli): UseShellExecute=false + ArgumentList costuma ser mais estável.
@@ -62,10 +92,20 @@ public sealed class RuntimeLauncherService(IEditorLogSink log) : IRuntimeLaunche
                 }
                 finally
                 {
+                    lock (_gate)
+                    {
+                        if (ReferenceEquals(_runtimeProcess, proc))
+                            _runtimeProcess = null;
+                    }
+
                     try { proc.Dispose(); }
                     catch { /* ignore */ }
+                    RuntimeExited?.Invoke(this, EventArgs.Empty);
                 }
             };
+
+            lock (_gate)
+                _runtimeProcess = proc;
 
             _ = proc.Id;
             return true;
@@ -74,6 +114,48 @@ public sealed class RuntimeLauncherService(IEditorLogSink log) : IRuntimeLaunche
         {
             errorMessage = ex.Message;
             log.Post(EditorLogLevel.Error, $"Start detached failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    public bool TryStopRuntime(out string? errorMessage)
+    {
+        errorMessage = null;
+        Process? proc;
+        lock (_gate)
+        {
+            proc = _runtimeProcess;
+            if (proc is null || proc.HasExited)
+            {
+                _runtimeProcess = null;
+                return true;
+            }
+        }
+
+        try
+        {
+            if (proc.CloseMainWindow())
+            {
+                if (!proc.WaitForExit(2500))
+                    proc.Kill(entireProcessTree: true);
+            }
+            else
+                proc.Kill(entireProcessTree: true);
+
+            lock (_gate)
+            {
+                if (ReferenceEquals(_runtimeProcess, proc))
+                    _runtimeProcess = null;
+            }
+
+            log.Post(EditorLogLevel.Info, "Runtime parado pelo editor.");
+            RuntimeExited?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            log.Post(EditorLogLevel.Warning, $"Falha ao parar runtime: {ex.Message}");
             return false;
         }
     }

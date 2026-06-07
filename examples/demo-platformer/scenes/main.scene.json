@@ -1,0 +1,35 @@
+{
+  "format": "aegis.scene",
+  "version": 1,
+  "name": "Main",
+  "kind": "2d",
+  "width": 1280,
+  "height": 720,
+  "entities": [
+    {
+      "id": "camera-main",
+      "name": "Main Camera",
+      "type": "Camera",
+      "x": 352,
+      "y": 128,
+      "scaleX": 1,
+      "scaleY": 1,
+      "rotation": 0,
+      "components": [],
+      "children": []
+    },
+    {
+      "id": "level-root",
+      "name": "Level Root",
+      "type": "Group",
+      "x": 352,
+      "y": 128,
+      "scaleX": 1,
+      "scaleY": 1,
+      "rotation": 0,
+      "components": [],
+      "children": []
+    }
+  ],
+  "tilemaps": []
+}

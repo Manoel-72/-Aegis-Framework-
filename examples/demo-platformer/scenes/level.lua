@@ -1,12 +1,16 @@
 -- Cena única para 3 fases. Usa tilemap, colisão automática, player, inimigos, coletáveis, HUD e câmera.
-local map, nav, player, rb, playerCol
-local playerIdle, playerRun, playerJump, activePlayerState
+local map, nav, player, rb, playerCol, atlas, anim
 local playerFacing = 1
-local enemies, coins, goal, jumpEmitter = {}, {}, nil, nil
-local hud = { lives = 3, score = 0, coins = 0, coinMax = 5 }
+local enemies, coins, goal, goalLock, checkpoint = {}, {}, nil, nil, nil
+local hud = { lives = 3, score = 0, coins = 0, coinMax = 5, requiredCoins = 3 }
 local tutorial = { active = false, alpha = 0, pulse = 0 }
 local collectedCoins = {}
 local pendingRemoveCoins = {}
+local checkpointActive = false
+local checkpointX, checkpointY = 48, 380
+local levelMessage = ""
+local levelMessageTimer = 0
+local exitWasUnlocked = false
 local levelComplete = false
 local sceneChanging = false
 local hurtCooldown = 0
@@ -33,53 +37,18 @@ local function approach(current, target, amount)
     return target
 end
 
-local function syncPlayerVisual()
-    if not player then return end
-    local x = aegis.getX(player) - 6
-    local y = aegis.getY(player)
-    if playerIdle then aegis.setPosition(playerIdle, x, y) end
-    if playerRun then aegis.setPosition(playerRun, x, y) end
-    if playerJump then aegis.setPosition(playerJump, x, y) end
-end
-
 local function syncPlayerFacing()
-    local flip = playerFacing < 0
-    if playerIdle then aegis.setFlip(playerIdle, flip) end
-    if playerRun then aegis.setFlip(playerRun, flip) end
-    if playerJump then aegis.setFlip(playerJump, flip) end
-end
-
-local function setPlayerState(state)
-    if activePlayerState == state then return end
-    activePlayerState = state
-    if playerIdle then aegis.setVisible(playerIdle, state == "idle") end
-    if playerRun then aegis.setVisible(playerRun, state == "run") end
-    if playerJump then aegis.setVisible(playerJump, state == "jump") end
-    if state == "jump" and playerJump then aegis.playAnim(playerJump, 0, 7, false, 5) end
-    if state == "run" and playerRun then aegis.playAnim(playerRun, 0, 5, true, 5) end
-    if state == "idle" and playerIdle then aegis.playAnim(playerIdle, 0, 3, true, 5) end
-end
-
-local function createPlayerVisuals()
-    playerIdle = aegis.newAnim("sprites/Idle.png", 36, 36)
-    playerRun = aegis.newAnim("sprites/Run.png", 36, 36)
-    playerJump = aegis.newAnim("sprites/Jump.png", 36, 36)
-
-    aegis.playAnim(playerIdle, 0, 3, true, 5)
-    aegis.playAnim(playerRun, 0, 5, true, 5)
-    aegis.playAnim(playerJump, 0, 7, false, 5)
-
-    aegis.setZ(playerIdle, 10)
-    aegis.setZ(playerRun, 10)
-    aegis.setZ(playerJump, 10)
-    activePlayerState = nil
-    setPlayerState("idle")
-    syncPlayerFacing()
-    syncPlayerVisual()
+    if player and aegis.setFlip then
+        aegis.setFlip(player, playerFacing < 0)
+    end
 end
 
 local function levelIndex()
-    return math.max(1, math.min(3, GAME.level or 1))
+    return math.max(1, math.min(GAME.maxLevel or 9, GAME.level or 1))
+end
+
+local function mapIndex()
+    return ((levelIndex() - 1) % 3) + 1
 end
 
 local function goToScene(scene, duration)
@@ -95,8 +64,42 @@ end
 
 local function buildHud()
     hud.coins = 0
-    hud.coinMax = 5
+    hud.coinMax = 5 + math.min(5, math.floor((levelIndex() - 1) / 2))
+    hud.requiredCoins = math.min(hud.coinMax, 3 + math.floor((levelIndex() + 1) / 2))
     syncHud()
+end
+
+local function goalUnlocked()
+    return hud.coins >= hud.requiredCoins
+end
+
+local function showLevelMessage(text, seconds)
+    levelMessage = text
+    levelMessageTimer = seconds or 1.6
+end
+
+local function updateGoalState()
+    if goalLock then
+        aegis.setAlpha(goalLock, goalUnlocked() and 0.0 or 0.72)
+    end
+    if goalUnlocked() and not exitWasUnlocked then
+        exitWasUnlocked = true
+        showLevelMessage("Porta liberada!", 1.4)
+        if goal then
+            aegis.burst(aegis.getX(goal) + 18, aegis.getY(goal) + 36, {
+                count = 28, speed = 90, life = 0.45, size = 3,
+                r = 0.45, g = 1.0, b = 0.65
+            })
+        end
+    end
+end
+
+local function respawnPlayer()
+    aegis.setPosition(player, checkpointX, checkpointY)
+    aegis.setVelocity(rb, 0, 0)
+    coyote = 0.12
+    jumpBuffer = 0
+    airJumpUsed = false
 end
 
 local function drawHudChrome()
@@ -113,7 +116,7 @@ local function drawHudChrome()
     aegis.drawRect(14, 14, 78, 32, 0.10, 0.28, 0.22, 0.92)
     aegis.drawRect(14, 14, 78, 3, 0.40, 0.82, 0.58, 1)
     aegis.drawText("FASE", 26, 18, 0.45, 0.78, 0.68, 0.9)
-    aegis.drawText(tostring(levelIndex()), 26, 32, 0.20, 1.0, 0.78)
+    aegis.drawText(tostring(levelIndex()) .. "/" .. tostring(GAME.maxLevel or 9), 26, 32, 0.20, 1.0, 0.78)
 
     local heartStartX = 108
     local heartGap = 30
@@ -136,6 +139,28 @@ local function drawHudChrome()
     aegis.drawText("SCORE", scoreX, 48, 0.5, 0.72, 0.55, 0.75)
     aegis.drawText(scoreStr, scoreX + 2, 65, 0, 0, 0, 0.35)
     aegis.drawText(scoreStr, scoreX, 63, 1.0, 0.95, 0.50)
+
+    local objText = "OBJETIVO: " .. tostring(math.min(hud.coins, hud.requiredCoins)) .. "/" .. tostring(hud.requiredCoins) .. " MOEDAS"
+    local objW = 250
+    local objX = math.floor((sw - objW) * 0.5)
+    aegis.drawRect(objX, 14, objW, 32, 0.08, 0.09, 0.12, 0.78)
+    if goalUnlocked() then
+        aegis.drawText("PORTA LIBERADA", objX + 46, 23, 0.45, 1.0, 0.68, 1)
+    else
+        aegis.drawText(objText, objX + 22, 23, 1.0, 0.86, 0.38, 1)
+    end
+end
+
+local function drawLevelMessage()
+    if levelMessageTimer <= 0 or levelMessage == "" then return end
+    local sw = aegis.screenWidth()
+    local w = math.min(520, sw - 80)
+    local x = math.floor((sw - w) * 0.5)
+    local y = 86
+    local a = math.min(1, levelMessageTimer)
+    aegis.drawRect(x, y, w, 34, 0.05, 0.07, 0.10, 0.82 * a)
+    aegis.drawRect(x, y, w, 3, 0.40, 0.82, 0.58, 0.95 * a)
+    aegis.drawText(levelMessage, x + 18, y + 10, 0.92, 0.96, 0.86, a)
 end
 
 local function tutorialConfirmPressed()
@@ -215,11 +240,46 @@ local function spawnCoin(x, y)
         GAME.score = (GAME.score or 0) + 10
         hud.coins = hud.coins + 1
         syncHud()
+        updateGoalState()
         aegis.playSound("coin.wav")
         aegis.burst(aegis.getX(s)+12, aegis.getY(s)+12, { count=18, speed=90, life=0.45, size=3, r=1, g=0.85, b=0.25 })
         pendingRemoveCoins[#pendingRemoveCoins + 1] = s
     end)
     coins[#coins+1] = s
+end
+
+local function spawnCheckpoint(x, y)
+    checkpoint = aegis.newRect(26, 52, 0.35, 0.85, 1.0)
+    aegis.setPosition(checkpoint, x, y)
+    aegis.setZ(checkpoint, 7)
+    aegis.setAlpha(checkpoint, 0.62)
+    local col = aegis.addCollider(checkpoint, 34, 58, -4, -3)
+    aegis.setTrigger(col, true)
+    aegis.setColliderLayer(col, "PICKUP")
+    aegis.setColliderMask(col, "PLAYER")
+    aegis.onCollideEnter(col, function(a, b)
+        if checkpointActive then return end
+        checkpointActive = true
+        checkpointX = x
+        checkpointY = y
+        aegis.setAlpha(checkpoint, 1.0)
+        showLevelMessage("Checkpoint ativado", 1.3)
+        aegis.playSound("coin.wav")
+        aegis.burst(x + 13, y + 24, {
+            count = 22, speed = 75, life = 0.5, size = 3,
+            r = 0.35, g = 0.85, b = 1.0
+        })
+    end)
+end
+
+local function spawnBonusPlatform(x, y, w)
+    local p = aegis.newRect(w, 16, 0.58, 0.75, 0.68)
+    aegis.setPosition(p, x, y)
+    aegis.setZ(p, 3)
+    local col = aegis.addCollider(p, w, 16)
+    aegis.setColliderLayer(col, "WORLD")
+    aegis.setColliderMask(col, "PLAYER|ENEMY")
+    return p
 end
 
 local function damagePlayer(enemy)
@@ -267,8 +327,9 @@ function aegis_init()
     aegis.log("[scene] level init: " .. tostring(levelIndex()))
     aegis.clearAll()
     local li = levelIndex()
+    local mi = mapIndex()
     -- load tilemap early so we can derive correct world size from the map
-    map = aegis.loadTilemap("tilemaps/level" .. li .. ".json")
+    map = aegis.loadTilemap("tilemaps/level" .. mi .. ".json")
     aegis.setZ(map, 0)
     local before = 80 * 30
     local generated = aegis.buildTilemapColliders(map, { solidGids = {1,2,3}, merge = true, layer = "WORLD" })
@@ -301,6 +362,11 @@ function aegis_init()
     enemies, coins = {}, {}
     collectedCoins = {}
     pendingRemoveCoins = {}
+    checkpointActive = false
+    checkpointX, checkpointY = 48, 380
+    levelMessage = ""
+    levelMessageTimer = 0
+    exitWasUnlocked = false
     hurtCooldown = 0
     coyote = 0
     jumpBuffer = 0
@@ -340,12 +406,17 @@ function aegis_init()
 
 
 
-    player = aegis.newRect(24, 30, 0.25, 0.55, 0.95)
+    player = aegis.newSprite("sprites/player-sheet.png")
+    atlas = aegis.loadAtlas("sprites/player-sheet.json")
+    aegis.setAtlasFrame(player, atlas, "idle_00")
+    anim = aegis.newAtlasAnimator(player, atlas)
+    aegis.addAtlasClip(anim, "idle", { "idle_00" }, 1)
+    aegis.addAtlasClip(anim, "run", { "run_00", "run_01", "run_02", "run_03", "run_04", "run_05" }, 8)
+    aegis.play(anim, "idle")
     aegis.setPosition(player, 48, 380)
     aegis.setZ(player, 10)
-    aegis.setAlpha(player, 0)
-    createPlayerVisuals()
-    playerCol = aegis.addCollider(player, 20, 28, 2, 1)
+    syncPlayerFacing()
+    playerCol = aegis.addCollider(player, 20, 28, 6, 4)
     aegis.setColliderLayer(playerCol, "PLAYER")
     aegis.setColliderMask(playerCol, "WORLD|ENEMY|PICKUP")
     rb = aegis.addRigidbody(player)
@@ -364,25 +435,51 @@ function aegis_init()
         openTutorial()
     end
 
-    local coinY = { 335, 175, 225, 285, 290 }
-    for i=1,5 do spawnCoin(160 + i*150, coinY[((i+li-1)%#coinY)+1]) end
+    spawnCheckpoint(640, 380)
 
-    -- Fase 1: um inimigo patrulhando plataforma central
+    if li % 2 == 0 then
+        spawnBonusPlatform(250, 300, 112)
+    end
+    if li >= 4 then
+        spawnBonusPlatform(690, 250, 126)
+    end
+    if li >= 6 then
+        spawnBonusPlatform(980, 230, 118)
+    end
+
+    local coinY = { 335, 175, 225, 285, 290, 405 }
+    for i=1,hud.coinMax do
+        spawnCoin(120 + i*125, coinY[((i+li-1)%#coinY)+1])
+    end
+
+    -- A campanha longa reutiliza os mapas base com perigo crescente por fase.
     spawnEnemy(520 + li*80, 408,  380, 700)
-    -- Fases 2 e 3: segundo inimigo numa plataforma elevada
     if li >= 2 then spawnEnemy(880, 280,  760, 1000) end
-    -- Fase 3: terceiro inimigo mais agressivo perto da saída
     if li >= 3 then spawnEnemy(1100, 408, 950, 1190) end
+    if li >= 4 then spawnEnemy(320, 335, 180, 450) end
+    if li >= 5 then spawnEnemy(1040, 175, 900, 1180) end
+    if li >= 7 then spawnEnemy(700, 225, 560, 860) end
 
     goal = aegis.newRect(34, 72, 0.55, 1.0, 0.65)
     aegis.setPosition(goal, 1210, 380)
     aegis.setZ(goal, 8)
+    goalLock = aegis.newRect(44, 82, 1.0, 0.35, 0.25)
+    aegis.setPosition(goalLock, 1205, 375)
+    aegis.setZ(goalLock, 9)
+    aegis.setAlpha(goalLock, 0.72)
+    updateGoalState()
     local gcol = aegis.addCollider(goal, 34, 72)
     aegis.setTrigger(gcol, true)
     aegis.setColliderLayer(gcol, "PICKUP")
     aegis.setColliderMask(gcol, "PLAYER")
     aegis.onCollideEnter(gcol, function(a,b)
         if levelComplete then return end
+        if not goalUnlocked() then
+            local missing = hud.requiredCoins - hud.coins
+            showLevelMessage("Colete mais " .. tostring(missing) .. " moeda(s) para abrir a porta", 1.6)
+            aegis.playSound("hurt.wav")
+            return
+        end
         levelComplete = true
         aegis.playSound("land.wav")
         GAME.level = li + 1
@@ -425,11 +522,11 @@ local function updatePlayer(dt)
 
     local visualGrounded = grounded or coyote > 0.04
     if not visualGrounded then
-        setPlayerState("jump")
+        if anim then aegis.play(anim, math.abs(vx) > 5 and "run" or "idle") end
     elseif math.abs(vx) > 5 then
-        setPlayerState("run")
+        if anim then aegis.play(anim, "run") end
     else
-        setPlayerState("idle")
+        if anim then aegis.play(anim, "idle") end
     end
 
     local spaceDown = aegis.keyDown("Space")
@@ -496,18 +593,11 @@ local function updatePlayer(dt)
             aegis.log("[scene] level -> transitionTo(gameover) [fell]")
             goToScene("gameover", 0.35)
         else
-            -- Respawn local para evitar loop de transição e manter controle responsivo.
-            aegis.setPosition(player, 48, 380)
-            syncPlayerVisual()
-            aegis.setVelocity(rb, 0, 0)
-            coyote = 0.12
-            jumpBuffer = 0
-            airJumpUsed = false
+            respawnPlayer()
             aegis.flashScreen({ r=1, g=0.2, b=0.2 }, 0.08)
         end
     end
 
-    syncPlayerVisual()
 end
 
 local function updateEnemies(dt)
@@ -557,10 +647,10 @@ function aegis_update(dt)
 
     hurtCooldown = math.max(0, hurtCooldown - dt)
     fallCooldown = math.max(0, fallCooldown - dt)
-    if aegis.keyPressed("Escape") or aegis.padPressed(0, "Back") then
-        aegis.stopMusic()
-        aegis.log("[scene] level -> transitionTo(menu) [escape]")
-        goToScene("menu", 0.35)
+    levelMessageTimer = math.max(0, levelMessageTimer - dt)
+    if aegis.keyPressed("Escape") or aegis.keyPressed("P") or aegis.padPressed(0, "Start") then
+        aegis.log("[scene] level -> pushScene(pause)")
+        aegis.pushScene("pause", { level = levelIndex(), score = GAME.score or 0 })
         return
     end
     if #pendingRemoveCoins > 0 then
@@ -579,6 +669,7 @@ end
 function aegis_draw_ui()
     if not tutorial.active then
         drawHudChrome()
+        drawLevelMessage()
     end
     drawTutorialPopup()
 end

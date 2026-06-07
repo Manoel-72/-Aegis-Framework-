@@ -36,7 +36,7 @@ static void PrintHelp()
     Console.WriteLine("Aegis Engine CLI");
     Console.WriteLine();
     Console.WriteLine("Uso:");
-    Console.WriteLine("  aegis run <pasta-do-jogo> [--editor-pipe] [--editor-pipe=NomePipe] [--audio-root=rel/a/partir/do/jogo]");
+    Console.WriteLine("  aegis run <pasta-do-jogo> [--scene=scenes/active.scene.json] [--editor-pipe] [--editor-pipe=NomePipe] [--audio-root=rel/a/partir/do/jogo]");
     Console.WriteLine("  aegis new <nome>");
     Console.WriteLine("  aegis new platformer|topdown|puzzle <nome>");
     Console.WriteLine("  aegis build [pasta-do-jogo] --target win-x64|linux-x64|osx|osx-x64|web");
@@ -169,7 +169,8 @@ static bool ShouldSkipDir(string name)
 static bool ShouldSkipFile(string name)
 {
     var lower = name.ToLowerInvariant();
-    return lower.EndsWith(".zip")
+    return lower == "active.scene.json"
+        || lower.EndsWith(".zip")
         || lower.EndsWith(".nupkg")
         || lower.EndsWith(".user")
         || lower.EndsWith(".suo")
@@ -535,6 +536,24 @@ static void ApplyRunnerEnvironmentFlags(ReadOnlySpan<string> args)
         {
             Environment.SetEnvironmentVariable("AEGIS_AUDIO_ROOT",
                 key["--audio-root=".Length..].Trim().Replace('\\', '/'));
+            continue;
+        }
+
+        if (key.StartsWith("--scene=", StringComparison.OrdinalIgnoreCase))
+        {
+            Environment.SetEnvironmentVariable("AEGIS_START_SCENE",
+                key["--scene=".Length..].Trim().Replace('\\', '/'));
+            continue;
+        }
+
+        if (key.Equals("--scene", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TakesPathNext(args, i, out var sceneRel))
+            {
+                Environment.SetEnvironmentVariable("AEGIS_START_SCENE", sceneRel);
+                i++;
+            }
+
             continue;
         }
 

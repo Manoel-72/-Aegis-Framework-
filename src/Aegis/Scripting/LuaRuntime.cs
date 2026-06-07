@@ -41,6 +41,7 @@ public sealed partial class LuaRuntime : IDisposable
     private LuaFunction? _onSceneEnter;
     private LuaFunction? _onSceneExit;
     private LuaTable? _sceneData;
+    private readonly Stack<SceneStackFrame> _sceneStack = new();
 
     private enum LuaApiStatus
     {
@@ -274,7 +275,10 @@ public sealed partial class LuaRuntime : IDisposable
         Reg("aegis.navIsSolid",      nameof(NavIsSolid));
         Reg("aegis.perlin",          nameof(Perlin));
         Reg("aegis.registerScene",   nameof(RegisterScene));
+        Reg("aegis.loadScene",       nameof(LoadScene));
         Reg("aegis.transitionTo",    nameof(TransitionTo));
+        Reg("aegis.pushScene",       nameof(PushScene));
+        Reg("aegis.popScene",        nameof(PopScene));
         Reg("aegis.sceneData",       nameof(SceneData));
         Reg("aegis.onSceneEnter",    nameof(OnSceneEnter));
         Reg("aegis.onSceneExit",     nameof(OnSceneExit));
@@ -365,6 +369,18 @@ public sealed partial class LuaRuntime : IDisposable
         RegExperimental("aegis.playSoundAt3D",   nameof(PlaySoundAt3D));
     }
 
+    private sealed record SceneStackFrame(
+        string Name,
+        LuaFunction? Init,
+        LuaFunction? Update,
+        LuaFunction? Draw,
+        LuaFunction? DrawUi,
+        LuaFunction? OnEnter,
+        LuaFunction? OnExit,
+        LuaTable? Data,
+        Object2D[] WorldChildren,
+        Object2D[] UiChildren);
+
     private static T Require<T>(T? value, string apiName) where T : class
         => value ?? throw new ArgumentNullException(apiName, $"[Aegis|Lua] Argumento obrigatório nulo em {apiName}.");
 
@@ -381,6 +397,7 @@ public sealed partial class LuaRuntime : IDisposable
     public void ReloadMainScript(string path)
     {
         ClearAll();
+        _sceneStack.Clear();
         _lua["aegis_init"]    = null;
         _lua["aegis_update"]  = null;
         _lua["aegis_draw"]    = null;
@@ -431,6 +448,7 @@ public sealed partial class LuaRuntime : IDisposable
             throw new FileNotFoundException($"[Aegis|Scene] Cena não encontrada: '{full}'");
 
         ClearAll();
+        _sceneStack.Clear();
         _lua["aegis_init"]    = null;
         _lua["aegis_update"]  = null;
         _lua["aegis_draw"]    = null;
@@ -443,9 +461,82 @@ public sealed partial class LuaRuntime : IDisposable
         CallFunction("aegis_init");
     }
 
+    internal void PushSceneFile(string name, string path, LuaTable? data)
+    {
+        var root = Path.GetFullPath(_gameRoot);
+        var safePath = path.Replace('\\', Path.DirectorySeparatorChar);
+        var full = Path.GetFullPath(Path.Combine(root, safePath));
+        if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"[Aegis|Scene] Cena fora da pasta do jogo: '{path}'");
+        if (!File.Exists(full))
+            throw new FileNotFoundException($"[Aegis|Scene] Cena nao encontrada: '{full}'");
+
+        var frame = new SceneStackFrame(
+            name,
+            _lua["aegis_init"] as LuaFunction,
+            _lua["aegis_update"] as LuaFunction,
+            _lua["aegis_draw"] as LuaFunction,
+            _lua["aegis_draw_ui"] as LuaFunction,
+            _onSceneEnter,
+            _onSceneExit,
+            _sceneData,
+            _app.S2D?.Children.ToArray() ?? Array.Empty<Object2D>(),
+            _app.Ui2D?.Children.ToArray() ?? Array.Empty<Object2D>());
+
+        _sceneStack.Push(frame);
+        _sceneData = data;
+        _onSceneEnter = null;
+        _onSceneExit = null;
+        _lua["aegis_init"] = null;
+        _lua["aegis_update"] = null;
+        _lua["aegis_draw"] = null;
+        _lua["aegis_draw_ui"] = null;
+
+        _lua.DoFile(full);
+        if (!HasFunction("aegis_init"))
+            throw new InvalidOperationException($"[Aegis|Lua] Funcao obrigatoria aegis_init nao encontrada na cena: {path}");
+
+        CallFunction("aegis_init");
+        NotifySceneEnter(name, data);
+        InputManager.HardSyncFromHardware();
+    }
+
+    internal bool PopSceneFrame()
+    {
+        if (_sceneStack.Count == 0) return false;
+
+        var frame = _sceneStack.Pop();
+        NotifySceneExit("overlay", frame.Name, _sceneData);
+        RemoveChildrenCreatedAfterPush(_app.S2D, frame.WorldChildren);
+        RemoveChildrenCreatedAfterPush(_app.Ui2D, frame.UiChildren);
+
+        _lua["aegis_init"] = frame.Init;
+        _lua["aegis_update"] = frame.Update;
+        _lua["aegis_draw"] = frame.Draw;
+        _lua["aegis_draw_ui"] = frame.DrawUi;
+        _onSceneEnter = frame.OnEnter;
+        _onSceneExit = frame.OnExit;
+        _sceneData = frame.Data;
+        InputManager.HardSyncFromHardware();
+        return true;
+    }
+
+    private static void RemoveChildrenCreatedAfterPush(Scene2D? scene, Object2D[] kept)
+    {
+        if (scene is null) return;
+        var keep = new HashSet<Object2D>(kept);
+        foreach (var child in scene.Children.ToArray())
+        {
+            if (!keep.Contains(child))
+                child.RemoveFromParent();
+        }
+    }
+
     public void ExecuteString(string code)            => _lua.DoString(code);
 
     public bool HasFunction(string name) => _lua[name] is LuaFunction;
+
+    public object? GetGlobal(string name) => _lua[name];
 
     public void CallFunction(string name, params object[] args)
     {

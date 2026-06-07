@@ -49,6 +49,7 @@ public static class AssetValidator
         ValidateProjectShape(root, report);
         ValidateExistingAssets(root, report);
         ValidateLuaReferences(root, report);
+        ValidateSceneReferences(root, report);
         ValidateTilemapReferences(root, report);
 
         return report;
@@ -233,6 +234,90 @@ public static class AssetValidator
         }
     }
 
+    private static void ValidateSceneReferences(string root, AssetValidationReport report)
+    {
+        var scenesRoot = Path.Combine(root, "scenes");
+        if (!Directory.Exists(scenesRoot)) return;
+
+        foreach (var file in Directory.EnumerateFiles(scenesRoot, "*.scene.json", SearchOption.AllDirectories))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(file));
+                var scene = doc.RootElement;
+
+                if (scene.TryGetProperty("entities", out var entities) && entities.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var entity in entities.EnumerateArray())
+                        ValidateSceneEntity(root, file, entity, report);
+                }
+
+                if (scene.TryGetProperty("tilemaps", out var tilemaps) && tilemaps.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var tilemap in tilemaps.EnumerateArray())
+                    {
+                        if (tilemap.ValueKind == JsonValueKind.String)
+                            ValidateAssetPath(root, tilemap.GetString() ?? string.Empty, file, report);
+                        else if (tilemap.ValueKind == JsonValueKind.Object && TryGetString(tilemap, "path", out var path))
+                            ValidateAssetPath(root, path, file, report);
+                    }
+                }
+            }
+            catch
+            {
+                // JSON validity is reported by ValidateExistingAssets.
+            }
+        }
+    }
+
+    private static void ValidateSceneEntity(string root, string sceneFile, JsonElement entity, AssetValidationReport report)
+    {
+        if (TryGetString(entity, "texturePath", out var texturePath))
+            ValidateAssetPath(root, texturePath, sceneFile, report);
+
+        if (TryGetString(entity, "scriptPath", out var scriptPath))
+            ValidateProjectPath(root, scriptPath, sceneFile, report);
+
+        if (!entity.TryGetProperty("components", out var components))
+            return;
+
+        if (components.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var component in components.EnumerateObject())
+                ValidateSceneComponent(root, sceneFile, component.Name, component.Value, report);
+        }
+        else if (components.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var component in components.EnumerateArray())
+            {
+                if (component.ValueKind != JsonValueKind.Object || !TryGetString(component, "type", out var type))
+                    continue;
+
+                if (component.TryGetProperty("properties", out var props))
+                    ValidateSceneComponent(root, sceneFile, type, props, report);
+            }
+        }
+    }
+
+    private static void ValidateSceneComponent(string root, string sceneFile, string type, JsonElement props, AssetValidationReport report)
+    {
+        if (props.ValueKind != JsonValueKind.Object)
+            return;
+
+        if (type.Equals("SpriteRenderer", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TryGetString(props, "sprite", out var sprite)
+                || TryGetString(props, "texture", out sprite)
+                || TryGetString(props, "texturePath", out sprite))
+                ValidateAssetPath(root, sprite, sceneFile, report);
+        }
+        else if (type.Equals("Script", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TryGetString(props, "file", out var script) || TryGetString(props, "path", out script))
+                ValidateProjectPath(root, script, sceneFile, report);
+        }
+    }
+
     private static void ValidateAssetPath(string root, string rel, string sourceFile, AssetValidationReport report, string? baseDir = null)
     {
         if (string.IsNullOrWhiteSpace(rel) || Path.IsPathRooted(rel)) return;
@@ -240,6 +325,27 @@ public static class AssetValidator
         var full = ResolveAssetPath(root, normalized, baseDir);
         if (!File.Exists(full))
             report.Add(AssetIssueSeverity.Error, "asset.reference.missing", $"Referenced asset not found: {normalized}", $"{sourceFile} -> {full}");
+    }
+
+    private static void ValidateProjectPath(string root, string rel, string sourceFile, AssetValidationReport report)
+    {
+        if (string.IsNullOrWhiteSpace(rel) || Path.IsPathRooted(rel)) return;
+        var normalized = rel.Replace('\\', '/').TrimStart('/');
+        var full = Path.GetFullPath(Path.Combine(root, normalized));
+        if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            return;
+        if (!File.Exists(full))
+            report.Add(AssetIssueSeverity.Error, "asset.reference.missing", $"Referenced file not found: {normalized}", $"{sourceFile} -> {full}");
+    }
+
+    private static bool TryGetString(JsonElement element, string propertyName, out string value)
+    {
+        value = string.Empty;
+        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(propertyName, out var prop) || prop.ValueKind != JsonValueKind.String)
+            return false;
+
+        value = prop.GetString() ?? string.Empty;
+        return !string.IsNullOrWhiteSpace(value);
     }
 
     private static string ResolveAssetPath(string root, string rel, string? baseDir)

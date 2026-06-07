@@ -1,0 +1,150 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AegisEditor.Views.AssetBrowserPanel">
+
+    <Border Background="{DynamicResource AeSurfaceBrush}"
+            BorderBrush="{DynamicResource AeBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="2"
+            Padding="0">
+        <DockPanel>
+            <Border DockPanel.Dock="Top"
+                    Height="26"
+                    Background="#0d2c48"
+                    BorderBrush="{DynamicResource AeBorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="8,4">
+                <TextBlock Text="Project / Asset Browser"
+                           FontSize="12"
+                           Foreground="{DynamicResource AeTextBrush}" />
+            </Border>
+
+            <Grid DockPanel.Dock="Top"
+                  ColumnDefinitions="Auto,Auto,*,Auto,Auto"
+                  Margin="6,6,6,6">
+                <Button Content="Back"
+                        Padding="8,5"
+                        Command="{Binding UpCommand}" />
+                <Button Grid.Column="1"
+                        Content="Open"
+                        Margin="6,0,0,0"
+                        Padding="8,5"
+                        Command="{Binding OpenSelectedCommand}" />
+                <TextBox Grid.Column="2"
+                         Margin="6,0"
+                           Text="{Binding CurrentFolder}"
+                           FontFamily="{DynamicResource AeFontMono}"
+                           FontSize="11"
+                         IsReadOnly="True" />
+                <Button Grid.Column="3"
+                        Content="+ Sprite"
+                        Padding="8,5"
+                        Command="{Binding CreateSpriteFromSelectedCommand}" />
+                <Button Grid.Column="4"
+                        Content="Validate"
+                        Margin="6,0,0,0"
+                        Padding="8,5"
+                        Command="{Binding ValidateProjectCommand}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="108,*">
+                <Border Grid.Column="0"
+                        Background="#071c2d"
+                        BorderBrush="{DynamicResource AeBorderBrush}"
+                        BorderThickness="0,1,1,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="8,8,8,14"
+                                    Spacing="6">
+                            <TextBlock Text="Assets"
+                                       FontWeight="SemiBold"
+                                       FontSize="12" />
+                            <Button Content="All"
+                                    Padding="6,4"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding OpenAllCommand}" />
+                            <Button Content="Sprites"
+                                    Padding="6,4"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding OpenSpritesCommand}" />
+                            <Button Content="Audio"
+                                    Padding="6,4"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding OpenAudioCommand}" />
+                            <Button Content="Tilemaps"
+                                    Padding="6,4"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding OpenTilemapsCommand}" />
+                            <Button Content="Scripts"
+                                    Padding="6,4"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding OpenScriptsCommand}" />
+                            <Button Content="Fonts"
+                                    Padding="6,4"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding OpenFontsCommand}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <ListBox x:Name="AssetList"
+                         Grid.Column="1"
+                         ItemsSource="{Binding Entries}"
+                         SelectedItem="{Binding SelectedAsset}"
+                         DoubleTapped="AssetList_OnDoubleTapped"
+                         PointerPressed="AssetList_OnPointerPressed"
+                         BorderThickness="0"
+                         Background="#082033">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="4,5"
+                                       PointerPressed="AssetItem_OnPointerPressed">
+                                <Border Width="40"
+                                        Height="34"
+                                        DockPanel.Dock="Left"
+                                        Margin="0,0,10,0"
+                                        CornerRadius="4"
+                                        Background="#d89222"
+                                        BorderBrush="#ffcf6a"
+                                        BorderThickness="1">
+                                    <Grid>
+                                        <Image Source="{Binding Thumbnail}"
+                                               Stretch="UniformToFill"
+                                               IsVisible="{Binding IsSprite}" />
+                                        <TextBlock Text="{Binding Badge}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="#082033" />
+                                    </Grid>
+                                </Border>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="12"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="!"
+                                                   IsVisible="{Binding IsBroken}"
+                                                   Foreground="{DynamicResource AeError}"
+                                                   FontWeight="Bold" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding FullPath}"
+                                               FontFamily="{DynamicResource AeFontMono}"
+                                               FontSize="10"
+                                               Foreground="{DynamicResource AeTextSecondaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding ValidationMessage}"
+                                               IsVisible="{Binding IsBroken}"
+                                               FontSize="10"
+                                               Foreground="{DynamicResource AeError}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </DockPanel>
+    </Border>
+</UserControl>

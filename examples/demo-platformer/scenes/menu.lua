@@ -22,6 +22,7 @@ function aegis_init()
     GAME.score = GAME.score or 0
     GAME.lives = 3
     GAME.level = 1
+    GAME.maxLevel = 9
     GAME.won = false
 
     bg = aegis.newRect(aegis.screenWidth(), aegis.screenHeight(), 0.08, 0.10, 0.16, true)
@@ -54,6 +55,7 @@ function aegis_update(dt)
         GAME.score = 0
         GAME.lives = 3
         GAME.level = 1
+        GAME.maxLevel = 9
         GAME.tutorialSeen = false
         if aegis.clearScreenShader then aegis.clearScreenShader() end
         aegis.transitionTo("level1", "fade", 0.35)

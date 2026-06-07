@@ -24,12 +24,14 @@ public sealed class SceneManager
 
     private string? _pendingScene;
     private LuaTable? _pendingData;
+    private int _stackDepth;
     private string _transition = "fade";
     private float _transitionTime = 0.35f;
     private float _timer;
     private bool _loading;
 
     public bool IsTransitioning => _pendingScene is not null || _timer > 0f;
+    public bool IsSceneStackActive => _stackDepth > 0;
     public float FadeAlpha { get; private set; }
 
     public void Initialize(App app, LuaRuntime lua)
@@ -41,6 +43,7 @@ public sealed class SceneManager
         _pendingScene = null;
         _pendingData = null;
         _currentScene = null;
+        _stackDepth = 0;
         _timer = 0f;
         _loading = false;
         FadeAlpha = 0f;
@@ -78,6 +81,27 @@ public sealed class SceneManager
             _loading = false;
             FadeAlpha = 0f;
         }
+    }
+
+    public void PushScene(string scene, LuaTable? data = null)
+    {
+        if (_lua is null) return;
+        if (string.IsNullOrWhiteSpace(scene))
+            throw new ArgumentException("Nome de cena vazio.", nameof(scene));
+        var name = scene.Trim();
+        if (!_scenes.ContainsKey(name) && !File.Exists(name))
+            throw new InvalidOperationException($"[Aegis|Scene] Cena nao registrada: {name}. Use aegis.registerScene(nome, arquivoLua) antes de pushScene.");
+
+        var file = _scenes.TryGetValue(name, out var mapped) ? mapped : name;
+        _lua.PushSceneFile(name, file, data);
+        _stackDepth++;
+    }
+
+    public bool PopScene()
+    {
+        var popped = _lua?.PopSceneFrame() ?? false;
+        if (popped) _stackDepth = Math.Max(0, _stackDepth - 1);
+        return popped;
     }
 
     public void AddTrigger(AreaTrigger trigger) => _triggers.Add(trigger);

@@ -40,6 +40,21 @@ meu-jogo/
 
 Use mapas ortogonais exportados como JSON.
 
+Decisao para v1.0:
+
+```text
+Tiled JSON e o formato oficial de mapa da Aegis v1.0.
+.tmx/XML fica para uma versao posterior.
+```
+
+Motivo:
+
+- JSON ja e suportado pelo runtime atual;
+- JSON ja e validado pelo `aegis doctor`;
+- JSON e mais simples de testar e documentar;
+- reduz risco antes do lancamento publico;
+- o Tiled exporta JSON de forma nativa.
+
 Hoje o runtime suporta:
 
 - tile layers com `data` em array ou CSV;
@@ -52,6 +67,7 @@ Hoje o runtime suporta:
 Ainda esta planejado:
 
 - tilesets externos `.tsx`;
+- `.tmx`/XML;
 - spawn automatico por objeto;
 - debug visual de object layers;
 - preview visual no editor.

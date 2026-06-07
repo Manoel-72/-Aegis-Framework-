@@ -55,6 +55,7 @@ Prioridade:
 | Assets pipeline | `[~]` | P0 | Validar e organizar assets do jogo |
 | Map pipeline 2D | `[~]` | P0 | Transformar mapas em fluxo oficial da engine |
 | Object layers/spawn | `[~]` | P0 | Criar entidades a partir do mapa |
+| Scene stack | `[x]` | P0 | `pushScene/popScene` para pause, modal e inventario |
 | Tile batching | `[ ]` | P1 | Melhorar performance de mapas grandes |
 | Debug visual | `[~]` | P1 | Ver colliders, grid, stats e mapa |
 | Editor Hub | `[~]` | P1 | Tela inicial clara para iniciantes |
@@ -78,6 +79,7 @@ Objetivo: registrar o que ja esta bom para nao refazer trabalho.
 | Fonte fallback automatica | `[x]` | `FontManager` |
 | Display `windowed` e `borderless` | `[x]` | config/display |
 | Flip de sprite via Lua | `[x]` | `aegis.setFlip(sprite, flipX, flipY?)` |
+| Stack de cenas | `[x]` | `aegis.pushScene`, `aegis.popScene` |
 | Exemplos em `examples/` | `[x]` | `examples/*` |
 | Release ZIP 0.9.9 | `[x]` | `dist/Aegis-Framework-v0.9.9.zip` |
 | Checklist de release | `[x]` | `docs/RELEASE_CHECKLIST_0.9.9.md` |
@@ -102,6 +104,7 @@ Objetivo: deixar o pacote publico sem sinais obvios de prototipo.
 | Garantir pacote sem arquivos antigos | `[x]` | P0 | `verify.ps1` valida conteudo proibido |
 | Regenerar ZIP final depois dos ajustes | `[~]` | P0 | `package-release.ps1` passa em Release |
 | Testar exemplo principal por 10-15 min | `[ ]` | P1 | Sem tela preta/crash/log novo |
+| Validar pause menu via `pushScene/popScene` | `[~]` | P1 | Teste automatizado passa; falta exemplo visual |
 
 Entregavel:
 
@@ -161,10 +164,12 @@ Tarefas:
 | `setTile/getTile` por nome de layer | `[x]` | P1 | Aceita indice ou nome da layer |
 | Suportar object layers do Tiled | `[x]` | P0 | Objetos do mapa acessiveis via Lua |
 | Ler properties de map/layer/tile/object | `[~]` | P0 | Map/layer/object ja leem propriedades; tile props parciais |
+| Suportar `.tmx` | `[B]` | P2 | Fora do escopo v1.0; formato oficial v1.0 e Tiled JSON |
 | Suportar tilesets externos `.tsx` | `[ ]` | P1 | Tiled moderno funciona melhor |
 | Suportar collision por propriedade | `[ ]` | P0 | `solid=true` gera collider |
 | Suportar object spawn | `[x]` | P0 | Handlers Lua criam entidades a partir do mapa |
 | Suportar tilemap procedural por grid Lua | `[x]` | P0 | `aegis.createTilemap(grid, opts)` cria mapa em memoria |
+| Formato oficial `.scene.json` 2D | `[x]` | P0 | Base inicial para Editor visual abrir/salvar cenas |
 | Suportar seed controlada | `[x]` | P1 | `aegis.setRandomSeed(seed)` repete sorteios |
 | Criar testes de tilemap/mapa | `[~]` | P0 | Testes cobrem parser Tiled e object layers |
 | Criar doc `2D_WORLD_AND_MAP_PIPELINE.md` | `[x]` | P0 | Guia oficial para construir mapa |
@@ -192,6 +197,13 @@ Entregavel:
 ```text
 Usuario consegue montar fase no Tiled e rodar na Aegis com colisao, objetos e
 spawns sem posicionar tudo manualmente no Lua.
+```
+
+Decisao de v1.0:
+
+```text
+O formato oficial de mapas da Aegis v1.0 e Tiled JSON.
+.tmx/XML fica planejado para v1.1+ para evitar risco extra no lancamento.
 ```
 
 ## Fase 4 - Tile Rendering E Performance
@@ -278,7 +290,8 @@ iniciantes, sem tentar fazer um editor completo cedo demais.
 | Tarefa | Status | Prioridade | Criterio De Pronto |
 | --- | --- | --- | --- |
 | Botao Run amigavel | `[~]` | P1 | Run + Connect existe, precisa simplificar texto |
-| Botao Stop | `[~]` | P1 | Stop via pipe existe |
+| Botao Stop | `[x]` | P1 | Para o runtime pelo pipe/processo sem abrir copias extras |
+| Botao Restart | `[x]` | P1 | Para e inicia o runtime novamente pelo editor |
 | Botao Doctor | `[ ]` | P1 | Executa `aegis doctor <projeto>` e mostra problemas |
 | Botao Build Windows | `[ ]` | P1 | Executa `aegis build <projeto> --target win-x64` |
 | Painel de problemas | `[ ]` | P1 | Mostra erros/warnings do AssetValidator |
@@ -300,6 +313,20 @@ iniciantes, sem tentar fazer um editor completo cedo demais.
 | Preview de tilemap | `[ ]` | P2 | Renderiza mapa sem rodar jogo |
 | Preview de colliders | `[ ]` | P2 | Mostra colisao gerada |
 | Preview de object layers | `[ ]` | P2 | Mostra nomes/retangulos dos objetos |
+
+### Fase 6E - Scene View Profissional
+
+| Tarefa | Status | Prioridade | Criterio De Pronto |
+| --- | --- | --- | --- |
+| Zoom no Scene View | `[x]` | P1 | Mouse wheel aproxima/afasta com limite seguro |
+| Pan no Scene View | `[x]` | P1 | Botao direito ou meio arrasta a camera do editor |
+| Snap grid | `[x]` | P1 | Botao Snap liga/desliga alinhamento em grid 32px |
+| Reset de viewport | `[x]` | P1 | Botao Reset volta zoom/pan ao padrao |
+| Selecionar entidade no canvas | `[x]` | P1 | Clique seleciona objeto real da cena |
+| Arrastar entidade | `[x]` | P1 | Movimento respeita snap quando ativo |
+| Deletar entidade | `[x]` | P1 | Delete/Backspace remove da cena, hierarchy e inspector |
+| Gizmo de mover | `[x]` | P1 | Entidade selecionada mostra eixos X/Y no canvas |
+| Evitar runtime duplicado | `[x]` | P0 | Play nao abre varias janelas se uma ja estiver viva |
 
 Nao fazer ainda:
 
@@ -392,6 +419,7 @@ Esta e a ordem mais segura para melhorar muito sem refatorar demais:
 8. Melhorar tilesets externos `.tsx`.
 9. Criar batching/chunks de tilemap.
 10. Criar preview de mapa no editor.
+11. Avaliar suporte `.tmx` depois do v1.0.
 
 ## Criterios Para Dizer Que Esta Pronto Para Lancar
 
@@ -411,7 +439,7 @@ A engine pode ser publicada como preview quando:
 A engine pode ser chamada de engine 2D madura quando:
 
 - mapa e asset pipeline forem oficiais;
-- Tiled/LDtk import estiver robusto;
+- Tiled JSON import estiver robusto;
 - object layers virarem entidades;
 - debug visual ajudar producao;
 - tile batching aguentar mapas grandes;

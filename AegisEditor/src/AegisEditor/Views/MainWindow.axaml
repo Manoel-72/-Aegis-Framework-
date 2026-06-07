@@ -125,133 +125,227 @@
         </Grid>
 
         <Grid IsVisible="{Binding IsWorkspaceVisible}"
-              RowDefinitions="Auto,Auto,*,8,*"
-              ColumnDefinitions="224,8,*,8,276">
+              Margin="-16"
+              RowDefinitions="24,54,*,6,240,20"
+              ColumnDefinitions="280,6,*,6,260">
 
-            <DockPanel Grid.Row="0"
-                       Grid.ColumnSpan="5"
-                       Margin="0,0,0,8">
-                <StackPanel Orientation="Horizontal"
-                            DockPanel.Dock="Left"
-                            VerticalAlignment="Center"
-                            Spacing="10">
-                    <Button Content="Hub"
-                            Padding="14,9"
-                            Command="{Binding BackToHubCommand}" />
+            <Border Grid.Row="0"
+                    Grid.ColumnSpan="5"
+                    Background="#092036"
+                    BorderBrush="#164566"
+                    BorderThickness="0,0,0,1">
+                <DockPanel LastChildFill="True">
+                    <Menu DockPanel.Dock="Left"
+                          Background="Transparent"
+                          Margin="2,0,0,0">
+                        <MenuItem Header="File">
+                            <MenuItem Header="New Project"
+                                      Command="{Binding NewProjectCommand}" />
+                            <MenuItem Header="New Scene"
+                                      Command="{Binding NewSceneCommand}" />
+                            <MenuItem Header="Save Scene"
+                                      Command="{Binding SaveSceneCommand}" />
+                            <Separator />
+                            <MenuItem Header="Project Hub"
+                                      Command="{Binding BackToHubCommand}" />
+                        </MenuItem>
+                        <MenuItem Header="Edit">
+                            <MenuItem Header="Undo"
+                                      Command="{Binding UndoCommand}" />
+                            <MenuItem Header="Redo"
+                                      Command="{Binding RedoCommand}" />
+                            <Separator />
+                            <MenuItem Header="Delete Selected"
+                                      Command="{Binding DeleteSelectedEntityCommand}" />
+                        </MenuItem>
+                        <MenuItem Header="View">
+                            <MenuItem Header="Toggle Snap"
+                                      Command="{Binding ToggleSnapCommand}" />
+                            <MenuItem Header="Toggle Grid"
+                                      Command="{Binding Viewport.ToggleGridCommand}" />
+                            <MenuItem Header="Reset Grid"
+                                      Command="{Binding Viewport.ResetGridCommand}" />
+                            <MenuItem Header="Reset Scene View"
+                                      Command="{Binding ResetEditorViewCommand}" />
+                        </MenuItem>
+                        <MenuItem Header="Tools">
+                            <MenuItem Header="Validate Assets"
+                                      Command="{Binding ValidateAssetsCommand}" />
+                            <Separator />
+                            <MenuItem Header="Play"
+                                      Command="{Binding RunGameAndConnectCommand}" />
+                            <MenuItem Header="Stop Runtime"
+                                      Command="{Binding StopCommand}" />
+                            <MenuItem Header="Restart Runtime"
+                                      Command="{Binding RestartRuntimeCommand}" />
+                        </MenuItem>
+                        <MenuItem Header="Help">
+                            <MenuItem Header="Documentation"
+                                      Command="{Binding OpenDocumentationCommand}" />
+                        </MenuItem>
+                    </Menu>
                     <TextBlock Text="{Binding CurrentProjectName}"
+                               HorizontalAlignment="Center"
                                VerticalAlignment="Center"
-                               FontWeight="SemiBold"
-                               Margin="4,0,12,0" />
-                    <Button Content="Connect" Padding="14,9" Command="{Binding ConnectCommand}" />
-                    <Button Content="Disconnect" Padding="14,9" Command="{Binding DisconnectCommand}" />
-                    <Button Content="PLAY" Padding="18,9" Command="{Binding PlayCommand}" />
-                    <Button Content="PAUSE" Padding="14,9" Command="{Binding PauseCommand}" />
-                    <Button Content="STOP" Padding="14,9" Command="{Binding StopCommand}" />
-                    <Button Content="Lua Hot Reload"
-                            Margin="12,0,0,0"
-                            Padding="16,9"
-                            Command="{Binding HotReloadLuaCommand}" />
+                               FontSize="12"
+                               Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                </DockPanel>
+            </Border>
 
-                    <Rectangle Width="1"
-                               Height="26"
-                               Margin="10,4"
-                               Fill="{DynamicResource AeBorderBrush}" />
-
-                    <TextBox Text="{Binding SceneProjectPath}"
-                             Watermark="C:\path\to\scene.json"
-                             FontFamily="{DynamicResource AeFontMono}"
-                             MinWidth="360"
-                             Padding="10,8"
-                             VerticalAlignment="Center" />
-
-                    <Button Content="Load"
-                            Margin="8,0,0,0"
-                            Padding="18,9"
-                            VerticalAlignment="Center"
-                            Command="{Binding LoadSceneCommand}" />
-                </StackPanel>
-
-                <TextBlock DockPanel.Dock="Right"
-                           VerticalAlignment="Center"
-                           Margin="10,2,4,2"
-                           FontFamily="{DynamicResource AeFontMono}"
-                           Foreground="#6b7280">
-                    Entities
-                    <Run Text="{Binding Hierarchy.Entities.Count}"
-                         Foreground="{DynamicResource AeTextBrush}"
-                         FontWeight="SemiBold" />
-                </TextBlock>
-            </DockPanel>
-
-            <DockPanel Grid.Row="1"
-                       Grid.ColumnSpan="5"
-                       Margin="0,0,0,12"
-                       Background="{DynamicResource AeSurfaceBrush}"
-                       FlowDirection="LeftToRight">
-                <Border Padding="12,10"
+            <Grid Grid.Row="1"
+                  Grid.ColumnSpan="5"
+                  Background="#071a2a">
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#12395b"
                         BorderBrush="{DynamicResource AeBorderBrush}"
                         BorderThickness="1"
-                        CornerRadius="8"
-                        DockPanel.Dock="Top">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="10"
-                                VerticalAlignment="Center">
-                        <Button Content="Run + Connect"
-                                Padding="16,10"
-                                Command="{Binding RunGameAndConnectCommand}" />
-                        <TextBlock VerticalAlignment="Center"
-                                   Margin="16,0,4,0"
-                                   Foreground="#9ca3af"
-                                   FontSize="13"
-                                   Text="pasta main.lua:" />
-                        <TextBox Width="460"
-                                 Text="{Binding GamePreviewFolder}"
-                                 Watermark="...\examples\demo-platformer"
-                                 FontFamily="{DynamicResource AeFontMono}"
-                                 Padding="10,8" />
-                        <TextBlock VerticalAlignment="Center"
-                                   Margin="8,0,4,0"
-                                   Foreground="#9ca3af"
-                                   FontSize="13"
-                                   Text="raiz engine (opc.):" />
-                        <TextBox MinWidth="220"
-                                 Width="340"
-                                 Text="{Binding EngineRepoOverride}"
-                                 Watermark="vazio = detectar pela pasta do exe"
-                                 FontFamily="{DynamicResource AeFontMono}"
-                                 Padding="10,8" />
+                        CornerRadius="4"
+                        Padding="8,4">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding BackToHubCommand}"
+                                MinWidth="58"
+                                Padding="8,4">
+                            <StackPanel>
+                                <TextBlock Text="Project" FontSize="11" HorizontalAlignment="Center" />
+                                <TextBlock Text="Open" FontSize="10" Foreground="{DynamicResource AeTextSecondaryBrush}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding NewSceneCommand}"
+                                MinWidth="58"
+                                Padding="8,4">
+                            <StackPanel>
+                                <TextBlock Text="Scene" FontSize="11" HorizontalAlignment="Center" />
+                                <TextBlock Text="New" FontSize="10" Foreground="{DynamicResource AeTextSecondaryBrush}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button IsEnabled="False"
+                                MinWidth="58"
+                                Padding="8,4">
+                            <StackPanel>
+                                <TextBlock Text="Build" FontSize="11" HorizontalAlignment="Center" />
+                                <TextBlock Text="Soon" FontSize="10" Foreground="{DynamicResource AeTextSecondaryBrush}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding RunGameAndConnectCommand}"
+                                MinWidth="58"
+                                Background="#167246"
+                                Padding="8,4">
+                            <StackPanel>
+                                <TextBlock Text="Play" FontSize="11" HorizontalAlignment="Center" />
+                                <TextBlock Text="Run" FontSize="10" Foreground="#bff7d5" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding StopCommand}"
+                                MinWidth="58"
+                                Padding="8,4">
+                            <StackPanel>
+                                <TextBlock Text="Stop" FontSize="11" HorizontalAlignment="Center" />
+                                <TextBlock Text="Runtime" FontSize="10" Foreground="{DynamicResource AeTextSecondaryBrush}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding RestartRuntimeCommand}"
+                                MinWidth="58"
+                                Padding="8,4">
+                            <StackPanel>
+                                <TextBlock Text="Restart" FontSize="11" HorizontalAlignment="Center" />
+                                <TextBlock Text="Run" FontSize="10" Foreground="{DynamicResource AeTextSecondaryBrush}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding SaveSceneCommand}"
+                                MinWidth="58"
+                                Padding="8,4">
+                            <StackPanel>
+                                <TextBlock Text="Save" FontSize="11" HorizontalAlignment="Center" />
+                                <TextBlock Text="Scene" FontSize="10" Foreground="{DynamicResource AeTextSecondaryBrush}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
-            </DockPanel>
+
+                <TextBlock HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0"
+                           Text="{Binding SceneProjectPath}"
+                           FontFamily="{DynamicResource AeFontMono}"
+                           FontSize="11"
+                           Foreground="{DynamicResource AeTextSecondaryBrush}"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="420" />
+            </Grid>
 
             <views:HierarchyPanel Grid.Row="2"
                                   Grid.Column="0"
-                                  Margin="2"
+                                  Margin="0"
                                   DataContext="{Binding Hierarchy}" />
 
             <GridSplitter Grid.Row="2"
                           Grid.Column="1"
-                          Width="8"
-                          Margin="0,12,0,12"
+                          Width="6"
                           Background="{DynamicResource AeBorderBrush}" />
 
             <Border Grid.Row="2"
                     Grid.Column="2"
-                    Margin="2"
-                    Background="{DynamicResource AeSurfaceBrush}"
+                    Margin="0"
+                    Background="{DynamicResource AePanelDeepBrush}"
                     BorderBrush="{DynamicResource AeBorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="4">
-                <controls:SceneViewport DataContext="{Binding Viewport}"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch" />
+                    CornerRadius="2">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top"
+                            Height="24"
+                            Background="#0d2c48"
+                            BorderBrush="{DynamicResource AeBorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="8,3">
+                        <DockPanel>
+                            <TextBlock Text="Scene View (2D)"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource AeTextBrush}" />
+                            <StackPanel DockPanel.Dock="Right"
+                                        Orientation="Horizontal"
+                                        Spacing="6">
+                                <Button Content="Grid"
+                                        Padding="8,1"
+                                        Command="{Binding Viewport.ToggleGridCommand}" />
+                                <Button Content="-"
+                                        MinWidth="24"
+                                        Padding="6,1"
+                                        Command="{Binding Viewport.DecreaseGridCommand}" />
+                                <TextBlock Text="{Binding Viewport.GridSize}"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                                <Button Content="+"
+                                        MinWidth="24"
+                                        Padding="6,1"
+                                        Command="{Binding Viewport.IncreaseGridCommand}" />
+                                <Button Content="32"
+                                        MinWidth="28"
+                                        Padding="6,1"
+                                        Command="{Binding Viewport.ResetGridCommand}" />
+                                <Button Content="Snap"
+                                        Padding="8,1"
+                                        Command="{Binding Viewport.ToggleSnapCommand}" />
+                                <Button Content="Reset"
+                                        Padding="8,1"
+                                        Command="{Binding Viewport.ResetViewCommand}" />
+                                <TextBlock Text="{Binding Viewport.Zoom, StringFormat={}{0:0.00}x}"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <controls:SceneViewport DataContext="{Binding Viewport}"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch" />
+                </DockPanel>
             </Border>
 
             <GridSplitter Grid.Row="2"
                           Grid.Column="3"
-                          Width="8"
-                          Margin="0,12,0,12"
+                          Width="6"
                           Background="{DynamicResource AeBorderBrush}" />
 
             <views:InspectorPanel Grid.Row="2"
@@ -261,27 +355,45 @@
 
             <GridSplitter Grid.Row="3"
                           Grid.ColumnSpan="5"
-                          Height="8"
+                          Height="6"
                           HorizontalAlignment="Stretch"
                           Background="{DynamicResource AeBorderBrush}" />
 
             <Grid Grid.Row="4"
                   Grid.ColumnSpan="5"
-                  Margin="0,4,0,0"
-                  ColumnDefinitions="1*,8,1*">
-                <views:ConsolePanel Grid.Column="0"
-                                    DataContext="{Binding ConsoleLog}"
-                                    HorizontalAlignment="Stretch" />
+                  Margin="0"
+                  ColumnDefinitions="0.95*,6,1.15*">
+                <views:AssetBrowserPanel Grid.Column="0"
+                                         DataContext="{Binding AssetBrowser}"
+                                         HorizontalAlignment="Stretch" />
 
                 <GridSplitter Grid.Column="1"
-                              Width="8"
-                              Margin="0,6,0,6"
+                              Width="6"
                               Background="{DynamicResource AeBorderBrush}" />
 
-                <controls:LuaEditor Grid.Column="2"
-                                    DataContext="{Binding LuaEditor}"
+                <views:ConsolePanel Grid.Column="2"
+                                    DataContext="{Binding ConsoleLog}"
                                     HorizontalAlignment="Stretch" />
             </Grid>
+
+            <Border Grid.Row="5"
+                    Grid.ColumnSpan="5"
+                    Background="#071a2a"
+                    BorderBrush="#164566"
+                    BorderThickness="0,1,0,0"
+                    Padding="8,2">
+                <DockPanel>
+                    <TextBlock Text="Aegis Editor 2D"
+                               FontSize="11"
+                               Foreground="{DynamicResource AeTextSecondaryBrush}" />
+                    <TextBlock DockPanel.Dock="Right"
+                               FontSize="11"
+                               Foreground="{DynamicResource AeTextSecondaryBrush}">
+                        Entities
+                        <Run Text="{Binding Hierarchy.Entities.Count}" />
+                    </TextBlock>
+                </DockPanel>
+            </Border>
         </Grid>
     </Grid>
 </Window>

@@ -264,7 +264,13 @@ public sealed class EditorPipeHost : IDisposable
                     var path = PayloadString(cmd.Payload, "path");
                     if (!string.IsNullOrEmpty(path))
                     {
-                        _lua.LoadSceneFile(path.Replace('\\', '/').Trim());
+                        var normalizedPath = path.Replace('\\', '/').Trim();
+                        if (normalizedPath.EndsWith(".scene.json", StringComparison.OrdinalIgnoreCase)
+                            || normalizedPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                            _lua.LoadSceneJson(normalizedPath);
+                        else
+                            _lua.LoadSceneFile(normalizedPath);
+
                         EmitLogBuffered("info", $"SCENE_LOAD ok: {path}");
                         EnqueueSceneState();
                     }

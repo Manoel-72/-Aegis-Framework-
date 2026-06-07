@@ -121,6 +121,8 @@ APIs uteis:
 ```lua
 aegis.registerScene("gameover", "scenes/gameover.lua")
 aegis.transitionTo("gameover", "fade", 0.35, { score = 120 })
+aegis.pushScene("pause", { from = "level1" })
+aegis.popScene()
 
 aegis.onSceneEnter(function(scene, data)
   if data then aegis.log("score: " .. tostring(data.score)) end
@@ -136,6 +138,10 @@ Modos de transicao:
 - `fade`
 - `none`
 - `slide`
+
+Use `pushScene/popScene` para pause menu, inventario e overlays. A cena
+empilhada nao destruiu o mundo; ao voltar, a engine remove os objetos criados
+pela cena empilhada e restaura os callbacks anteriores.
 
 ## Tilemap
 

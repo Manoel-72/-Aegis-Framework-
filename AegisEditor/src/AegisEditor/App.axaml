@@ -3,21 +3,24 @@
              x:Class="AegisEditor.App"
              RequestedThemeVariant="Dark">
     <Application.Resources>
-        <Color x:Key="AeBackground">#FF0b0d12</Color>
-        <Color x:Key="AeSurface">#FF12151e</Color>
-        <Color x:Key="AeSurfaceHover">#FF1a1e2b</Color>
-        <Color x:Key="AeBorder">#FF1e2230</Color>
-        <Color x:Key="AeTextPrimary">#FFdde1ec</Color>
-        <Color x:Key="AeTextSecondary">#FF6b7280</Color>
-        <Color x:Key="AeAccent">#FF5b7fff</Color>
+        <Color x:Key="AeBackground">#FF06131d</Color>
+        <Color x:Key="AeSurface">#FF0b2740</Color>
+        <Color x:Key="AeSurfaceHover">#FF12395b</Color>
+        <Color x:Key="AePanelDeep">#FF071a2a</Color>
+        <Color x:Key="AeBorder">#FF2a6fa7</Color>
+        <Color x:Key="AeTextPrimary">#FFdcecff</Color>
+        <Color x:Key="AeTextSecondary">#FF8fb6d4</Color>
+        <Color x:Key="AeAccent">#FF36a8ff</Color>
         <Color x:Key="AeSuccess">#FF34d399</Color>
         <Color x:Key="AeWarning">#FFfbbf24</Color>
         <Color x:Key="AeError">#FFf87171</Color>
 
         <SolidColorBrush x:Key="AeBackgroundBrush" Color="{DynamicResource AeBackground}" />
         <SolidColorBrush x:Key="AeSurfaceBrush" Color="{DynamicResource AeSurface}" />
+        <SolidColorBrush x:Key="AePanelDeepBrush" Color="{DynamicResource AePanelDeep}" />
         <SolidColorBrush x:Key="AeBorderBrush" Color="{DynamicResource AeBorder}" />
         <SolidColorBrush x:Key="AeTextBrush" Color="{DynamicResource AeTextPrimary}" />
+        <SolidColorBrush x:Key="AeTextSecondaryBrush" Color="{DynamicResource AeTextSecondary}" />
 
         <FontFamily x:Key="AeFontMono">Cascadia Mono, Consolas, Courier New, monospace</FontFamily>
     </Application.Resources>
@@ -27,6 +30,27 @@
         <!-- Dark palette overlay -->
         <Style Selector="Window">
             <Setter Property="Background" Value="{DynamicResource AeBackgroundBrush}" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#173c5d" />
+            <Setter Property="Foreground" Value="{DynamicResource AeTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AeBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="10,6" />
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#205780" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#071c2d" />
+            <Setter Property="Foreground" Value="{DynamicResource AeTextBrush}" />
+            <Setter Property="BorderBrush" Value="#2b6f9f" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="3" />
+        </Style>
+        <Style Selector="ListBox">
+            <Setter Property="Foreground" Value="{DynamicResource AeTextBrush}" />
         </Style>
     </Application.Styles>
 </Application>
